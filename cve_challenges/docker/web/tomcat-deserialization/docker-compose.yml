@@ -1,0 +1,14 @@
+services:
+  tomcat:
+    build:
+      context: .
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{web-01-default}}
+    ports:
+      - "10101:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s

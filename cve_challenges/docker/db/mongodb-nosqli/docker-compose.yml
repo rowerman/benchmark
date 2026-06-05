@@ -1,0 +1,41 @@
+services:
+  web:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      args:
+        CVE_FLAG: ${CVE_FLAG}
+    container_name: db09-web-nosqli
+    ports:
+      - "10209:5000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5000/ > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - db09-net
+
+  mongo:
+    build:
+      context: ./mongo
+      dockerfile: Dockerfile
+      args:
+        CVE_FLAG: ${CVE_FLAG}
+    container_name: db09-mongo-nosqli
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/27017' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - db09-net
+
+networks:
+  db09-net:
+    driver: bridge

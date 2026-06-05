@@ -1,0 +1,16 @@
+services:
+  docker-socket:
+    build:
+      context: .
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{lnx-08-default}}
+    ports:
+      - "10303:22"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/22' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

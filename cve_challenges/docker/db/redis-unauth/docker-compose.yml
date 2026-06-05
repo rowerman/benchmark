@@ -1,0 +1,17 @@
+services:
+  redis-ssh:
+    build:
+      context: .
+      dockerfile: Dockerfile.ssh
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{db-05-default}}
+    container_name: db05-redis-ssh
+    ports:
+      - "10205:6379"
+      - "10222:22"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

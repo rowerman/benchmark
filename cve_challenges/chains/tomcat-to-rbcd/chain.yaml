@@ -1,0 +1,86 @@
+name: "Tomcat Deserialization to RBCD Domain Admin"
+domain: Cross (Web + Linux + AD)
+difficulty: L3
+steps: 6
+description: >
+  Full cross-domain attack chain spanning web application exploitation,
+  Linux privilege escalation, credential discovery, and Active Directory
+  compromise via Resource-Based Constrained Delegation. Demonstrates
+  the complete attack path from external web entry point to full domain
+  takeover.
+
+steps_detail:
+  - step: 1
+    scenario: WEB-01
+    name: "Tomcat Deserialization RCE"
+    technique: CVE-2025-24813
+    description: >
+      Exploit Apache Tomcat deserialization vulnerability to achieve
+      remote code execution on the web server. Upload a JSP webshell
+      or execute commands directly via the PUT/PATCH interface.
+    flag: flag{chain28-step1-tomcat}
+    flag_location: "/opt/flag.txt on the Tomcat web server"
+
+  - step: 2
+    scenario: LNX-05
+    name: "Linux Privilege Escalation via Sudo Chroot"
+    technique: CVE-2025-32463
+    description: >
+      From the web server shell, escalate to root using the sudo chroot
+      vulnerability. This provides full control over the compromised
+      Linux host.
+    flag: flag{chain28-step2-privesc}
+    flag_location: "/root/flag.txt after privilege escalation"
+
+  - step: 3
+    scenario: Credential Discovery
+    name: "AD Credential Discovery on Linux Host"
+    technique: Credential Discovery
+    description: >
+      Search the compromised Linux host for AD-related credentials.
+      Find cached Kerberos tickets, configuration files with domain
+      credentials, or SSH keys that grant access to AD-joined systems.
+    flag: flag{chain28-step3-creds}
+    flag_location: "Credentials stored in /home/attacker/.ad_creds.txt"
+
+  - step: 4
+    scenario: AD Enumeration
+    name: "Active Directory Enumeration"
+    technique: ATT&CK T1016 / T1087
+    description: >
+      Using discovered credentials, enumerate the AD domain. Identify
+      users, groups, computers, and ACL relationships. Discover the
+      GenericWrite permission on DESKTOP-HELPDESK$ computer.
+    flag: flag{chain28-step4-enum}
+    flag_location: "LDAP query result for DESKTOP-HELPDESK$ ACL"
+
+  - step: 5
+    scenario: AD-17
+    name: "RBCD Computer Takeover"
+    technique: ATT&CK T1558.003 (RBCD)
+    description: >
+      Exploit the discovered GenericWrite permission via RBCD. Create
+      an attacker machine account, write its SID to the target computer's
+      msDS-AllowedToActOnBehalfOfOtherIdentity, and use S4U2Proxy to
+      impersonate Administrator.
+    flag: flag{chain28-step5-rbcd}
+    flag_location: "DESKTOP-HELPDESK$ description attribute after impersonation"
+
+  - step: 6
+    scenario: AD-09
+    name: "DCSync — Full Domain Compromise"
+    technique: ATT&CK T1003.006
+    description: >
+      With Administrator-level access, perform DCSync to extract all
+      domain password hashes including krbtgt. Full domain compromise.
+    flag: flag{chain28-step6-dcsync-final}
+    flag_location: "krbtgt NTLM hash extracted via DCSync"
+
+infrastructure:
+  type: cross-domain
+  components:
+    - web: WEB-01 (Docker, port 10101)
+    - linux: LNX-05 (Docker, port 10322)
+    - ad: Samba AD DC (192.168.100.10)
+  entry_user: lowpriv
+  entry_password: Password123!

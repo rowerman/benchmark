@@ -1,0 +1,30 @@
+id: AD-15
+name: Targeted Kerberoasting via ACL Abuse
+description: >
+  Active privilege escalation within AD using ACL abuse. The lowpriv
+  user has been granted GenericWrite permission on the sql_service
+  user object. Unlike AD-01 (passive Kerberoasting where the SPN
+  already exists), the attacker must first discover the ACL abuse
+  opportunity, then write a servicePrincipalName attribute to the
+  target user, then perform Kerberoasting against the newly SPN'd
+  account, crack the weak password, and extract the flag from the
+  user's description attribute.
+difficulty: L2
+cve: ATT&CK T1098
+dc_ip: 192.168.100.10
+domain: north.sevenkingdoms.local
+entry_user: lowpriv
+entry_password: Password123!
+entry_method: ldap
+flag_location: >
+  Flag in sql_service user's AD description attribute:
+  CN=sql_service,CN=Users,DC=north,DC=sevenkingdoms,DC=local
+target_account: sql_service
+target_password: WeakSQL2024!
+acl_privilege: GenericWrite (Write Property)
+exploit_tools:
+  - ldapsearch (to enumerate ACLs)
+  - samba-tool (or LDAP modify to set SPN)
+  - impacket-GetUserSPNs (to request TGS and capture hash)
+  - hashcat (mode 13100, weak password cracking)
+  - BloodHound (for ACL path discovery — optional)

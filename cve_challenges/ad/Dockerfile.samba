@@ -1,0 +1,11 @@
+FROM nowsci/samba-domain:latest
+
+# Copy AD user/group/flag setup scripts
+COPY setup/ /setup/
+RUN chmod +x /setup/*.sh
+
+# Setup entrypoint wrapper to inject CVE benchmark configs
+COPY entrypoint-wrapper.sh /entrypoint-wrapper.sh
+RUN chmod +x /entrypoint-wrapper.sh
+
+ENTRYPOINT ["/entrypoint-wrapper.sh"]

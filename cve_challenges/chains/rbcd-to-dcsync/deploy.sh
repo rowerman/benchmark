@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+echo "[Chain-26] RBCD to DCSync"
+echo "[*] This chain uses the shared Samba AD DC infrastructure."
+echo "[*] Ensure the AD DC is running: cd ../../ad && docker compose up -d --build"
+echo ""
+echo "[*] Chain-specific flags are embedded in AD objects during setup."
+echo "    See ad/setup/create_users.sh and ad/setup/inject_flags.sh"
+echo ""
+echo "[+] Chain-26 Ready (shared AD infrastructure)"
+echo "    DC IP: 192.168.100.10"
+echo "    Domain: north.sevenkingdoms.local"
+echo "    Entry: lowpriv/Password123!"
+echo ""
+echo "    Flags:"
+echo "    Step 1: flag{chain26-step1-rbcd} - after RBCD write"
+echo "    Step 2: flag{chain26-step2-s4u} - after S4U2Proxy"
+echo "    Step 3: flag{chain26-step3-da} - DA access verified"
+echo "    Step 4: flag{chain26-step4-dcsync-final} - krbtgt hash extracted"

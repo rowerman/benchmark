@@ -1,0 +1,16 @@
+services:
+  mongodb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CVE_FLAG: ${CVE_FLAG}
+    container_name: db06-mongodb-unauth
+    ports:
+      - "10206:27017"
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/27017' || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s

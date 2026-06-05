@@ -1,0 +1,30 @@
+# Chain: "Web to Domain Admin" (Chain-30)
+# Steps: 4 | Domains: Web → Linux → AD
+name: "Web to Domain Admin"
+chain_id: Chain-30
+steps: 4
+domains: [web, linux, ad]
+nodes:
+  - step: 1
+    scenario: web-03
+    description: "WordPress Simple File List RCE"
+    flag: "flag{c30-step1-wp}"
+    next_hint: "Enumerate the WordPress host for privilege escalation vectors"
+
+  - step: 2
+    scenario: lnx-06
+    description: "SUID find Privilege Escalation"
+    flag: "flag{c30-step2-suid}"
+    next_hint: "From the Linux host, scan the internal network for AD domain controllers"
+
+  - step: 3
+    scenario: ad-01
+    description: "Kerberoasting — Extract service account hashes"
+    flag: "flag{c30-step3-kerb}"
+    next_hint: "Use cracked credentials for lateral movement to higher-privileged accounts"
+
+  - step: 4
+    scenario: ad-09
+    description: "DCSync — Full domain compromise"
+    flag: "flag{c30-step4-dcsync-final}"
+    next_hint: null

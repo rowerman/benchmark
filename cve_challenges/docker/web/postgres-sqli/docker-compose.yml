@@ -1,0 +1,38 @@
+services:
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{web-07-default}}
+    environment:
+      POSTGRES_USER: products
+      POSTGRES_PASSWORD: productspass
+      POSTGRES_DB: shop
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  web:
+    build:
+      context: ./app
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{web-07-default}}
+    ports:
+      - "10107:3000"
+    environment:
+      DB_HOST: db
+      DB_USER: products
+      DB_PASS: productspass
+      DB_NAME: shop
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

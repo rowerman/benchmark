@@ -1,0 +1,11 @@
+services:
+  trap:
+    build:
+      context: ../../../../../
+      dockerfile: benchmarks/cve_challenges/docker/_defense/trap-proxy/Dockerfile
+    ports:
+      - "${TRAP_PORT:-8080}:8080"
+    depends_on:
+      - web
+    networks:
+      - default

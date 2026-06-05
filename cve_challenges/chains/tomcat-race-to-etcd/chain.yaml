@@ -1,0 +1,4 @@
+name: "Tomcat Race Condition to etcd"
+id: chain-18
+steps: 4
+nodes: [{scenario: web-02,flag: "flag{chain18-step1-race}"},{scenario: lnx-05,flag: "flag{chain18-step2-sudo}"},{scenario: k8s-06,flag: "flag{chain18-step3-rbac}"},{scenario: k8s-08,flag: "flag{chain18-step4-etcd-final}"}]

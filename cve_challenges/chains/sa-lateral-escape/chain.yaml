@@ -1,0 +1,10 @@
+name: "SA Token Lateral to Escape"
+id: chain-13
+steps: 4
+nodes:
+  - scenario: k8s-13
+    flag: "flag{chain13-step1-crossns}"
+  - scenario: k8s-06
+    flag: "flag{chain13-step2-rbac}"
+  - scenario: k8s-01
+    flag: "flag{chain13-step3-runc-final}"

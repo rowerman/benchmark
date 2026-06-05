@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16.6
+    ports:
+      - "10201:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+    volumes:
+      - ./flag.txt:/flag.txt:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s

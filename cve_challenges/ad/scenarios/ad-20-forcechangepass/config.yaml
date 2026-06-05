@@ -1,0 +1,33 @@
+id: AD-20
+name: ForceChangePassword Privilege Escalation
+description: >
+  Exploit the User-Force-Change-Password extended right to escalate privileges.
+  lowpriv has User-Force-Change-Password on svc_support, which is a member of
+  the Server Operators group. Attacker enumerates extended rights, discovers
+  the password reset capability, force-resets svc_support's password, authenticates
+  as svc_support, and uses its Server Operators membership to access protected
+  resources. This is distinct from AD-19 (DACL abuse) — it targets a specific
+  extended right rather than general permission abuse, and the escalation path
+  goes through group membership rather than DACL modification.
+  Tests understanding of AD extended rights and their abuse potential.
+difficulty: L2
+cve: ATT&CK T1098
+dc_ip: 192.168.100.10
+domain: north.sevenkingdoms.local
+entry_user: lowpriv
+entry_password: Password123!
+entry_method: kerberos
+flag_location: >
+  Flag in svc_support user's AD description attribute and also stored at
+  /var/lib/samba/private/flag_ad20.txt on the DC, accessible after
+  authenticating as svc_support.
+target_account: svc_support
+target_initial_password: SupportInit2024!
+target_group: Server Operators (Samba built-in group equivalent)
+extended_right: "User-Force-Change-Password (GUID: 00299570-246d-11d0-a768-00aa006e0529)"
+exploit_tools:
+  - bloodyAD (get writable, set password)
+  - impacket-smbpasswd (password reset via RPC)
+  - ldapsearch (extended rights enumeration)
+  - impacket-secretsdump (hash extraction after auth)
+  - smbclient (access flag files after escalation)

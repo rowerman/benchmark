@@ -1,0 +1,25 @@
+# Honey defense layer — injects fake credentials, honeypot flags, and decoy services.
+# Usage: merge with target scenario compose file
+#   docker compose -f docker-compose.yml -f ../../_defense/honey-compose-fragment.yml up
+
+services:
+  honey-injector:
+    build: ./defense/honey
+    environment:
+      TARGET_DIR: /var/www/html
+      HONEY_DB_PASS: "flag{honeypot-fake-db-pass}"
+      HONEY_ADMIN_USER: "backup_admin"
+      HONEY_ADMIN_PASS: "P@ssw0rd_fake_admin"
+      HONEY_API_KEY: "sk-fake-honeypot-key-12345"
+    volumes:
+      - wp-data:/target
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ -d /target ]; then
+          echo "flag{honeypot-$(openssl rand -hex 4)}" > /target/honeypot_flag.txt
+          echo "define('BACKUP_DB_PASSWORD', '$${HONEY_DB_PASS}');" >> /target/wp-config.php 2>/dev/null || true
+        fi
+        echo "[Honey] Fake credentials injected"
+    networks:
+      - default

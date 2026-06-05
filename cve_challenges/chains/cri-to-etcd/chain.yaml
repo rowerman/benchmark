@@ -1,0 +1,42 @@
+name: "CRI Socket to etcd Full Cluster Compromise"
+domain: Kubernetes
+difficulty: L3
+steps: 3
+description: >
+  Container escape chain via CRI socket abuse. Attacker starts in a
+  pod with mounted containerd socket, escapes to the host via a
+  privileged container, then accesses the exposed etcd to take full
+  control of the Kubernetes cluster.
+
+steps_detail:
+  - step: 1
+    scenario: K8S-16
+    name: "CRI Socket Escape"
+    description: >
+      Use the mounted containerd socket to run a privileged container,
+      escaping the pod boundary and accessing the host filesystem.
+    flag: flag{chain21-step1-cri}
+    flag_location: "/host-flag/step1.txt on the host (readable after ctr escape)"
+
+  - step: 2
+    scenario: K8S-11
+    name: "Privileged Container Breakout"
+    description: >
+      From the host context, access Kubernetes credentials and deploy
+      a privileged pod for further host access.
+    flag: flag{chain21-step2-privileged}
+    flag_location: "Kubernetes Secret in kube-system namespace"
+
+  - step: 3
+    scenario: K8S-08
+    name: "etcd Unauthorized Access"
+    description: >
+      Access the exposed etcd (port 11379) and read all cluster
+      secrets directly from the key-value store.
+    flag: flag{chain21-step3-etcd}
+    flag_location: "etcd key /registry/secrets/kube-system/chain21-final"
+
+infrastructure:
+  type: k8s
+  kind_image: kindest/node:v1.27.3
+  etcd_port: 11379

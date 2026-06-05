@@ -1,0 +1,64 @@
+# MSSQL xp_cmdshell scenario — Web app + MSSQL
+# MSSQL 端口通过 socat + host 网络转发，避免 Docker NAT 导致 nmap tcpwrapped
+# HTTP 端口 (10109) 保留 Docker 端口映射（HTTP 协议 nmap 可正常识别）
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Password123!"
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    volumes:
+      - ./flag.txt:/flag.txt:ro
+    networks:
+      db-net:
+        ipv4_address: 192.168.101.30
+
+  web:
+    image: mcr.microsoft.com/dotnet/aspnet:6.0
+    ports:
+      - "10109:80"
+    environment:
+      DB_CONNECTION: "Server=db,1433;Database=vulndb;User Id=sa;Password=Password123!;TrustServerCertificate=true"
+    networks:
+      - db-net
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  db-proxy:
+    image: alpine:latest
+    container_name: mssql-xp-proxy
+    network_mode: host
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache socat >/dev/null 2>&1
+        echo "[db-proxy] MSSQL forward 10119 -> 192.168.101.30:1433"
+        exec socat TCP-LISTEN:10119,reuseaddr,fork TCP:192.168.101.30:1433
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep socat || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      - db
+
+networks:
+  db-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.101.0/24

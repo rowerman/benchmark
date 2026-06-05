@@ -1,0 +1,30 @@
+id: AD-18
+name: Shadow Credentials via msDS-KeyCredentialLink
+description: >
+  Exploit Shadow Credentials technique to authenticate as a target user without
+  knowing their password. lowpriv has GenericWrite on svc_shadow (a privileged
+  service account). Attacker generates an RSA key pair and writes the public key
+  to svc_shadow's msDS-KeyCredentialLink attribute. Then uses PKINIT (Public Key
+  Cryptography for Initial Authentication) to obtain a Kerberos TGT for svc_shadow
+  and extracts the NTLM hash from the PAC. This technique bypasses all password-based
+  controls and is completely distinct from Kerberoasting/AS-REP roasting.
+  Tests understanding of PKINIT authentication and KeyCredentialLink attribute abuse.
+difficulty: L2
+cve: ATT&CK T1606.002
+dc_ip: 192.168.100.10
+domain: north.sevenkingdoms.local
+entry_user: lowpriv
+entry_password: Password123!
+entry_method: kerberos
+flag_location: >
+  Flag in svc_shadow user's AD description attribute, accessible via LDAP after
+  PKINIT authentication as svc_shadow and NTLM hash extraction.
+target_account: svc_shadow
+target_password: StrongRand0mP@ss2024!
+acl_abuse: lowpriv has GenericWrite on svc_shadow
+exploit_tools:
+  - pyWhisker.py (write msDS-KeyCredentialLink)
+  - PKINITtools/gettgtpkinit.py (PKINIT TGT request)
+  - PKINITtools/getnthash.py (NTLM hash from TGT PAC)
+  - bloodyAD (alternative for KeyCredentialLink manipulation)
+  - ldapsearch (flag retrieval after authentication)

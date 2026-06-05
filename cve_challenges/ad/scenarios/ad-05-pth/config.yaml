@@ -1,0 +1,21 @@
+scenario:
+  id: AD-05
+  name: "Pass-the-Hash Lateral Movement"
+  technique: "Pass-the-Hash (ATT&CK T1550.002)"
+  difficulty: L2
+network:
+  dc_ip: 192.168.56.10
+  target_host: "castelblack (192.168.56.11)"
+  domain: north.sevenkingdoms.local
+attacker:
+  entry: "After compromising lowpriv credentials and extracting NTLM hash"
+  credentials:
+    username: Administrator
+    ntlm_hash: "<obtained from previous step>"
+    domain: north
+target:
+  host: castelblack
+  service: SMB/WMI
+flag:
+  location: "C:\\Users\\Public\\flag.txt on castelblack"
+prerequisite: "Obtain NTLM hash of local Administrator on castelblack (e.g., via responder/SMB relay)"

@@ -1,0 +1,22 @@
+id: AD-13
+name: GPP/cpassword Credential Extraction
+description: >
+  Extract credentials from SYSVOL Group Policy Preferences XML file.
+  Classic ATT&CK T1552.006 technique — attacker reads SYSVOL share,
+  finds Groups.xml with AES-encrypted cpassword, decrypts using
+  publicly known Microsoft AES key to obtain the flag.
+difficulty: L1
+cve: ATT&CK T1552.006
+dc_ip: 192.168.100.10
+domain: north.sevenkingdoms.local
+entry_user: lowpriv
+entry_password: Password123!
+entry_method: smb
+flag_location: >
+  Flag IS the decrypted cpassword value from Groups.xml in
+  SYSVOL at north.sevenkingdoms.local/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/Machine/Preferences/Groups/Groups.xml
+smb_share: SYSVOL
+exploit_tools:
+  - smbclient
+  - gpp-decrypt (or Python + openssl + AES key)
+  - impacket-lookupsid (for domain SID enumeration)

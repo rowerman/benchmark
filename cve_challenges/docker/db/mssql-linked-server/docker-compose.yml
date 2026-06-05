@@ -1,0 +1,64 @@
+# MSSQL Linked Server scenario — 双 MSSQL 实例，low 可访问 target 的 linked server
+# TCP 端口通过 socat + host 网络转发，避免 Docker NAT 导致 nmap tcpwrapped
+services:
+  mssql-low:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Password123!"
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      db-net:
+        ipv4_address: 192.168.101.10
+
+  mssql-target:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Password123!"
+    volumes:
+      - ./flag.txt:/flag.txt:ro
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      db-net:
+        ipv4_address: 192.168.101.11
+
+  db-proxy:
+    image: alpine:latest
+    container_name: mssql-linked-proxy
+    network_mode: host
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache socat >/dev/null 2>&1
+        echo "[db-proxy] MSSQL TCP forwards..."
+        socat TCP-LISTEN:10204,reuseaddr,fork TCP:192.168.101.10:1433 &
+        socat TCP-LISTEN:10214,reuseaddr,fork TCP:192.168.101.11:1433 &
+        wait
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep socat || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      - mssql-low
+      - mssql-target
+
+networks:
+  db-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.101.0/24

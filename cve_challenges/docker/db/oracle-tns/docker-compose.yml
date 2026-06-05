@@ -1,0 +1,48 @@
+# Oracle TNS Poisoning scenario
+# TCP 端口通过 socat + host 网络转发，避免 Docker NAT 导致 nmap tcpwrapped
+services:
+  oracle:
+    image: gvenzl/oracle-xe:21.3.0-slim
+    environment:
+      ORACLE_PASSWORD: password123
+      APP_USER: app
+      APP_USER_PASSWORD: apppass
+      ORACLE_DATABASE: XEPDB1
+    volumes:
+      - ./flag.txt:/flag.txt:ro
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/1521' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      db-net:
+        ipv4_address: 192.168.101.20
+
+  db-proxy:
+    image: alpine:latest
+    container_name: oracle-tns-proxy
+    network_mode: host
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache socat >/dev/null 2>&1
+        echo "[db-proxy] Oracle TNS forward 10203 -> 192.168.101.20:1521"
+        exec socat TCP-LISTEN:10203,reuseaddr,fork TCP:192.168.101.20:1521
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep socat || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      - oracle
+
+networks:
+  db-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.101.0/24

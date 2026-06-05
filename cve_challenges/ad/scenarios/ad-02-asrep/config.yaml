@@ -1,0 +1,20 @@
+scenario:
+  id: AD-02
+  name: "AS-REP Roasting"
+  technique: "AS-REP Roasting (ATT&CK T1558.004)"
+  difficulty: L1
+network:
+  dc_ip: 192.168.56.10
+  domain: north.sevenkingdoms.local
+attacker:
+  entry: "Kali Linux (192.168.56.50)"
+  credentials:
+    username: lowpriv
+    password: "Password123!"
+    domain: north
+target:
+  vulnerable_account: no_preauth
+  hint: "Account has Kerberos pre-authentication disabled"
+flag:
+  location: "AD user 'no_preauth' description attribute"
+  format: "flag{ad-02-xxxxxxxx}"

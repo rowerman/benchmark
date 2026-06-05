@@ -1,0 +1,28 @@
+services:
+  localstack:
+    image: localstack/localstack:3.5.0
+    ports:
+      - "10603:4566"
+    environment:
+      - SERVICES=s3,iam,lambda,dynamodb,sqs,sns,sts,kms,ec2
+      - AWS_DEFAULT_REGION=us-east-1
+      - EDGE_PORT=4566
+      - CVE_FLAG=${CVE_FLAG:-flag{cloud-03-default}}
+    volumes:
+      - ./init/:/etc/localstack/init/ready.d/
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4566/_localstack/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  web:
+    build: ./app
+    ports:
+      - "10603:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-03-default}}
+    depends_on:
+      localstack:
+        condition: service_healthy

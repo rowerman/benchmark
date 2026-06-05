@@ -1,0 +1,54 @@
+name: "ExternalIP Traffic Hijack to Secret Theft"
+domain: K8s
+difficulty: L2
+steps: 4
+description: >
+  Multi-step K8s attack chain exploiting Service externalIP design flaw
+  (CVE-2020-8554) to intercept internal traffic, discover credentials,
+  move laterally across namespaces, and access protected Secrets.
+
+steps_detail:
+  - step: 1
+    scenario: K8S-22
+    name: "Service ExternalIP Traffic Interception"
+    technique: CVE-2020-8554
+    description: >
+      Create a malicious Service with externalIPs set to a target service's
+      ClusterIP. All traffic destined for the target service gets redirected
+      to the attacker's pods.
+    flag: flag{chain24-step1-hijack}
+    flag_location: "X-Flag header in intercepted HTTP requests"
+
+  - step: 2
+    scenario: Credential Discovery
+    name: "Credential Discovery from Captured Traffic"
+    technique: Credential Sniffing
+    description: >
+      Analyze intercepted traffic to discover credentials or tokens
+      embedded in HTTP headers or request bodies.
+    flag: flag{chain24-step2-capture}
+    flag_location: "Credentials found in captured request data"
+
+  - step: 3
+    scenario: K8S-13
+    name: "SA Token Cross-Namespace Lateral Movement"
+    technique: RBAC Lateral Movement
+    description: >
+      Using discovered credentials, access a ServiceAccount token from
+      another namespace (ns-beta) that has broader permissions.
+    flag: flag{chain24-step3-crossns}
+    flag_location: "Secret flag-secret in ns-beta namespace"
+
+  - step: 4
+    scenario: K8S-06
+    name: "RBAC Secrets Abuse"
+    technique: ATT&CK T1552.007
+    description: >
+      With the cross-namespace SA token, access Kubernetes Secrets in
+      kube-system namespace to extract the final flag.
+    flag: flag{chain24-step4-secrets-final}
+    flag_location: "Secret 'flag-secret' in kube-system namespace"
+
+infrastructure:
+  type: kind
+  cluster_name: chain24-externalip-to-secrets

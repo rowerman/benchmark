@@ -1,0 +1,28 @@
+id: AD-14
+name: Silver Ticket Attack
+description: >
+  Forge Kerberos Service Ticket (TGS) for CIFS service using the
+  compromised NTLM hash of svc_backup service account. Unlike
+  AD-10 (Golden Ticket which uses KRBTGT hash for TGT), Silver
+  Ticket uses a service account hash to forge tickets for specific
+  services. The attacker discovers svc_backup's NTLM hash via
+  Kerberoasting (AD-01) or from a leaked hash file in SYSVOL,
+  then forges a Silver Ticket to access CIFS as Administrator.
+difficulty: L2
+cve: ATT&CK T1558.002
+dc_ip: 192.168.100.10
+domain: north.sevenkingdoms.local
+entry_user: lowpriv
+entry_password: Password123!
+entry_method: kerberos
+flag_location: >
+  Flag is in svc_backup user's AD description attribute, accessible
+  via LDAP after forging Silver Ticket and impersonating Administrator.
+  Can also be extracted from /var/lib/samba/sysvol/north.sevenkingdoms.local/scripts/backup_info.txt
+target_service: cifs/dc01.north.sevenkingdoms.local
+target_account: svc_backup
+target_ntlm: a8244f9213691fc04d4893105d38d630
+exploit_tools:
+  - impacket-GetUserSPNs (to discover svc_backup SPN)
+  - impacket-ticketer (to forge Silver Ticket)
+  - impacket-psexec (to connect with forged ticket)

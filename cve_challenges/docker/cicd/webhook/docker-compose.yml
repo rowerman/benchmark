@@ -1,0 +1,13 @@
+services:
+  webhook:
+    build: ./app
+    ports:
+      - "10704:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{ci-04-default}}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

@@ -1,0 +1,48 @@
+name: "GPP to DCSync"
+domain: AD
+difficulty: L2
+steps: 3
+description: >
+  Multi-step AD attack chain starting with Group Policy Preferences
+  credential extraction, escalating through ACL abuse and targeted
+  Kerberoasting, culminating in DCSync domain compromise.
+
+steps_detail:
+  - step: 1
+    scenario: AD-13
+    name: "GPP/cpassword Extraction"
+    technique: ATT&CK T1552.006
+    description: >
+      Access SYSVOL share as lowpriv, locate Groups.xml, decrypt
+      cpassword using publicly known Microsoft AES key. The decrypted
+      value reveals privileged credentials or a flag fragment.
+    flag: flag{chain19-step1-gpp}
+    flag_location: "Decrypted cpassword from Groups.xml in SYSVOL"
+
+  - step: 2
+    scenario: AD-15
+    name: "Targeted Kerberoasting via ACL Abuse"
+    technique: ATT&CK T1098
+    description: >
+      Use information from step 1 to identify the sql_service account.
+      Exploit GenericWrite ACL on sql_service to set a servicePrincipalName,
+      then perform Kerberoasting. Crack the weak TGS password offline.
+    flag: flag{chain19-step2-kerb}
+    flag_location: "sql_service AD user description attribute"
+
+  - step: 3
+    scenario: AD-09
+    name: "DCSync Attack"
+    technique: ATT&CK T1003.006
+    description: >
+      Using escalated credentials from step 2, perform DCSync to
+      extract all domain password hashes from the Domain Controller.
+    flag: flag{chain19-step3-dcsync}
+    flag_location: "Extracted from Domain Admin hash or accessible resource"
+
+infrastructure:
+  type: samba-ad
+  dc_ip: 192.168.100.10
+  domain: north.sevenkingdoms.local
+  entry_user: lowpriv
+  entry_password: Password123!

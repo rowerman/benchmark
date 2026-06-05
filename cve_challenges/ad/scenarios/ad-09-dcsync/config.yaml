@@ -1,0 +1,19 @@
+scenario:
+  id: AD-09
+  name: "DCSync Attack"
+  technique: "DCSync (ATT&CK T1003.006)"
+  difficulty: L2
+network:
+  dc_ip: 192.168.56.10
+  domain: north.sevenkingdoms.local
+attacker:
+  credentials:
+    username: dcsync_user
+    password: "DCSyncUser123!"
+    domain: north
+target:
+  privilege: "Replication-Get-Changes-All on domain"
+  purpose: "Simulate Domain Controller replication to extract all password hashes"
+flag:
+  location: "Domain Admin NTLM hash (from secretsdump output)"
+  secondary: "KRBTGT hash (for Golden Ticket in AD-10)"

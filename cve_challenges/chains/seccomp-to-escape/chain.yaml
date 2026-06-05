@@ -1,0 +1,45 @@
+name: "hostPID Access to CRI Socket Escape"
+domain: K8s
+difficulty: L2
+steps: 3
+description: >
+  Multi-step K8s container escape chain. Start with a pod that has hostPID
+  enabled but appears locked down (no privileged mode, no capabilities).
+  Use hostPID to access host filesystem via /proc. Then leverage CRI
+  socket access for full container escape to the node.
+
+steps_detail:
+  - step: 1
+    scenario: K8S-23
+    name: "hostPID ProcFS Host Filesystem Access"
+    technique: Container Escape via /proc
+    description: >
+      Pod with hostPID:true but no privileged mode. Despite appearing
+      locked down (non-root, no capabilities), access /proc/1/root to
+      read the host filesystem.
+    flag: flag{chain25-step1-seccomp}
+    flag_location: "/host-flag/flag.txt on the KIND node"
+
+  - step: 2
+    scenario: K8S-16
+    name: "CRI Socket Mount Access"
+    technique: CRI Socket Abuse
+    description: >
+      The pod also has access to the CRI socket. Use crictl or nsenter
+      to interact with container runtime and access other containers.
+    flag: flag{chain25-step2-cri}
+    flag_location: "Accessible via crictl or nsenter using CRI socket"
+
+  - step: 3
+    scenario: Host Flag
+    name: "Full Node Compromise"
+    technique: Node Compromise
+    description: >
+      With CRI socket access and hostPID, execute commands on the host
+      node. Read the final flag from the host filesystem.
+    flag: flag{chain25-step3-escape-final}
+    flag_location: "/etc/chain25_final_flag on the KIND node"
+
+infrastructure:
+  type: kind
+  cluster_name: chain25-seccomp-to-escape

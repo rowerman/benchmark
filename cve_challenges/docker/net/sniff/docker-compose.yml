@@ -1,0 +1,48 @@
+services:
+  attacker:
+    build:
+      context: ./attacker
+    container_name: net03-attacker
+    network_mode: "service:victim"
+    depends_on:
+      victim:
+        condition: service_started
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+  victim:
+    build:
+      context: ./victim
+    container_name: net03-victim
+    ports:
+      - "10903:22"
+    environment:
+      SECRET_TOKEN: ${CVE_FLAG:-flag{net-03-default}}
+    networks:
+      - net-sniff
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  monitor:
+    build:
+      context: ./monitor
+    container_name: net03-monitor
+    environment:
+      SECRET_TOKEN: ${CVE_FLAG:-flag{net-03-default}}
+    networks:
+      - net-sniff
+    depends_on:
+      victim:
+        condition: service_healthy
+
+networks:
+  net-sniff:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.3.0/24

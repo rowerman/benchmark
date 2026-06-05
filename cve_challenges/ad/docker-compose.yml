@@ -1,0 +1,64 @@
+# AD DC benchmark scenario — Samba AD Domain Controller
+# TCP ports are proxied through ad-proxy (Python + host network).
+# The proxy uses eager-connect: it immediately connects to the Samba
+# backend when a client connects, then bidirectionally forwards traffic.
+# This ensures nmap's NULL probe doesn't timeout the connection before
+# nmap gets to send its protocol-specific probes (SMB/LDAP/Kerberos/RPC
+# are all client-speaks-first protocols).
+# UDP ports use direct Docker port mapping.
+services:
+  dc01:
+    build:
+      context: .
+      dockerfile: Dockerfile.samba
+    container_name: ad-dc01
+    cap_add:
+      - SYS_ADMIN
+      - NET_ADMIN
+    environment:
+      DOMAIN: north.sevenkingdoms.local
+      DOMAINPASS: Password123!
+      NOCOMPLEXITY: "true"
+      INSECURELDAP: "true"
+    ports:
+      - "10053:53/udp"
+      - "10088:88/udp"
+      - "10464:464/udp"
+    networks:
+      ad-net:
+        ipv4_address: 192.168.100.10
+
+  # ── TCP proxy (host network, socat-based) ────────────────────────
+  # socat is a battle-tested TCP relay used by nmap developers for
+  # testing.  Unlike the previous Python select()-based proxy, socat
+  # uses fork()+splice() which correctly handles nmap's -sV probe
+  # sequence (NULL probe → protocol probes on the same connection).
+  ad-proxy:
+    image: alpine/socat:latest
+    container_name: ad-proxy
+    network_mode: host
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        # Fork a socat TCP relay for each AD service port.
+        # Host port → DC standard port on the ad-net bridge.
+        socat TCP-LISTEN:10053,fork,reuseaddr TCP:192.168.100.10:53 &
+        socat TCP-LISTEN:10088,fork,reuseaddr TCP:192.168.100.10:88 &
+        socat TCP-LISTEN:10389,fork,reuseaddr TCP:192.168.100.10:389 &
+        socat TCP-LISTEN:10445,fork,reuseaddr TCP:192.168.100.10:445 &
+        socat TCP-LISTEN:10139,fork,reuseaddr TCP:192.168.100.10:139 &
+        socat TCP-LISTEN:10135,fork,reuseaddr TCP:192.168.100.10:135 &
+        socat TCP-LISTEN:10326,fork,reuseaddr TCP:192.168.100.10:3268 &
+        socat TCP-LISTEN:10464,fork,reuseaddr TCP:192.168.100.10:464 &
+        echo "[ad-proxy] all 8 TCP relays active" >&2
+        wait
+    depends_on:
+      - dc01
+
+networks:
+  ad-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24

@@ -1,0 +1,25 @@
+# Chain: "Container Escape to Cluster Admin" (K8s-Chain-1)
+# Steps: 4 | Domains: K8s only
+name: "Container Escape to Cluster Admin"
+chain_id: K8s-Chain-1
+steps: 4
+domains: [k8s]
+nodes:
+  - step: 1
+    scenario: k8s-06
+    description: "RBAC Secrets Abuse"
+    flag: "flag{chain2-step1-rbac}"
+    next_hint: "Use the SA token to list more secrets and find a privileged token"
+
+  - step: 2
+    scenario: k8s-01
+    description: "runC WORKDIR Escape → host filesystem"
+    flag: "flag{chain2-step2-escape}"
+    next_hint: "From the host, find the etcd endpoint"
+    note: "Requires bare metal K8s (KIND container-in-container limits escape)"
+
+  - step: 3
+    scenario: k8s-08
+    description: "etcd Unauthorized Access → full cluster control"
+    flag: "flag{chain2-step3-etcd-final}"
+    next_hint: null

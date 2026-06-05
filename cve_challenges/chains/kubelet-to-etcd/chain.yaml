@@ -1,0 +1,24 @@
+# Chain: "Kubelet API to etcd Cluster Admin" (K8s-Chain-5)
+# Steps: 3 | Domains: K8s
+name: "Kubelet Anonymous to etcd Cluster Control"
+chain_id: K8s-Chain-5
+steps: 3
+domains: [k8s]
+nodes:
+  - step: 1
+    scenario: k8s-07
+    description: "Kubelet anonymous access → pod enumeration + exec"
+    flag: "flag{chain6-step1-kubelet}"
+    next_hint: "Use kubelet exec to access a pod, then enumerate RBAC from inside"
+
+  - step: 2
+    scenario: k8s-06
+    description: "RBAC abuse → read all secrets across namespaces"
+    flag: "flag{chain6-step2-rbac}"
+    next_hint: "Find the etcd client certificate in a kube-system secret"
+
+  - step: 3
+    scenario: k8s-08
+    description: "etcd unauthorized → read Kubernetes secrets from etcd directly"
+    flag: "flag{chain6-step3-etcd-final}"
+    next_hint: null

@@ -1,0 +1,31 @@
+# Chain: "AS-REP to Golden Ticket" (AD-Chain-7)
+# Steps: 4 | Domains: AD only
+# Tests: Account enumeration → hash cracking → lateral movement → ticket forging
+name: "AS-REP Roasting to Golden Ticket"
+chain_id: AD-Chain-7
+steps: 4
+domains: [ad]
+nodes:
+  - step: 1
+    scenario: ad-02
+    description: "AS-REP Roasting — identify accounts without pre-authentication"
+    flag: "flag{chain4-step1-asrep}"
+    next_hint: "Crack the AS-REP hash and use the account for lateral movement"
+
+  - step: 2
+    scenario: ad-05
+    description: "Pass-the-Hash lateral movement to member server"
+    flag: "flag{chain4-step2-pth}"
+    next_hint: "Extract local admin hashes and target the Domain Controller"
+
+  - step: 3
+    scenario: ad-09
+    description: "DCSync — extract KRBTGT hash from DC"
+    flag: "flag{chain4-step3-dcsync}"
+    next_hint: "With the KRBTGT hash, forge a Golden Ticket for cross-domain access"
+
+  - step: 4
+    scenario: ad-10
+    description: "Golden Ticket — cross-domain Enterprise Admin"
+    flag: "flag{chain4-step4-golden-final}"
+    next_hint: null

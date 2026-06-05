@@ -1,0 +1,17 @@
+scenario:
+  id: AD-10
+  name: "Golden Ticket Attack"
+  technique: "Golden Ticket (ATT&CK T1558.001)"
+  difficulty: L3
+network:
+  dc_ip: 192.168.56.10
+  domain: north.sevenkingdoms.local
+  parent_domain: sevenkingdoms.local
+  forest: "3 domains, 2 forests (full GOAD)"
+attacker:
+  prerequisite: "KRBTGT NTLM hash (obtained via DCSync or other means)"
+target:
+  exploit: "KRBTGT hash → forged TGT → cross-domain trust → Enterprise Admin"
+flag:
+  location: "Enterprise Admin access (DC of parent domain sevenkingdoms.local)"
+  secondary: "C:\\Users\\Public\\flag.txt on kingslanding (parent DC)"

@@ -1,0 +1,4 @@
+flask==3.1.1
+graphene==3.4
+pyjwt==2.10.1
+gunicorn==23.0.0

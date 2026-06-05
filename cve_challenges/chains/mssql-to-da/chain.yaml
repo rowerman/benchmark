@@ -1,0 +1,30 @@
+# Chain: "MSSQL Linked Server to Domain Admin" (Cross-Chain-9)
+# Steps: 4 | Domains: Web/DB → AD
+name: "MSSQL Linked Server Chain to Domain Admin"
+chain_id: Cross-Chain-9
+steps: 4
+domains: [web, db, ad]
+nodes:
+  - step: 1
+    scenario: web-09
+    description: "MSSQL xp_cmdshell via SQLi entry point"
+    flag: "flag{chain9-step1-mssql}"
+    next_hint: "Use xp_cmdshell to enumerate the MSSQL host and find linked servers"
+
+  - step: 2
+    scenario: db-04
+    description: "MSSQL linked server chain — privilege escalation across linked instances"
+    flag: "flag{chain9-step2-linked}"
+    next_hint: "From the target MSSQL instance, use xp_cmdshell to access domain resources"
+
+  - step: 3
+    scenario: ad-05
+    description: "Pass-the-Hash lateral movement to domain-joined server"
+    flag: "flag{chain9-step3-pth}"
+    next_hint: "With local admin on the member server, target the Domain Controller"
+
+  - step: 4
+    scenario: ad-09
+    description: "DCSync → Domain Admin hashes"
+    flag: "flag{chain9-step4-dcsync-final}"
+    next_hint: null

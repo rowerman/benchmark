@@ -1,0 +1,4 @@
+name: "Redis to K8s Cluster Admin"
+id: chain-16
+steps: 4
+nodes: [{scenario: db-05,flag: "flag{chain16-step1-redis}"},{scenario: k8s-11,flag: "flag{chain16-step2-priv}"},{scenario: k8s-06,flag: "flag{chain16-step3-rbac}"},{scenario: k8s-08,flag: "flag{chain16-step4-etcd-final}"}]

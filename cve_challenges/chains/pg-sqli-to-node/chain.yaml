@@ -1,0 +1,4 @@
+name: "PostgreSQL SQLi to Node Compromise"
+id: chain-15
+steps: 4
+nodes: [{scenario: web-07,flag: "flag{chain15-step1-sqli}"},{scenario: db-01,flag: "flag{chain15-step2-db-rce}"},{scenario: k8s-12,flag: "flag{chain15-step3-hostpath}"},{scenario: k8s-07,flag: "flag{chain15-step4-kubelet-final}"}]

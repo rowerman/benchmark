@@ -1,0 +1,32 @@
+id: AD-16
+name: Constrained Delegation Abuse
+description: >
+  Exploit Kerberos constrained delegation (msDS-AllowedToDelegateTo).
+  The service account svc_deleg has been granted constrained delegation
+  to the LDAP service on the Domain Controller. The attacker first
+  compromises svc_deleg (via Kerberoasting, AD-01) and obtains its
+  credentials. Then uses S4U2Self to request a service ticket for
+  Administrator to itself, followed by S4U2Proxy to forward that
+  ticket to the LDAP service. Finally queries LDAP as Domain Admin
+  to extract the flag from svc_deleg's description attribute.
+  Tests understanding of delegation extension protocols and
+  multi-step Kerberos abuse.
+difficulty: L2
+cve: ATT&CK T1558.003
+dc_ip: 192.168.100.10
+domain: north.sevenkingdoms.local
+entry_user: lowpriv
+entry_password: Password123!
+entry_method: kerberos
+flag_location: >
+  Flag in svc_deleg user's AD description attribute, accessible
+  via LDAP after S4U2Proxy to LDAP service as Administrator.
+target_account: svc_deleg
+target_password: DelegPass2024!
+delegated_service: ldap/dc01.north.sevenkingdoms.local
+impersonate_user: Administrator
+exploit_tools:
+  - impacket-GetUserSPNs (to discover svc_deleg and crack password)
+  - impacket-getST (S4U2Self/S4U2Proxy impersonation)
+  - ldapsearch (LDAP query as impersonated admin)
+  - impacket-ticketer (alternative ticket forging approach)

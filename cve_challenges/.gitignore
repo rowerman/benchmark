@@ -1,0 +1,20 @@
+# Flag 文件
+flag*.txt
+*.flag
+
+# 数据库数据
+*.db
+*.sqlite
+data/
+
+# Vagrant
+.vagrant/
+*.box
+
+# K8s
+kubeconfig*
+*.kubeconfig
+
+# 临时文件
+*.tmp
+*.log

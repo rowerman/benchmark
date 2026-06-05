@@ -1,0 +1,61 @@
+name: "Shadow Credentials to Golden Ticket"
+domain: AD
+difficulty: L3
+steps: 4
+description: >
+  Advanced AD attack chain using Shadow Credentials technique to bypass
+  password-based authentication, escalate to Domain Admin via DCSync,
+  and forge a Golden Ticket for persistent domain dominance. This chain
+  demonstrates a passwordless attack path using PKINIT and
+  msDS-KeyCredentialLink manipulation.
+
+steps_detail:
+  - step: 1
+    scenario: AD-18
+    name: "Shadow Credentials via KeyCredentialLink"
+    technique: ATT&CK T1606.002
+    description: >
+      Enumerate ACLs to find GenericWrite on svc_shadow. Generate RSA key
+      pair. Write public key to svc_shadow's msDS-KeyCredentialLink via
+      pyWhisker. Use PKINIT (gettgtpkinit.py) to authenticate as svc_shadow
+      without knowing the password.
+    flag: flag{chain27-step1-shadow}
+    flag_location: "svc_shadow AD user description attribute"
+
+  - step: 2
+    scenario: NTLM Extraction
+    name: "NTLM Hash Extraction from TGT PAC"
+    technique: PKINIT + getnthash
+    description: >
+      Use getnthash.py to extract the NTLM hash from the TGT's PAC
+      obtained via PKINIT. This provides the NTLM credential for svc_shadow.
+    flag: flag{chain27-step2-ntlm}
+    flag_location: "Extracted NTLM hash of svc_shadow (stored in /tmp)"
+
+  - step: 3
+    scenario: AD-09
+    name: "DCSync Attack"
+    technique: ATT&CK T1003.006
+    description: >
+      If svc_shadow has sufficient privileges, perform DCSync to extract
+      all domain hashes including krbtgt. Otherwise, use svc_shadow's
+      credentials to further escalate privileges.
+    flag: flag{chain27-step3-dcsync}
+    flag_location: "krbtgt NTLM hash extracted via DCSync"
+
+  - step: 4
+    scenario: AD-10
+    name: "Golden Ticket Attack"
+    technique: ATT&CK T1558.001
+    description: >
+      Using the extracted krbtgt hash, forge a Golden Ticket granting
+      Enterprise Admin access. Verify the ticket works against the domain.
+    flag: flag{chain27-step4-golden-final}
+    flag_location: "Verified via access to /var/lib/samba/private/flag_ad10.txt on DC"
+
+infrastructure:
+  type: samba-ad
+  dc_ip: 192.168.100.10
+  domain: north.sevenkingdoms.local
+  entry_user: lowpriv
+  entry_password: Password123!

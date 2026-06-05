@@ -1,0 +1,62 @@
+name: "Inngress RCE to etcd Compromise"
+domain: K8s
+difficulty: L3
+steps: 4
+description: >
+  Multi-step K8s attack chain starting with ingress-nginx Admission Controller
+  RCE (CVE-2025-1974), escalating through ServiceAccount token discovery,
+  RBAC privilege escalation, and culminating in etcd data access for
+  complete cluster compromise.
+
+steps_detail:
+  - step: 1
+    scenario: K8S-20
+    name: "ingress-nginx Admission Controller RCE"
+    technique: CVE-2025-1974
+    description: >
+      Exploit the ingress-nginx validating webhook admission controller
+      via crafted AdmissionReview request. Achieve RCE in the ingress-nginx
+      controller pod by injecting a malicious shared library via the
+      ssl_engine directive.
+    flag: flag{chain23-step1-ingress}
+    flag_location: "/tmp/flag.txt in ingress-nginx controller pod"
+
+  - step: 2
+    scenario: Token Discovery
+    name: "ServiceAccount Token Discovery"
+    technique: Credential Discovery
+    description: >
+      From within the compromised ingress-nginx controller pod, discover
+      the mounted ServiceAccount token and enumerate its permissions.
+      The ingress-nginx SA typically has access to Secrets in its namespace.
+    flag: flag{chain23-step2-token}
+    flag_location: "SA token stored in /var/run/secrets/kubernetes.io/serviceaccount/token"
+
+  - step: 3
+    scenario: K8S-06
+    name: "RBAC Secrets Abuse"
+    technique: ATT&CK T1552.007
+    description: >
+      Use the discovered SA token with Kubernetes API to list and read
+      Secrets in the cluster. The ingress-nginx SA has ClusterRole
+      permissions to read Secrets across namespaces.
+    flag: flag{chain23-step3-rbac}
+    flag_location: "Secret 'rbac-flag' in kube-system namespace"
+
+  - step: 4
+    scenario: K8S-08
+    name: "etcd Unauthorized Access"
+    technique: etcd Data Access
+    description: >
+      Using cluster-admin level access gained through RBAC escalation,
+      access the etcd endpoint directly or via kubectl proxy. Read
+      Kubernetes Secrets directly from the etcd datastore.
+    flag: flag{chain23-step4-etcd-final}
+    flag_location: "etcd-flag Secret in kube-system, readable via etcdctl"
+
+infrastructure:
+  type: kind
+  cluster_name: chain23-ingress-to-etcd
+  ports:
+    - 10443  # ingress admission webhook
+    - 11379  # etcd endpoint

@@ -1,0 +1,35 @@
+id: AD-21
+name: Unconstrained Delegation Discovery & Exploitation
+description: >
+  Exploit Unconstrained Kerberos Delegation on a compromised computer account.
+  Computer SRV-WEB$ has TrustedForDelegation (unconstrained delegation) set in
+  its UserAccountControl flags. Attacker discovers this delegation configuration,
+  compromises SRV-WEB$'s machine account (credentials obtained from a SYSVOL hint),
+  extracts cached Kerberos TGTs from the server (simulated via a pre-placed
+  Administrator TGT), and uses the DA TGT to impersonate Domain Administrator.
+  Unconstrained delegation is fundamentally different from Constrained Delegation
+  (AD-16) and RBCD (AD-17) — any service ticket presented to the server causes
+  the user's TGT to be cached for potential reuse.
+  Tests understanding of delegation types (unconstrained vs constrained vs RBCD)
+  and TGT extraction techniques.
+difficulty: L3
+cve: ATT&CK T1558.001
+dc_ip: 192.168.100.10
+domain: north.sevenkingdoms.local
+entry_user: lowpriv
+entry_password: Password123!
+entry_method: kerberos
+flag_location: >
+  Primary flag in Domain Administrator's user description attribute and
+  /var/lib/samba/private/flag_ad21.txt on the DC. Accessible after TGT
+  extraction and impersonation of Domain Admin.
+target_computer: SRV-WEB$
+target_computer_password: WebServer2024!
+delegation_flag: TrustedForDelegation (UAC 0x80000)
+simulated_da_tgt: Pre-placed Administrator TGT cached on SRV-WEB$ (simulated)
+exploit_tools:
+  - ldapsearch (discover unconstrained delegation via userAccountControl query)
+  - impacket-secretsdump (extract machine account hash from SYSVOL hint)
+  - impacket-ticketer (TGT extraction and DA impersonation)
+  - smbclient (initial SYSVOL enumeration for credentials)
+  - impacket-getTGT (request DA TGT after impersonation)

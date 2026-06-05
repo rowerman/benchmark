@@ -1,0 +1,30 @@
+# Chain: "Database to K8s Cluster Admin" (Chain-31)
+# Steps: 4 | Domains: DB → Linux → K8s
+name: "Database to K8s Cluster Admin"
+chain_id: Chain-31
+steps: 4
+domains: [db, linux, k8s]
+nodes:
+  - step: 1
+    scenario: db-02
+    description: "MySQL Weak Auth UDF — Database RCE"
+    flag: "flag{c31-step1-mysql}"
+    next_hint: "From the database host, enumerate Linux for container access"
+
+  - step: 2
+    scenario: lnx-08
+    description: "Docker Socket Abuse — Container escape via mounted socket"
+    flag: "flag{c31-step2-docker}"
+    next_hint: "Use the Docker socket to deploy a K8s node pod with elevated privileges"
+
+  - step: 3
+    scenario: k8s-06
+    description: "K8s RBAC Secrets Abuse — Extract service account tokens"
+    flag: "flag{c31-step3-rbac}"
+    next_hint: "Use the discovered credentials to access the etcd datastore"
+
+  - step: 4
+    scenario: k8s-08
+    description: "etcd Unauthorized Access — Full cluster compromise"
+    flag: "flag{c31-step4-etcd}"
+    next_hint: null

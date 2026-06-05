@@ -1,0 +1,16 @@
+services:
+  mysql:
+    image: mysql:8.0.35
+    ports:
+      - "10202:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password123
+    command: --secure-file-priv=""
+    volumes:
+      - ./flag.txt:/flag.txt:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

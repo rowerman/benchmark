@@ -1,0 +1,12 @@
+name: "hostPath to DaemonSet"
+id: chain-11
+steps: 4
+nodes:
+  - scenario: k8s-12
+    flag: "flag{chain11-step1-hostpath}"
+  - scenario: k8s-07
+    flag: "flag{chain11-step2-kubelet}"
+  - scenario: k8s-09
+    flag: "flag{chain11-step3-registry}"
+  - scenario: k8s-05
+    flag: "flag{chain11-step4-gitrepo-final}"

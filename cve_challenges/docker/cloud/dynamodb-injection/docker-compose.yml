@@ -1,0 +1,30 @@
+services:
+  localstack:
+    image: localstack/localstack:3.5.0
+    expose:
+      - "4566"
+    environment:
+      - SERVICES=s3,iam,lambda,dynamodb,sqs,sns,sts,kms
+      - AWS_DEFAULT_REGION=us-east-1
+      - EDGE_PORT=4566
+      - CVE_FLAG=${CVE_FLAG:-flag{cloud-05-default}}
+    volumes:
+      - ./init/:/etc/localstack/init/ready.d/
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4566/_localstack/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+  app:
+    build: ./app
+    ports:
+      - "10605:5000"
+    environment:
+      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=fake
+      - AWS_SECRET_ACCESS_KEY=fake
+    depends_on:
+      localstack:
+        condition: service_healthy

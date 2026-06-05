@@ -1,0 +1,50 @@
+name: "Kerberoasting to Constrained Delegation"
+domain: AD
+difficulty: L3
+steps: 3
+description: >
+  Advanced AD attack chain combining Kerberoasting, Silver Ticket
+  forgery, and Constrained Delegation abuse. The attacker starts
+  with basic domain credentials and escalates to Domain Admin
+  impersonation via S4U2Proxy.
+
+steps_detail:
+  - step: 1
+    scenario: AD-01
+    name: "Kerberoasting"
+    technique: ATT&CK T1558.003
+    description: >
+      Enumerate service accounts with SPNs. Request TGS for
+      svc_deleg service account. Crack offline to obtain
+      DelegPass2024! password and NTLM hash.
+    flag: flag{chain20-step1-kerb}
+    flag_location: "svc_deleg description attribute via LDAP query"
+
+  - step: 2
+    scenario: AD-14
+    name: "Silver Ticket Forgery"
+    technique: ATT&CK T1558.002
+    description: >
+      Use svc_deleg NTLM hash to forge a Silver Ticket for
+      CIFS service. Test access to SMB shares using the
+      forged service ticket.
+    flag: flag{chain20-step2-silver}
+    flag_location: "Accessible after SMB connection with Silver Ticket"
+
+  - step: 3
+    scenario: AD-16
+    name: "Constrained Delegation Abuse"
+    technique: ATT&CK T1558.003
+    description: >
+      Use svc_deleg credentials for S4U2Self/S4U2Proxy to
+      impersonate Administrator. Access LDAP service on DC
+      to query domain objects as Domain Admin.
+    flag: flag{chain20-step3-deleg}
+    flag_location: "svc_deleg protected attribute, readable via LDAP as admin"
+
+infrastructure:
+  type: samba-ad
+  dc_ip: 192.168.100.10
+  domain: north.sevenkingdoms.local
+  entry_user: lowpriv
+  entry_password: Password123!

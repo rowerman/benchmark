@@ -1,0 +1,15 @@
+# Cloak defense layer — fingerprint masking proxy
+# Changes Server header, removes version banners, masks technology signatures
+# Usage: merge with target scenario compose
+
+services:
+  cloak:
+    image: nginx:1.24-alpine
+    ports:
+      - "${CLOAK_PORT:-8080}:80"
+    volumes:
+      - ./defense/cloak/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web
+    networks:
+      - default

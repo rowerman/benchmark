@@ -1,0 +1,51 @@
+services:
+  elasticsearch:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CVE_FLAG: ${CVE_FLAG}
+    container_name: db07-elasticsearch-script
+    ports:
+      - "10207:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - script.painless.regex.enabled=true
+      - script.allowed_types=inline
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/ > /dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - db07-net
+
+  setup:
+    image: alpine/curl:8.9.1
+    container_name: db07-es-setup
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      CVE_FLAG: ${CVE_FLAG}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for ES..."
+        sleep 5
+        echo "Indexing flag..."
+        curl -s -X PUT "http://elasticsearch:9200/hidden_config/_doc/1" \
+          -H "Content-Type: application/json" \
+          -d "{\"flag\": \"${CVE_FLAG}\", \"note\": \"Find me if you can\"}"
+        echo ""
+        echo "Setup complete!"
+    networks:
+      - db07-net
+
+networks:
+  db07-net:
+    driver: bridge

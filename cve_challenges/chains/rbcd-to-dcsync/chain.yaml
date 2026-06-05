@@ -1,0 +1,61 @@
+name: "RBCD to DCSync Domain Compromise"
+domain: AD
+difficulty: L2
+steps: 4
+description: >
+  Multi-step AD attack chain leveraging Resource-Based Constrained Delegation
+  to escalate from a low-privileged domain user to full Domain Admin via
+  DCSync. The attacker creates a machine account, exploits RBCD on a target
+  computer, impersonates Administrator via S4U2Proxy, and extracts all
+  domain hashes.
+
+steps_detail:
+  - step: 1
+    scenario: AD-17
+    name: "RBCD Computer Takeover"
+    technique: ATT&CK T1558.003 (RBCD)
+    description: >
+      Enumerate ACLs to discover GenericWrite on DESKTOP-HELPDESK$.
+      Create attacker-controlled machine account. Write its SID to
+      msDS-AllowedToActOnBehalfOfOtherIdentity on the target computer.
+    flag: flag{chain26-step1-rbcd}
+    flag_location: "DESKTOP-HELPDESK$ computer description attribute"
+
+  - step: 2
+    scenario: S4U2Proxy
+    name: "S4U2Proxy to Impersonate Administrator"
+    technique: ATT&CK T1558.003
+    description: >
+      Request TGT for attacker machine account. Use S4U2Proxy to obtain
+      service ticket for CIFS/DESKTOP-HELPDESK as Administrator.
+      Verify impersonation works by accessing computer's SMB share.
+    flag: flag{chain26-step2-s4u}
+    flag_location: "Accessible via CIFS share after S4U2Proxy as Administrator"
+
+  - step: 3
+    scenario: Domain Admin Access
+    name: "Domain Admin Level Access Verification"
+    technique: Privilege Escalation
+    description: >
+      Use the impersonated Administrator context to access protected
+      domain resources. Verify DA-level access through LDAP queries
+      to protected objects.
+    flag: flag{chain26-step3-da}
+    flag_location: "Accessible via LDAP as Administrator to Domain Admins group"
+
+  - step: 4
+    scenario: AD-09
+    name: "DCSync Attack"
+    technique: ATT&CK T1003.006
+    description: >
+      With Domain Admin privileges, perform DCSync to extract all domain
+      password hashes including krbtgt. This represents full domain compromise.
+    flag: flag{chain26-step4-dcsync-final}
+    flag_location: "/var/lib/samba/private/chain26_dcsync_flag.txt on DC"
+
+infrastructure:
+  type: samba-ad
+  dc_ip: 192.168.100.10
+  domain: north.sevenkingdoms.local
+  entry_user: lowpriv
+  entry_password: Password123!

@@ -1,0 +1,4 @@
+name: "Tomcat Deserialization to K8s Admin"
+id: chain-14
+steps: 4
+nodes: [{scenario: web-01,flag: "flag{chain14-step1-tomcat}"},{scenario: lnx-05,flag: "flag{chain14-step2-sudo}"},{scenario: k8s-06,flag: "flag{chain14-step3-rbac}"},{scenario: k8s-08,flag: "flag{chain14-step4-etcd-final}"}]

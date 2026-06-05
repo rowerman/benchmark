@@ -1,0 +1,14 @@
+services:
+  web:
+    build:
+      context: ./app
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{web-12-default}}
+    ports:
+      - "10112:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

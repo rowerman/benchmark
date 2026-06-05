@@ -1,0 +1,29 @@
+FROM ubuntu:22.04
+
+# Install Redis + SSH in the same container so Redis can write SSH authorized_keys
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    redis-server openssh-server && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Configure Redis for external access: no auth, no protected mode, bind all
+RUN sed -i 's/^bind 127.0.0.1/bind 0.0.0.0/' /etc/redis/redis.conf; \
+    sed -i 's/^protected-mode yes/protected-mode no/' /etc/redis/redis.conf; \
+    sed -i 's/^# requirepass.*/requirepass ""/' /etc/redis/redis.conf
+
+# Create victim user for SSH login
+RUN useradd -m -s /bin/bash victim && \
+    echo 'victim:password123' | chpasswd && \
+    mkdir -p /home/victim/.ssh && chmod 700 /home/victim/.ssh && \
+    chown -R victim:victim /home/victim/.ssh && \
+    mkdir -p /run/sshd
+
+# Flag — requires either SSH login or Redis RCE to read
+ARG CVE_FLAG=flag{db-05-default}
+RUN echo "${CVE_FLAG}" > /flag.txt && chmod 644 /flag.txt
+
+# Startup: Redis + SSH
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 22 6379
+ENTRYPOINT ["/entrypoint.sh"]

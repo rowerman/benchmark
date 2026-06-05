@@ -1,0 +1,86 @@
+name: "WordPress to Shadow Credentials Domain Admin"
+domain: Cross (Web + DB + Linux + AD)
+difficulty: L3
+steps: 6
+description: >
+  Full cross-domain attack chain from WordPress RCE through database
+  exploitation, Linux privilege escalation, credential discovery, and
+  Active Directory compromise via Shadow Credentials (msDS-KeyCredentialLink).
+  Demonstrates a passwordless AD attack path starting from an external
+  web application.
+
+steps_detail:
+  - step: 1
+    scenario: WEB-03
+    name: "WordPress Simple File List RCE"
+    technique: CVE-2025-34085
+    description: >
+      Exploit WordPress Simple File List plugin to achieve pre-auth
+      remote code execution. Upload a PHP webshell and execute commands
+      on the web server.
+    flag: flag{chain29-step1-wp}
+    flag_location: "/opt/flag.txt on the WordPress web server"
+
+  - step: 2
+    scenario: DB-02
+    name: "MySQL Weak Authentication + UDF PrivEsc"
+    technique: MySQL UDF Code Execution
+    description: >
+      Discover MySQL credentials in WordPress wp-config.php. Connect to
+      the MySQL database. Use User-Defined Function (UDF) technique to
+      execute arbitrary commands on the database host.
+    flag: flag{chain29-step2-db}
+    flag_location: "/var/lib/mysql/flag.txt on the database server"
+
+  - step: 3
+    scenario: LNX-05
+    name: "Shell on Database Host + Linux PrivEsc"
+    technique: SSH Access + CVE-2025-32463
+    description: >
+      Use the MySQL UDF shell to establish persistence via SSH key.
+      Access the host via SSH. Escalate to root using sudo chroot.
+    flag: flag{chain29-step3-shell}
+    flag_location: "/root/flag.txt after privilege escalation"
+
+  - step: 4
+    scenario: Credential Discovery
+    name: "AD Credential & Network Discovery"
+    technique: Credential Discovery + Network Scan
+    description: >
+      From the compromised Linux host, scan the internal network for
+      the AD DC. Discover AD credentials in configuration files or
+      environment variables left by administrative scripts.
+    flag: flag{chain29-step4-creds}
+    flag_location: "AD credentials in /etc/ad_config/ad_bind.conf"
+
+  - step: 5
+    scenario: AD-18
+    name: "Shadow Credentials via msDS-KeyCredentialLink"
+    technique: ATT&CK T1606.002
+    description: >
+      Using discovered AD credentials (lowpriv), enumerate ACLs to find
+      GenericWrite on svc_shadow. Write attacker's key material to
+      msDS-KeyCredentialLink via pyWhisker. Authenticate via PKINIT
+      without svc_shadow's password.
+    flag: flag{chain29-step5-shadow}
+    flag_location: "svc_shadow AD user description attribute"
+
+  - step: 6
+    scenario: AD-09
+    name: "DCSync — Full Domain Compromise"
+    technique: ATT&CK T1003.006
+    description: >
+      With svc_shadow's elevated privileges, perform DCSync to extract
+      all domain hashes. Full domain compromise via passwordless attack path.
+    flag: flag{chain29-step6-dcsync-final}
+    flag_location: "krbtgt NTLM hash extracted via DCSync"
+
+infrastructure:
+  type: cross-domain
+  components:
+    - web: WEB-03 (Docker, port 10103)
+    - db: DB-02 (Docker, port 10202)
+    - linux: LNX-05 (Docker, port 10322)
+    - ad: Samba AD DC (192.168.100.10)
+  entry_user: lowpriv
+  entry_password: Password123!
