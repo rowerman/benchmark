@@ -1,0 +1,18 @@
+# Chain: "XXE SVG to Elasticsearch Data Exfiltration" (Chain-34)
+# Steps: 2 | Domains: Web → DB
+name: "XXE SVG to Elasticsearch Data Exfiltration"
+chain_id: Chain-34
+steps: 2
+domains: [web, db]
+nodes:
+  - step: 1
+    scenario: web-14
+    description: "XXE SVG Upload — Read internal files via malicious SVG, discover Elasticsearch endpoint"
+    flag: "flag{c34-step1-xxe}"
+    next_hint: "The SVG parsing error reveals Elasticsearch is running at localhost:10207 with inline scripts enabled"
+
+  - step: 2
+    scenario: db-07
+    description: "Elasticsearch Painless Script Injection — Query hidden_config index to extract flag"
+    flag: "flag{c34-step2-es}"
+    next_hint: null

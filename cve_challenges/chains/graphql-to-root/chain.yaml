@@ -1,0 +1,24 @@
+# Chain: "GraphQL IDOR to CouchDB RCE to PwnKit Escalation" (Chain-37)
+# Steps: 3 | Domains: Web → DB → Linux
+name: "GraphQL IDOR to CouchDB RCE to PwnKit Escalation"
+chain_id: Chain-37
+steps: 3
+domains: [web, db, linux]
+nodes:
+  - step: 1
+    scenario: web-16
+    description: "GraphQL Introspection + IDOR — Enumerate schema, exploit IDOR to access admin profile containing CouchDB credentials"
+    flag: "flag{c37-step1-graphql}"
+    next_hint: "The exposed user profile contains CouchDB credentials (admin:admin123). The CouchDB instance is at localhost:10208."
+
+  - step: 2
+    scenario: db-08
+    description: "CouchDB Arbitrary Command Execution — Authenticate, create Erlang native view to execute OS commands, read flag"
+    flag: "flag{c37-step2-couch}"
+    next_hint: "The CouchDB server's filesystem contains SSH credentials. SSH as attacker:password123 to localhost:10307."
+
+  - step: 3
+    scenario: lnx-11
+    description: "Polkit CVE-2021-4034 (PwnKit) — SSH to Linux host, exploit pkexec vulnerability to escalate to root"
+    flag: "flag{c37-step3-pwnkit}"
+    next_hint: null

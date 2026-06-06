@@ -1,0 +1,30 @@
+# Chain: "SSTI to Cloud Credential Theft" (Chain-33)
+# Steps: 4 | Domains: Web → Cloud → Cloud → Cloud
+name: "SSTI to Cloud Credential Theft"
+chain_id: Chain-33
+steps: 4
+domains: [web, cloud, cloud, cloud]
+nodes:
+  - step: 1
+    scenario: web-12
+    description: "SSTI Jinja2 — Exploit template injection to achieve RCE, read flag and discover cloud credentials in environment"
+    flag: "flag{c33-step1-ssti}"
+    next_hint: "The server environment contains AWS credentials for a low-privilege IAM user. Use them against the cloud API at port 10602."
+
+  - step: 2
+    scenario: cloud-02
+    description: "IAM Privilege Escalation — Use low-priv credentials to create and attach an admin policy, accessing the protected S3 bucket"
+    flag: "flag{c33-step2-iam}"
+    next_hint: "With admin access, enumerate IAM roles and discover AdminRole with sts:AssumeRole trust. Target port 10607."
+
+  - step: 3
+    scenario: cloud-07
+    description: "STS AssumeRole Abuse — Assume the over-privileged AdminRole to obtain temporary admin credentials"
+    flag: "flag{c33-step3-sts}"
+    next_hint: "The assumed role has kms:Decrypt permission on a specific KMS key. Use it against port 10608."
+
+  - step: 4
+    scenario: cloud-08
+    description: "KMS Decryption Oracle — Download encrypted flag from S3, use kms:Decrypt to retrieve the plaintext flag"
+    flag: "flag{c33-step4-kms}"
+    next_hint: null

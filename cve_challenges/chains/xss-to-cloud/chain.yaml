@@ -1,0 +1,30 @@
+# Chain: "Stored XSS Session Hijack to Cloud Takeover" (Chain-36)
+# Steps: 4 | Domains: Web → Cloud → Cloud → Cloud
+name: "Stored XSS Session Hijack to Cloud Takeover"
+chain_id: Chain-36
+steps: 4
+domains: [web, cloud, cloud, cloud]
+nodes:
+  - step: 1
+    scenario: web-18
+    description: "Stored XSS — Inject script payload, steal admin bot's session cookie, access admin panel to retrieve flag and discover cloud service URLs"
+    flag: "flag{c36-step1-xss}"
+    next_hint: "The admin dashboard displays SQS queue URLs. Use the stolen session to view them, then target the SQS service at port 10606."
+
+  - step: 2
+    scenario: cloud-06
+    description: "SQS Message Interception — List queues, receive messages from orders-queue containing IAM credentials"
+    flag: "flag{c36-step2-sqs}"
+    next_hint: "The intercepted SQS messages contain low-privilege IAM credentials. Use them for privilege escalation at port 10602."
+
+  - step: 3
+    scenario: cloud-02
+    description: "IAM Privilege Escalation — Create and attach admin policy using iam:CreatePolicy + iam:AttachUserPolicy to access protected S3 bucket"
+    flag: "flag{c36-step3-iam}"
+    next_hint: "With admin access, find the encrypted flag and KMS key metadata. Target the KMS service at port 10608."
+
+  - step: 4
+    scenario: cloud-08
+    description: "KMS Decryption Oracle — Download encrypted flag from S3, decrypt using kms:Decrypt to retrieve the plaintext flag"
+    flag: "flag{c36-step4-kms}"
+    next_hint: null

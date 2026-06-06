@@ -1,0 +1,30 @@
+# Chain: "Cloud S3 Discovery to KMS Decryption" (Chain-38)
+# Steps: 4 | Domains: Cloud ×4 (Pure Cloud)
+name: "Cloud S3 Discovery to KMS Decryption"
+chain_id: Chain-38
+steps: 4
+domains: [cloud, cloud, cloud, cloud]
+nodes:
+  - step: 1
+    scenario: cloud-01
+    description: "S3 Public Bucket Reconnaissance — List public buckets, download flag and credentials file without authentication"
+    flag: "flag{c38-step1-s3}"
+    next_hint: "The bucket contains credentials.txt with low-priv IAM access keys. Use them to authenticate and escalate."
+
+  - step: 2
+    scenario: cloud-02
+    description: "IAM Privilege Escalation — Exploit iam:CreatePolicy + iam:AttachUserPolicy to create and attach an admin policy to lowpriv, then access s3://admin-secrets/flag.txt"
+    flag: "flag{c38-step2-iam}"
+    next_hint: "With admin access, enumerate IAM roles. Discover AdminRole with sts:AssumeRole trust allowing any principal."
+
+  - step: 3
+    scenario: cloud-07
+    description: "STS AssumeRole Abuse — Assume AdminRole to obtain temporary admin credentials, bypass bucket policy on s3://flag-vault"
+    flag: "flag{c38-step3-sts}"
+    next_hint: "The assumed role has full access. Find the KMS-encrypted flag in s3://secure-data/."
+
+  - step: 4
+    scenario: cloud-08
+    description: "KMS Decryption Oracle — Download encrypted flag and metadata, use kms:Decrypt to retrieve the plaintext final flag"
+    flag: "flag{c38-step4-kms}"
+    next_hint: null

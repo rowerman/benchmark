@@ -107,6 +107,18 @@ bash chains/container-to-admin/deploy.sh   # 纯 K8s 链
 | tomcat-to-rbcd (Web → Linux → AD → RBCD → DCSync) | 6 | Cross | 可用 |
 | wordpress-to-shadow (WP → DB → Linux → AD → Shadow → DCSync) | 6 | Cross | 可用 |
 
+### 新增攻击链 (Phase 12 扩展 — 基于新场景)
+
+| 链 | 步骤 | 领域 | 状态 |
+|----|:---:|------|:---:|
+| ssti-to-cloud (SSTI → IAM → STS → KMS) | 4 | Web→Cloud | 可用 |
+| xxe-to-es (XXE SVG → Elasticsearch Script) | 2 | Web→DB | 可用 |
+| php-to-mongo (PHP Deser → MongoDB NoSQLi) | 2 | Web→DB | 可用 |
+| xss-to-cloud (XSS → SQS → IAM → KMS) | 4 | Web→Cloud | 可用 |
+| graphql-to-root (GraphQL → CouchDB → PwnKit) | 3 | Web→DB→Linux | 可用 |
+| s3-to-kms (S3 → IAM → STS → KMS) | 4 | Cloud | 可用 |
+| sqs-to-lambda (SQS → IAM → Lambda → KMS) | 4 | Cloud | 可用 |
+
 ## Flag 格式
 
 `flag{<scenario-id>-<8-hex>}` — 验证工具: `./scripts/verify-flag.sh`

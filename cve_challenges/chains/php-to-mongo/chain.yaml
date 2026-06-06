@@ -1,0 +1,18 @@
+# Chain: "PHP Deserialization to MongoDB NoSQL Injection" (Chain-35)
+# Steps: 2 | Domains: Web → DB
+name: "PHP Deserialization to MongoDB NoSQL Injection"
+chain_id: Chain-35
+steps: 2
+domains: [web, db]
+nodes:
+  - step: 1
+    scenario: web-17
+    description: "PHP Deserialization Auth Bypass — Craft serialized PHP object to gain admin, discover internal MongoDB API endpoint"
+    flag: "flag{c35-step1-php}"
+    next_hint: "The admin dashboard reveals an internal MongoDB API at localhost:10209. Try NoSQL injection to bypass authentication."
+
+  - step: 2
+    scenario: db-09
+    description: "MongoDB NoSQL Injection — Use $ne operator to bypass login and extract admin flag field"
+    flag: "flag{c35-step2-mongo}"
+    next_hint: null

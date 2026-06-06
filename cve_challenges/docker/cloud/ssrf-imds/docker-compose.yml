@@ -20,7 +20,7 @@ services:
   web:
     build: ./app
     ports:
-      - "10603:5000"
+      - "10613:5000"
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-03-default}}
     depends_on:

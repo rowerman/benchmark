@@ -126,7 +126,7 @@
 | NET-02 | Docker | DNS Exfiltration Detection | N/A (DNS exfiltration) | DNS Exfiltration Detection | 见 BENCHMARK_SUMMARY 正文 | L2 |
 | NET-03 | Docker | Container Network Sniffing | N/A (network sniffing) | Container Network Sniffing | 见 BENCHMARK_SUMMARY 正文 | L1 |
 
-## 二、攻击链场景（27）
+## 二、攻击链场景（34）
 
 | 链目录 | 名称 | 主战场 | 组合单点场景 | 涉及漏洞/技术 | 场景说明 | 利用路径简介 | 难度 |
 |--------|------|--------|--------------|---------------|----------|--------------|------|
@@ -138,25 +138,32 @@
 | docker-to-etcd | Docker Socket to etcd Cluster Compromise | Kubernetes | K8S-17, K8S-09, K8S-08 | Docker socket abuse; N/A (misconfiguration) | Docker socket 逃逸 → 镜像投毒 → etcd 读 Secret | Pod with Docker socket → docker run privileged container → host FS → flag → Push malicious image to private registry ... | L2 |
 | externalip-to-secrets | ExternalIP Traffic Hijack to Secret Theft | Kubernetes | K8S-22, Credential Discovery, K8S-13, K8S-06 | CVE-2020-8554; N/A (RBAC lateral); N/A (misconfiguration) | ExternalIP 劫持 → 跨 ns Token → 读 Secret | ExternalIP Hijack → Traffic Capture → Cross-NS SA Token → Secrets Abuse | L2 |
 | gpp-to-dcsync | GPP to DCSync | Active Directory | AD-13, AD-15, AD-09 | ATT&CK T1552.006; ATT&CK T1098; ATT&CK T1003.006 | GPP 凭据 → ACL Kerberoasting → DCSync 域妥协 | lowpriv (SMB SYSVOL) → Decrypt cpassword → Discover sql_service ACL abuse → Set SPN on sql_service → Kerberoast → Cra... | L2 |
+| graphql-to-root | GraphQL IDOR to CouchDB RCE to PwnKit Escalation | Web+DB+Linux | WEB-16, DB-08, LNX-11 | GraphQL introspection + IDOR; N/A (Erlang native view RCE); CVE-2021-4034 |  |  | L3 |
 | hostpath-to-daemonset | hostPath to DaemonSet | Kubernetes | K8S-12, K8S-07, K8S-09, K8S-05 | N/A (hostPath mount); N/A (misconfiguration); CVE-2024-10220 | hostPath → Kubelet → Registry → gitRepo 多阶段 K8s 链 | K8S-12 (hostPath Writable) → /var/log 符号链接攻击 → 宿主机文件访问 → K8S-07 (Kubelet Anonymous) → 匿名访问 Kubelet API → pod exec → K... | L3 |
 | ingress-to-etcd | Ingress RCE to etcd Compromise | Kubernetes | K8S-20, Token Discovery, K8S-06, K8S-08 | CVE-2025-1974; N/A (misconfiguration) | IngressNightmare RCE → SA Token → RBAC → etcd | ingress-nginx RCE (CVE-2025-1974) → SA Token Discovery → RBAC Secrets Abuse (K8S-06) → etcd Data Access (K8S-08) | L3 |
 | kerb-to-deleg | Kerberoasting to Constrained Delegation | Active Directory | AD-01, AD-14, AD-16 | ATT&CK T1558.003; ATT&CK T1558.002 | Kerberoasting → Silver Ticket → 约束委派 | Kerberoast svc_deleg → Crack DelegPass2024! → Get NTLM hash → Forge Silver Ticket for CIFS service → SMB access → S4U... | L3 |
 | kubelet-to-etcd | Kubelet Anonymous to etcd Cluster Control | K8s | K8S-07, K8S-06, K8S-08 | N/A (misconfiguration) | Kubelet 匿名 → RBAC Secret → etcd | K8S-07 (Kubelet Anonymous) → 匿名访问 Kubelet API → pod exec → K8S-06 (RBAC Abuse) → 从 pod 内读 secrets → K8S-08 (etcd Unau... | L3 |
 | mssql-to-da | MSSQL Linked Server Chain to Domain Admin | Web+DB+AD | WEB-09, DB-04, AD-05, AD-09 | MSSQL xp_cmdshell; MSSQL Linked Server; ATT&CK T1550.002; ATT&CK T1003.006 | MSSQL Web SQLi → 链接服务器 → PTH → DCSync | WEB-09 (MSSQL SQLi → xp_cmdshell) → 系统命令执行 → DB-04 (MSSQL Linked Server) → OPENQUERY 横向到目标 MSSQL → AD-05 (Pass-the-Ha... | L3 |
 | pg-sqli-to-node | PostgreSQL SQLi to Node Compromise | Cross | WEB-07, DB-01, K8S-12, K8S-07 | CVE-2025-1094; N/A (misconfiguration); N/A (hostPath mount) | PG SQLi → DB RCE → hostPath → Kubelet | WEB-07 (PG SQLi) → BIG5 编码绕过 → SQL 注入 → 数据库读取 → DB-01 (PG Weak Auth RCE) → COPY PROGRAM → 系统命令执行 → K8S-12 (hostPath E... | L3 |
+| php-to-mongo | PHP Deserialization to MongoDB NoSQL Injection | Web+DB | WEB-17, DB-09 | Insecure PHP deserialization; N/A (NoSQL injection) |  |  | L3 |
 | privilege-to-etcd | Privilege to etcd | Kubernetes | K8S-11, K8S-06, K8S-08 | N/A (privileged pod); N/A (misconfiguration) | 特权容器逃逸 → RBAC → etcd | K8S-11 (Privileged Container) → nsenter 进入宿主机 namespace → 读宿主机 flag → K8S-06 (RBAC Abuse) → 从宿主机获取 kubeconfig, 读 secr... | L2 |
 | rbcd-to-dcsync | RBCD to DCSync Domain Compromise | Active Directory | AD-17, S4U2Proxy, Domain Admin Access, AD-09 | ATT&CK T1558.003 (RBCD); ATT&CK T1003.006 | RBCD 接管计算机 → S4U → DCSync | lowpriv → Enumerate ACLs → RBCD on DESKTOP-HELPDESK$ → S4U2Proxy as Administrator → DA-level access → DCSync | L2 |
 | redis-to-k8s | Redis to K8s Cluster Admin | Kubernetes | DB-05, K8S-11, K8S-06, K8S-08 | N/A (misconfiguration); N/A (privileged pod) | Redis 写 SSH → 特权 Pod → RBAC → etcd | DB-05 (Redis Unauthorized) → 未授权 Redis → 写 SSH key → 初始 shell → K8S-11 (Privileged Container) → nsenter 进入宿主机 → 读宿主机 ... | L3 |
+| s3-to-kms | Cloud S3 Discovery to KMS Decryption | cloud+cloud+cloud+cloud | cloud-01, cloud-02, cloud-07, cloud-08 | （链内逻辑步骤，见组合场景 CVE） |  |  | L3 |
 | sa-lateral-escape | SA Token Lateral to Escape | Cross | K8S-13, K8S-06, K8S-01 | N/A (RBAC lateral); N/A (misconfiguration); CVE-2024-21626 | 跨 ns SA Token → RBAC → runC 逃逸 | K8S-13 (SA Cross-Namespace) → ns-alpha 中发现泄露的 ns-beta token → 跨命名空间读取 → K8S-06 (RBAC Abuse) → 使用 token 在 ns-beta 中读 s... | L3 |
 | seccomp-to-escape | hostPID Access to CRI Socket Escape | Kubernetes | K8S-23, K8S-16, Host Flag | N/A (misconfiguration); CRI socket abuse | hostPID 读宿主机 → CRI socket → 节点 flag | hostPID pod (locked down) → /proc/1/root → host filesystem → CRI socket → full node compromise | L2 |
 | shadow-to-golden | Shadow Credentials to Golden Ticket | Active Directory | AD-18, NTLM Extraction, AD-09, AD-10 | ATT&CK T1606.002; ATT&CK T1003.006; ATT&CK T1558.001 | Shadow Credentials → DCSync → Golden Ticket | Shadow Credentials → PKINIT auth → NTLM extraction → DCSync → Golden Ticket | L3 |
+| sqs-to-lambda | Cloud SQS Intercept to Lambda Command Injection | cloud+cloud+cloud+cloud | cloud-06, cloud-02, cloud-04, cloud-08 | （链内逻辑步骤，见组合场景 CVE） |  |  | L3 |
 | ssrf-to-cloud | SSRF to Cloud Credential Theft | Web+cloud | WEB-10, cloud-03 | N/A (SSRF misconfiguration) |  | SSRF Internal Service Access → Probe internal cloud metadata → EC2 SSRF Localhost Flag Theft → Flag exfiltration | L2 |
+| ssti-to-cloud | SSTI to Cloud Credential Theft | Web+cloud+cloud+cloud | WEB-12, cloud-02, cloud-07, cloud-08 | N/A (SSTI vulnerability) |  |  | L3 |
 | tomcat-race-to-etcd | Tomcat Race Condition to etcd | Cross | WEB-02, LNX-05, K8S-06, K8S-08 | CVE-2024-50379; CVE-2025-32463; N/A (misconfiguration) | Tomcat 竞态 RCE → sudo 提权 → K8s 集群 | WEB-02 (Tomcat Race Condition) → PUT JSP + 条件竞争 → JSP 编译执行 → RCE → LNX-05 (Sudo Chroot) → CVE-2025-32463 → root → K8S... | L3 |
 | tomcat-to-k8s | Tomcat Deserialization to K8s Admin | Cross | WEB-01, LNX-05, K8S-06, K8S-08 | CVE-2025-24813; CVE-2025-32463; N/A (misconfiguration) | Tomcat 反序列化 → sudo 提权 → K8s 集群 | WEB-01 (Tomcat 反序列化) → PUT 序列化 session → RCE → LNX-05 (Sudo Chroot) → CVE-2025-32463 → root → K8S-06 (RBAC Abuse) → S... | L3 |
 | tomcat-to-rbcd | Tomcat Deserialization to RBCD Domain Admin | Cross (Web + Linux + AD) | WEB-01, LNX-05, Credential Discovery, AD Enumeration, AD-17, AD-09 | CVE-2025-24813; CVE-2025-32463; ATT&CK T1558.003 (RBCD); ATT&CK T1003.006 | Tomcat → Linux 提权 → AD 枚举 → RBCD → DCSync | Tomcat RCE → Linux PrivEsc → AD Credential Discovery → AD Enumeration → RBCD → DCSync | L3 |
 | web-to-admin | Web to Domain Admin | Web+Linux+AD | WEB-03, LNX-06, AD-01, AD-09 | CVE-2025-34085; N/A (misconfiguration); ATT&CK T1558.003; ATT&CK T1003.006 |  | WordPress RCE → SUID Privilege Escalation → Kerberoasting → DCSync → Full domain compromise | L3 |
 | wordpress-to-shadow | WordPress to Shadow Credentials Domain Admin | Cross (Web + DB + Linux + AD) | WEB-03, DB-02, LNX-05, Credential Discovery, AD-18, AD-09 | CVE-2025-34085; MySQL UDF Abuse; CVE-2025-32463; ATT&CK T1606.002; ATT&CK T1003.006 | WordPress → MySQL → Linux → Shadow Creds → DCSync | WordPress RCE → MySQL UDF → Linux Shell + PrivEsc → AD Credential Discovery → Shadow Credentials → DCSync | L3 |
 | wp-lfi-to-cluster | WordPress LFI to Cluster Admin | Cross | WEB-06, K8S-06, K8S-01, K8S-08 | CVE-2025-0366; N/A (misconfiguration); CVE-2024-21626 | WordPress LFI RCE → RBAC → runC → etcd | WEB-06 (WordPress LFI) → Contributor 登录 → SVG 上传 → PHP LFI → RCE → K8S-06 (RBAC Abuse) → SA token → 读 secrets → K8S-0... | L3 |
+| xss-to-cloud | Stored XSS Session Hijack to Cloud Takeover | Web+cloud+cloud+cloud | WEB-18, cloud-06, cloud-02, cloud-08 | Stored XSS |  |  | L3 |
+| xxe-to-es | XXE SVG to Elasticsearch Data Exfiltration | Web+DB | WEB-14, DB-07 | XXE (XML External Entity); N/A (script injection) |  |  | L3 |
 
 ## 统计摘要
 
@@ -174,7 +181,7 @@
 |------|------|
 | L1 | 0 |
 | L2 | 7 |
-| L3 | 20 |
+| L3 | 27 |
 
 ### 单点场景领域分布
 
