@@ -1,0 +1,66 @@
+services:
+  web:
+    build:
+      context: ../../docker/cloud/ssrf-to-imds/web
+      args:
+        CVE_FLAG: flag{c32-step1-ssrf}
+    environment:
+      - FLAG=flag{c32-step1-ssrf}
+    ports:
+      - "11633:5000"
+    networks:
+      chain32-net:
+        ipv4_address: 169.254.0.10
+
+  imds:
+    build:
+      context: ../../docker/cloud/_infra/imds-server
+    environment:
+      - IMDS_ROLE_NAME=ec2-role
+      - IMDS_ACCESS_KEY_ID=AKIACHAIN32EXAMPLE
+      - IMDS_SECRET_ACCESS_KEY=chain32-imds-secret
+      - IMDS_SESSION_TOKEN=chain32-session-token
+    networks:
+      chain32-net:
+        ipv4_address: 169.254.169.254
+
+  s3:
+    build:
+      context: ../../docker/cloud/ssrf-to-imds/s3
+    environment:
+      - S3_ACCESS_KEY=AKIACHAIN32EXAMPLE
+      - S3_SECRET_KEY=chain32-imds-secret
+      - FLAG2=flag{c32-step2-imds}
+    networks:
+      chain32-net:
+        ipv4_address: 169.254.0.20
+
+  iam:
+    build:
+      context: ../../docker/cloud/_infra/iam-trust
+    environment:
+      - IAM_ROLES_FILE=/app/roles/default.yaml
+    networks:
+      chain32-net:
+        ipv4_address: 169.254.0.30
+
+  attacker-ui:
+    build:
+      context: ../../docker/cloud/cross-account-trust/attacker
+      args:
+        CVE_FLAG: flag{c32-step3-cross}
+    ports:
+      - "11632:5000"
+    environment:
+      - FLAG=flag{c32-step3-cross}
+      - IAM_URL=http://iam:5000
+    networks:
+      chain32-net:
+        ipv4_address: 169.254.0.40
+
+networks:
+  chain32-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 169.254.0.0/16

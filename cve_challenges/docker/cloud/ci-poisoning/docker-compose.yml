@@ -1,0 +1,29 @@
+services:
+  attacker:
+    build:
+      context: ./attacker
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-08-default}}
+    ports:
+      - "10608:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-08-default}}
+      - CI_URL=http://ci-runner:5000
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  ci-runner:
+    build:
+      context: ./ci-runner
+    environment:
+      - FLAG2=flag{cloud-08-step2-pipeline}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

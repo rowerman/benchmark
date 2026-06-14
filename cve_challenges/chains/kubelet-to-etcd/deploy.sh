@@ -23,6 +23,14 @@ nodes:
           kubeletExtraArgs:
             anonymous-auth: "true"
             authorization-mode: "AlwaysAllow"
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        etcd:
+          local:
+            extraArgs:
+              client-cert-auth: "false"
+
 KINDCFG
 
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true

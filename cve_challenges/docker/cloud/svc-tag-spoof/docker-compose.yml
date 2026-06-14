@@ -1,0 +1,17 @@
+services:
+  attacker:
+    build:
+      context: ./attacker
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-18-default}}
+    ports:
+      - "10618:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-18-default}}
+      - FW_URL=http://firewall:5000
+  firewall:
+    build: ./firewall
+  internal-api:
+    build: ./internal-api
+    environment:
+      - FLAG2=flag{cloud-18-step2-svc-tag}

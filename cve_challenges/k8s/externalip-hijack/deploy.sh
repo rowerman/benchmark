@@ -98,26 +98,7 @@ spec:
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c"]
           args:
-            - |
-              apk add --no-cache curl >/dev/null 2>&1
-              # Periodically send flag-bearing request to itself
-              while true; do
-                curl -s -H "X-Flag: $FLAG" http://localhost:8080/health 2>/dev/null || true
-                sleep 30
-              done &
-              # Also serve requests
-              cat > /etc/nginx/conf.d/default.conf << 'NGINX'
-              server {
-                listen 8080;
-                location /health {
-                  return 200 '{"status":"ok"}\n';
-                }
-                location / {
-                  return 200 'API v1.0\n';
-                }
-              }
-              NGINX
-              nginx -g 'daemon off;'
+            -           - "printf 'server { listen 8080; location /health { return 200 \\"{\\\\\\"status\\\\\\":\\\\\\"ok\\\\\\"}\\\\"; } location / { return 200 \\"API v1.0\\\"; } }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
           ports:
             - containerPort: 8080
 ---
@@ -134,21 +115,8 @@ spec:
       image: nginx:1.24-alpine
       imagePullPolicy: IfNotPresent
       command: ["sh", "-c"]
-      args:
-        - |
-          apk add --no-cache curl bash >/dev/null 2>&1
-          echo "Attacker pod ready - listening for traffic interception..."
-          # Set up a simple HTTP listener on port 8080
-          cat > /etc/nginx/conf.d/default.conf << 'NGINX'
-          server {
-            listen 8080;
-            location / {
-              # Log all intercepted requests including headers
-              return 200 'intercepted\n';
-            }
-          }
-          NGINX
-          nginx -g 'daemon off;' &
+          args:
+          - "apk add --no-cache curl bash >/dev/null 2>&1 && echo attacker-ready && nginx -g 'daemon off;' & sleep 3600"
           sleep 3600
       ports:
         - containerPort: 8080

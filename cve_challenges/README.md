@@ -1,6 +1,6 @@
 # CVE Benchmark — DARWIN LLM Pentest Evaluation
 
-基于公开 CVE 的自建渗透测试 Benchmark，覆盖 10 个领域 101 个场景、27 条攻击链。
+基于公开 CVE 的自建渗透测试 Benchmark，覆盖 10 个领域 115 个场景、35 条攻击链。
 
 📖 **[学习路径指南](docs/LEARNING_PATH.md)** — 按难度和攻击路径的场景推荐
 
@@ -118,6 +118,12 @@ bash chains/container-to-admin/deploy.sh   # 纯 K8s 链
 | graphql-to-root (GraphQL → CouchDB → PwnKit) | 3 | Web→DB→Linux | 可用 |
 | s3-to-kms (S3 → IAM → STS → KMS) | 4 | Cloud | 可用 |
 | sqs-to-lambda (SQS → IAM → Lambda → KMS) | 4 | Cloud | 可用 |
+
+### 新增攻击链 (Phase 13 扩展 — 跨域 AD + 多节点 K8s + Cloud 扩展 + 内核漏洞)
+
+| 链 | 步骤 | 领域 | 状态 |
+|----|:---:|------|:---:|
+| cross-forest-ad (SSTI → Docker esc → Kerberoast → Cross-Forest → DCSync) | 5 | Web→Linux→AD×3 | 可用 |
 
 ## Flag 格式
 

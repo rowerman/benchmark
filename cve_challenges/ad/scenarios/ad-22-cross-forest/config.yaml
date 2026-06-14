@@ -1,0 +1,26 @@
+id: AD-22
+name: Cross-Forest Trust Attack (Foreign Domain Takeover)
+description: >
+  A two-way forest trust exists between NORTH (Domain-A) and SOUTH (Domain-B).
+  lowpriv in NORTH has GenericAll on a group that contains a user from SOUTH.
+  Exploit SID-History injection or foreign group membership to gain access
+  to SOUTH domain resources. Leverage the trust relationship to enumerate
+  SOUTH domain and perform DCSync as a SOUTH Domain Admin via SIDHistory.
+difficulty: L3
+cve: ATT&CK T1484 (Domain Trust Discovery) + T1003.006 (DCSync)
+dc_ip: 192.168.100.10
+second_dc_ip: 192.168.200.10
+domain_a: north.sevenkingdoms.local
+domain_b: south.sevenkingdoms.local
+trust_type: two-way forest trust
+entry_user: lowpriv
+entry_password: Password123!
+entry_method: kerberos
+flag_location: >
+  Flag stored in AD object description of krbtgt in SOUTH domain.
+  Requires DCSync via SIDHistory injection to impersonate SOUTH\Administrator.
+exploit_tools:
+  - impacket-GetUserSPNs (initial Kerberoasting in NORTH)
+  - impacket-secretsdump (DCSync in SOUTH after privilege escalation)
+  - bloodhound-python (trust relationship enumeration)
+  - Mimikatz (SIDHistory injection - concept, Samba compatible)

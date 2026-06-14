@@ -6,3 +6,4 @@ source "$(dirname "$0")/../../scripts/k8s-common.sh"
 
 k8s_init
 k8s_delete_cluster
+docker rm -f cve-etcd-flag 2>/dev/null || true

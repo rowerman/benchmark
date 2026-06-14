@@ -1,0 +1,171 @@
+# Default IAM roles and users for the IAM Trust Engine.
+# This defines the simulated AWS account's identity and access management.
+
+accounts:
+  - id: "000000000000"
+    name: dev-account
+
+roles:
+  # EC2Role — can only be assumed by EC2 service, has S3 read
+  - name: EC2Role
+    arn: arn:aws:iam::000000000000:role/EC2Role
+    trust_policy:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: sts:AssumeRole
+    permissions:
+      - s3:GetObject
+      - s3:ListBucket
+
+  # AdminRole — trust policy has Principal:"*" with no Condition (deliberately insecure)
+  - name: AdminRole
+    arn: arn:aws:iam::000000000000:role/AdminRole
+    trust_policy:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            AWS: "*"
+          Action: sts:AssumeRole
+    permissions:
+      - s3:*
+      - kms:Decrypt
+      - iam:ListRoles
+      - iam:GetRole
+
+  # GitHubActionsRole — OIDC federation, condition restricts sub claim
+  - name: GitHubActionsRole
+    arn: arn:aws:iam::000000000000:role/GitHubActionsRole
+    trust_policy:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Federated: token.actions.githubusercontent.com
+          Action: sts:AssumeRoleWithWebIdentity
+          Condition:
+            StringLike:
+              "token.actions.githubusercontent.com:sub": "repo:demo-org/demo-repo:*"
+    permissions:
+      - s3:GetObject
+      - s3:PutObject
+      - iam:GetRole
+
+  # Phase 3: CrossAccountRole — trust policy allows cross-account AssumeRole
+  - name: CrossAccountRole
+    arn: arn:aws:iam::111111111111:role/CrossAccountRole
+    trust_policy:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            AWS: "arn:aws:iam::000000000000:root"
+          Action: sts:AssumeRole
+    permissions:
+      - s3:GetObject
+      - s3:ListBucket
+
+  # Phase 3: ManagedIdentityRole — used for confused deputy scenarios
+  - name: ManagedIdentityRole
+    arn: arn:aws:iam::000000000000:role/ManagedIdentityRole
+    trust_policy:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service: svc-a.internal
+          Action: sts:AssumeRole
+    permissions:
+      - s3:GetObject
+      - dynamodb:Query
+
+  # Phase 3: SAML Federation Role
+  - name: SAMLAdminRole
+    arn: arn:aws:iam::000000000000:role/SAMLAdminRole
+    trust_policy:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Federated: corp-idp.example.com
+          Action: sts:AssumeRoleWithSAML
+          Condition:
+            StringEquals:
+              "SAML:aud": "https://signin.aws.amazon.com/saml"
+    permissions:
+      - s3:*
+      - iam:*
+      - kms:Decrypt
+
+  # LambdaExecutionRole — service-linked, has S3 access + PassRole
+  - name: LambdaExecutionRole
+    arn: arn:aws:iam::000000000000:role/LambdaExecutionRole
+    trust_policy:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+    permissions:
+      - s3:GetObject
+      - s3:PutObject
+      - lambda:InvokeFunction
+
+users:
+  # lowpriv — has iam:CreatePolicy + iam:AttachUserPolicy (IAM privesc path)
+  - name: lowpriv
+    access_key_id: AKIALOWPRIVEXAMPLE
+    secret_access_key: lowpriv-secret-key
+    permissions:
+      - iam:CreatePolicy
+      - iam:AttachUserPolicy
+      - sts:AssumeRole
+      - s3:ListBucket
+      - iam:ListRoles
+
+  # lambda-svc — Lambda function execution role (discovered via env leak)
+  - name: lambda-svc
+    access_key_id: AKIALAMBDAEXAMPLE
+    secret_access_key: lambda-iam-secret-key
+    permissions:
+      - sts:AssumeRole
+      - iam:ListRoles
+      - iam:GetRole
+
+  # attacker — minimal starting permissions
+  - name: attacker
+    access_key_id: AKIAATTACKEREXAMPLE
+    secret_access_key: attacker-secret-key
+    permissions:
+      - sts:AssumeRole
+      - iam:ListRoles
+
+  # Phase 3 users
+  - name: auditor
+    access_key_id: AKIAAUDITOREXAMPLE
+    secret_access_key: auditor-secret-key
+    permissions:
+      - iam:ListRoles
+      - iam:GetRole
+      - iam:SimulatePrincipalPolicy
+
+  # Chain-32 IMDS user
+  - name: chain32-imds-user
+    access_key_id: AKIACHAIN32EXAMPLE
+    secret_access_key: chain32-imds-secret
+    permissions:
+      - sts:AssumeRole
+      - s3:ListBucket
+      - s3:GetObject
+
+  - name: scp-bypass-user
+    access_key_id: AKIASCBPASSEXAMPLE
+    secret_access_key: scp-bypass-secret
+    permissions:
+      - s3:ListBucket
+      - iam:GetRole
+      - sts:AssumeRole

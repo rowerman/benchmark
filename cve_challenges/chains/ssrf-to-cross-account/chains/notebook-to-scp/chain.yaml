@@ -1,0 +1,5 @@
+name: ""
+chain_id: Chain-notebook
+steps: 
+domains:
+  - cloud

@@ -1,0 +1,15 @@
+services:
+  lkm-overflow:
+    build:
+      context: .
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{lkx-02-default}}
+    ports:
+      - "10311:22"
+    privileged: true
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/22' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

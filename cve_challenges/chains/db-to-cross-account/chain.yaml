@@ -1,0 +1,26 @@
+name: DB SQLi to IMDS to Cross-Account
+chain_id: Chain-35
+steps: 4
+domains:
+- cloud
+nodes:
+- step: 1
+  scenario: cloud-06
+  description: SQL 注入 → 读取 secrets 表
+  flag: flag{c35-step1-db}
+  next_hint: 使用 COPY FROM PROGRAM 执行 OS 命令
+- step: 2
+  scenario: cloud-06
+  description: COPY FROM PROGRAM → curl IMDS → 窃取凭据
+  flag: flag{c35-step2-imds}
+  next_hint: IMDS 凭据可用于 AssumeRole
+- step: 3
+  scenario: cloud-12
+  description: AssumeRole 跨账号角色
+  flag: flag{c35-step3-cross}
+  next_hint: 跨账号凭据访问受保护资源
+- step: 4
+  scenario: cloud-12
+  description: S3 受保护资源 → 最终 flag
+  flag: flag{c35-step4-final}
+  next_hint: null

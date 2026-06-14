@@ -1,0 +1,26 @@
+services:
+  notebook:
+    build:
+      context: ./notebook
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-09-default}}
+    ports:
+      - "10609:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-09-default}}
+      - K8S_API_URL=http://k8s-api:5000
+    # Mount docker socket to simulate container escape path
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  k8s-api:
+    build: ./k8s-api
+    environment:
+      - FLAG2=flag{cloud-09-step2-sa-token}
+      - SA_TOKEN=eyJhbGciOiJub25lIn0.eyJzdWIiOiJicmlkZ2UifQ.

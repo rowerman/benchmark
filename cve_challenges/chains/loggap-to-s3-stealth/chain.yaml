@@ -1,0 +1,21 @@
+name: "Logging Gap to SCP Bypass to S3 Stealth Exfiltration"
+chain_id: Chain-43
+steps: 3
+domains:
+  - cloud
+nodes:
+  - step: 1
+    scenario: cloud-16
+    description: "Logging Gap → 静默枚举云资源 (无审计痕迹)"
+    flag: "flag{c43-step1-silent}"
+    next_hint: "枚举发现可绕过 SCP 的旧版 API 端点"
+  - step: 2
+    scenario: cloud-15
+    description: "SCP Bypass → 绕过服务控制策略限制"
+    flag: "flag{c43-step2-scp}"
+    next_hint: "获得权限后可访问 S3 全局命名空间"
+  - step: 3
+    scenario: cloud-07
+    description: "S3 桶垄断 → 读取影子资源 → 最终 flag (整链不可检测)"
+    flag: "flag{c43-step3-final}"
+    next_hint: null

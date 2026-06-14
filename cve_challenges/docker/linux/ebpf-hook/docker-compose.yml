@@ -1,0 +1,17 @@
+services:
+  ebpf-hook:
+    build:
+      context: .
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{lkx-04-default}}
+    ports:
+      - "10313:22"
+    cap_add:
+      - CAP_BPF
+      - CAP_SYS_ADMIN
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/22' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

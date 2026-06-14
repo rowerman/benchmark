@@ -34,18 +34,8 @@ spec:
       image: nginx:1.24-alpine
       imagePullPolicy: IfNotPresent
       command: ["sh", "-c"]
-      args:
-        - |
-          # Serve flag only on 127.0.0.1:11080
-          cat > /etc/nginx/conf.d/default.conf << 'NGINX'
-          server {
-            listen 127.0.0.1:11080;
-            location /flag {
-              return 200 'FLAG_CONTENT\n';
-            }
-          }
-          NGINX
-          nginx -g 'daemon off;'
+          args:
+            -           - "printf 'server { listen 127.0.0.1:11080; location /flag { return 200 FLAG_CONTENT\\\\n; } }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
       securityContext:
         privileged: false
 ---

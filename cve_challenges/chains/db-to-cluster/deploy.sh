@@ -36,6 +36,14 @@ nodes:
       - containerPort: 2379
         hostPort: 11379
         protocol: TCP
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        etcd:
+          local:
+            extraArgs:
+              client-cert-auth: "false"
+
 KINDCFG
 
 echo "  [*] Waiting for cluster stabilization..."

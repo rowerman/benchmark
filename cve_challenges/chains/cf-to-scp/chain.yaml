@@ -1,0 +1,26 @@
+name: CF Injection to S3 Monopoly to Logging Gap to SCP Bypass
+chain_id: Chain-41
+steps: 4
+domains:
+- cloud
+nodes:
+- step: 1
+  scenario: cloud-05
+  description: CF Fn::Sub → SSM 参数泄露
+  flag: flag{c41-step1-cf}
+  next_hint: 泄露参数包含 S3 桶名预测公式
+- step: 2
+  scenario: cloud-07
+  description: S3 桶名预测 → 读取影子资源
+  flag: flag{c41-step2-s3}
+  next_hint: S3 配置显示审计日志盲区
+- step: 3
+  scenario: cloud-16
+  description: Logging Gap → 静默枚举
+  flag: flag{c41-step3-silent}
+  next_hint: 枚举发现可绕过 SCP 的旧版 API
+- step: 4
+  scenario: cloud-15
+  description: SCP Bypass → 限制绕过
+  flag: flag{c41-step4-final}
+  next_hint: null

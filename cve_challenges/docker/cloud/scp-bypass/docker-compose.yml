@@ -1,0 +1,14 @@
+services:
+  attacker:
+    build:
+      context: ./attacker
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-15-default}}
+    ports:
+      - "10615:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-15-default}}
+      - IAM_URL=http://iam:5000
+  iam:
+    build:
+      context: ../_infra/iam-trust

@@ -30,6 +30,14 @@ nodes:
       - containerPort: 2379
         hostPort: 11379
         protocol: TCP
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        etcd:
+          local:
+            extraArgs:
+              client-cert-auth: "false"
+
 KINDCFG
 
 docker pull alpine:latest 2>/dev/null; kind load docker-image alpine:latest --name "$CLUSTER_NAME" 2>/dev/null || true

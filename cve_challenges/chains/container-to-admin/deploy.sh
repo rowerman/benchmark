@@ -25,6 +25,14 @@ nodes:
     extraMounts:
       - hostPath: /home/kianabin/cve-flags/chain2-flags
         containerPath: /chain-flags
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        etcd:
+          local:
+            extraArgs:
+              client-cert-auth: "false"
+
 KINDCFG
 
 # Wait for stability

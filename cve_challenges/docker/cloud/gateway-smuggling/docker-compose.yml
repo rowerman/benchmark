@@ -1,0 +1,28 @@
+services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "10610:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-10-default}}
+      - BACKEND_URL=http://backend:5000
+      - ADMIN_URL=http://admin:5000
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-10-default}}
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-10-default}}
+
+  admin:
+    build: ./admin
+    environment:
+      - FLAG2=flag{cloud-10-step2-admin}

@@ -1,0 +1,21 @@
+name: S3 Bucket Monopoly to CF Injection to IAM Escalation
+chain_id: Chain-36
+steps: 3
+domains:
+- cloud
+nodes:
+- step: 1
+  scenario: cloud-07
+  description: 发现预置桶 → 读取影子资源
+  flag: flag{c36-step1-s3}
+  next_hint: 桶中 config 文件引用了 CloudFormation 模板
+- step: 2
+  scenario: cloud-05
+  description: CF Fn::Sub 注入 → SSM 参数泄露
+  flag: flag{c36-step2-cf}
+  next_hint: 泄露的参数包含 IAM 凭据
+- step: 3
+  scenario: cloud-12
+  description: AssumeRole AdminRole → 最终 flag
+  flag: flag{c36-step3-final}
+  next_hint: null

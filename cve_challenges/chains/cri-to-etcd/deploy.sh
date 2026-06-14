@@ -32,6 +32,14 @@ nodes:
     extraMounts:
       - hostPath: /home/kianabin/cve-flags/chain21
         containerPath: /host-flag
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        etcd:
+          local:
+            extraArgs:
+              client-cert-auth: "false"
+
 KINDCFG
 
 echo "[*] Waiting for cluster stabilization..."

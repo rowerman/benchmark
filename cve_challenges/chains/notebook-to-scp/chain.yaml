@@ -1,0 +1,26 @@
+name: Notebook Escape to Confused Deputy to Logging Gap
+chain_id: Chain-38
+steps: 4
+domains:
+- cloud
+nodes:
+- step: 1
+  scenario: cloud-09
+  description: Notebook 代码执行 → 发现 K8s API
+  flag: flag{c38-step1-notebook}
+  next_hint: 使用 SA Token 访问 K8s API
+- step: 2
+  scenario: cloud-09
+  description: SA Token → 跨 namespace exec
+  flag: flag{c38-step2-k8s}
+  next_hint: K8s 凭据可访问云服务代理
+- step: 3
+  scenario: cloud-17
+  description: Confused Deputy 代理滥用
+  flag: flag{c38-step3-deputy}
+  next_hint: 代理响应中包含审计日志配置
+- step: 4
+  scenario: cloud-16
+  description: Logging Gap 静默枚举 → 最终 flag
+  flag: flag{c38-step4-final}
+  next_hint: null

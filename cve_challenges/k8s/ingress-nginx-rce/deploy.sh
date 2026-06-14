@@ -10,12 +10,35 @@ k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
 
-echo "[*] Pre-loading container images into KIND..."
-k8s_load_images nginx:1.24-alpine registry.k8s.io/ingress-nginx/controller:v1.11.0 registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1
+echo "[*] Labeling node for ingress-nginx scheduling..."
+kubectl label node "${CLUSTER_NAME}-control-plane" ingress-ready=true --overwrite 2>/dev/null || true
 
-echo "[*] Deploying vulnerable ingress-nginx v1.11.0..."
-# Deploy the ingress-nginx mandatory components (namespace, RBAC, etc.)
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.0/deploy/static/provider/kind/deploy.yaml
+echo "[*] Pre-loading container images into KIND..."
+# Load base images; report if ingress-nginx images are missing
+for img in nginx:1.24-alpine registry.k8s.io/ingress-nginx/controller:v1.11.0 registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1; do
+  if docker image inspect "$img" >/dev/null 2>&1; then
+    kind load docker-image "$img" --name "$CLUSTER_NAME" 2>/dev/null || echo "  [!] Failed to load $img into KIND"
+  else
+    echo "  [!] Image $img not found locally — pull it first: docker pull $img"
+  fi
+done
+
+echo "[*] Deploying vulnerable ingress-nginx v1.11.0 (from local YAML)..."
+LOCAL_YAML="$(dirname "$0")/ingress-nginx-deploy.yaml"
+if [ ! -f "$LOCAL_YAML" ]; then
+  echo "[!] Local deploy YAML not found. Downloading from GitHub..."
+  DEPLOY_URL="https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.0/deploy/static/provider/kind/deploy.yaml"
+  curl -sL --connect-timeout 10 --max-time 30 "$DEPLOY_URL" -o "$LOCAL_YAML" || {
+    echo "[!] ERROR: Cannot download ingress-nginx deploy YAML (GitHub unreachable)"
+    echo "[!] Download manually from: $DEPLOY_URL"
+    echo "[!] Save as: $LOCAL_YAML"
+    echo "[!] Then run: sed -i 's/@sha256:[a-f0-9]\{64\}//g' $LOCAL_YAML"
+    exit 1
+  }
+fi
+# Strip @sha256:... digest suffixes so locally-loaded images match
+sed -i 's/@sha256:[a-f0-9]\{64\}//g' "$LOCAL_YAML"
+kubectl apply -f "$LOCAL_YAML"
 
 echo "[*] Waiting for ingress-nginx controller and certgen jobs to complete..."
 k8s_wait_pods_label "app.kubernetes.io/component=controller" "ingress-nginx"

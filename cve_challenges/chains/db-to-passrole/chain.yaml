@@ -1,0 +1,31 @@
+name: DB SQLi to PassRole to Lambda to Cross-Account
+chain_id: Chain-40
+steps: 5
+domains:
+- cloud
+nodes:
+- step: 1
+  scenario: cloud-06
+  description: SQLi → secrets 泄露
+  flag: flag{c40-step1-db}
+  next_hint: 使用 COPY FROM PROGRAM 逃逸
+- step: 2
+  scenario: cloud-06
+  description: COPY FROM PROGRAM → IMDS 凭据
+  flag: flag{c40-step2-imds}
+  next_hint: 凭据有 iam:PassRole 权限
+- step: 3
+  scenario: cloud-14
+  description: PassRole → Lambda 特权执行
+  flag: flag{c40-step3-passrole}
+  next_hint: Lambda 返回高权限凭据
+- step: 4
+  scenario: cloud-14
+  description: Lambda FLAG2 泄露
+  flag: flag{c40-step4-lambda}
+  next_hint: 使用凭据跨账号访问
+- step: 5
+  scenario: cloud-12
+  description: Cross-Account → 最终 flag
+  flag: flag{c40-step5-final}
+  next_hint: null

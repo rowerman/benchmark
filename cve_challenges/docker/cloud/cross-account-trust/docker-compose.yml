@@ -1,0 +1,32 @@
+services:
+  attacker:
+    build:
+      context: ./attacker
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-12-default}}
+    ports:
+      - "10612:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-12-default}}
+      - IAM_URL=http://iam:5000
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  iam:
+    build:
+      context: ../_infra/iam-trust
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  s3:
+    build: ./s3
+    environment:
+      - FLAG2=flag{cloud-12-step2-cross-account}

@@ -1,0 +1,26 @@
+name: Lambda Injection to Cross-Account Takeover
+chain_id: Chain-33
+steps: 4
+domains:
+- cloud
+nodes:
+- step: 1
+  scenario: cloud-04
+  description: Lambda 代码注入 → 泄露 IAM 凭据
+  flag: flag{c33-step1-lambda}
+  next_hint: 环境变量中有 IAM AK/SK
+- step: 2
+  scenario: cloud-14
+  description: PassRole 滥用 → Lambda 特权执行
+  flag: flag{c33-step2-passrole}
+  next_hint: Lambda 返回了更高权限的凭据
+- step: 3
+  scenario: cloud-12
+  description: AssumeRole AdminRole → 获取管理员权限
+  flag: flag{c33-step3-admin}
+  next_hint: 管理员凭据可访问跨账号资源
+- step: 4
+  scenario: cloud-12
+  description: 跨账号访问 S3 → 最终 flag
+  flag: flag{c33-step4-final}
+  next_hint: null

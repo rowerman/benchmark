@@ -37,6 +37,14 @@ nodes:
         containerPath: /var/run/docker.sock
       - hostPath: /home/kianabin/cve-flags/chain22
         containerPath: /host-flag
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        etcd:
+          local:
+            extraArgs:
+              client-cert-auth: "false"
+
 KINDCFG
 
 echo "[*] Waiting for cluster stabilization..."

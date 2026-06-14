@@ -1,0 +1,36 @@
+# Chain: "Web to Cross-Forest Domain Admin" (Chain-40)
+# Steps: 5 | Domains: Web → Linux → AD → AD → AD
+name: "Web to Cross-Forest Domain Admin"
+chain_id: Chain-40
+steps: 5
+domains: [web, linux, ad, ad, ad]
+nodes:
+  - step: 1
+    scenario: web-12
+    description: "SSTI Jinja2 RCE — Exploit template injection on web app to achieve RCE and discover internal network access"
+    flag: "flag{c40-step1-ssti}"
+    next_hint: "From the web server, discover SSH access to a Linux host in the internal network"
+
+  - step: 2
+    scenario: lnx-08
+    description: "Docker Socket Abuse — SSH to Linux host, exploit mounted docker.sock to escape container and gain host access"
+    flag: "flag{c40-step2-docker}"
+    next_hint: "The host has network access to Domain-A (NORTH) AD DC. Discover AD credentials in configuration files"
+
+  - step: 3
+    scenario: ad-01
+    description: "Kerberoasting in NORTH domain — Use discovered credentials to request TGS tickets for service accounts"
+    flag: "flag{c40-step3-kerberoast}"
+    next_hint: "Crack the Kerberos ticket to gain service account access. Enumerate domain trust relationships"
+
+  - step: 4
+    scenario: ad-22
+    description: "Cross-Forest Trust Exploitation — Leverage two-way forest trust between NORTH and SOUTH to enumerate SOUTH domain via SIDHistory"
+    flag: "flag{c40-step4-crossforest}"
+    next_hint: "Inject SIDHistory to impersonate SOUTH\\Administrator. Then perform DCSync against SOUTH domain controller"
+
+  - step: 5
+    scenario: ad-09
+    description: "DCSync in SOUTH domain — Extract krbtgt hash and all domain credentials from SOUTH (foreign domain take over)"
+    flag: "flag{c40-step5-dcsync-final}"
+    next_hint: null

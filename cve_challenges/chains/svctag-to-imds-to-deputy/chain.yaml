@@ -1,0 +1,26 @@
+name: "Service Tag Spoofing to IMDS to Confused Deputy"
+chain_id: Chain-44
+steps: 4
+domains:
+  - cloud
+nodes:
+  - step: 1
+    scenario: cloud-18
+    description: "Service Tag 伪造 → 绕过云防火墙 → 进入内部网络"
+    flag: "flag{c44-step1-firewall}"
+    next_hint: "内部网络可访问 IMDS 端点"
+  - step: 2
+    scenario: cloud-01
+    description: "内部网络 SSRF → IMDS → 窃取托管服务凭据"
+    flag: "flag{c44-step2-imds}"
+    next_hint: "凭据为 managed identity → 可调用内部服务代理"
+  - step: 3
+    scenario: cloud-17
+    description: "Confused Deputy → 代理滥用 → 跨服务访问"
+    flag: "flag{c44-step3-deputy}"
+    next_hint: "svc-b 返回了受保护的管理员数据"
+  - step: 4
+    scenario: cloud-17
+    description: "使用 deputy 凭据访问 svc-b 受保护资源 → 最终 flag"
+    flag: "flag{c44-step4-final}"
+    next_hint: null

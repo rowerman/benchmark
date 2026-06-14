@@ -1,0 +1,66 @@
+services:
+  web:
+    build:
+      context: ./web
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-06-default}}
+    ports:
+      - "10606:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-06-default}}
+      - DB_URL=postgresql://postgres:password123@db:5432/clouddb
+    networks:
+      cloud-net:
+        ipv4_address: 169.254.0.10
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  db:
+    build:
+      context: ./db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: clouddb
+    networks:
+      cloud-net:
+        ipv4_address: 169.254.0.30
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  imds:
+    build:
+      context: ../_infra/imds-server
+    environment:
+      IMDS_ROLE_NAME: ec2-role
+      IMDS_ACCESS_KEY_ID: AKIACLOUD06EXAMPLE
+      IMDS_SECRET_ACCESS_KEY: cloud06-imds-secret
+      IMDS_SESSION_TOKEN: mock-session-token-cloud06
+      IMDS_INSTANCE_ID: i-0db06example
+    networks:
+      cloud-net:
+        ipv4_address: 169.254.169.254
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  cloud-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 169.254.0.0/16

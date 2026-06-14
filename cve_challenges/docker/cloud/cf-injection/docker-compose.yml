@@ -1,0 +1,29 @@
+services:
+  console:
+    build:
+      context: ./console
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-05-default}}
+    ports:
+      - "10605:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-05-default}}
+      - PARSER_URL=http://parser:5000/parse
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  parser:
+    build:
+      context: ./parser
+    environment:
+      - FLAG2=flag{cloud-05-step2-cf-inject}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

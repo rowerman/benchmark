@@ -1,0 +1,57 @@
+services:
+  gateway:
+    build:
+      context: ./gateway
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-04-default}}
+    ports:
+      - "10604:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-04-default}}
+      - LAMBDA_URL=http://lambda:5000/run
+    networks:
+      - cloud-net
+    depends_on:
+      - lambda
+      - iam
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  lambda:
+    build:
+      context: ./lambda
+    environment:
+      - FLAG2=flag{cloud-04-step2-lambda}
+      - IAM_ACCESS_KEY_ID=AKIALAMBDAEXAMPLE
+      - IAM_SECRET_KEY=lambda-iam-secret-key
+    networks:
+      - cloud-net
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  iam:
+    build:
+      context: ../_infra/iam-trust
+    environment:
+      - IAM_ROLES_FILE=/app/roles/default.yaml
+      - IAM_CREDENTIAL_TTL=3600
+    networks:
+      - cloud-net
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  cloud-net:
+    driver: bridge

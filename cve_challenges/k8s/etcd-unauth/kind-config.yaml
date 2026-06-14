@@ -3,7 +3,3 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
   - role: control-plane
     image: kindest/node:v1.27.3
-    extraPortMappings:
-      - containerPort: 2379
-        hostPort: 11379
-        protocol: TCP

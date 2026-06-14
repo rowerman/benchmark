@@ -1,0 +1,31 @@
+id: AD-23
+name: AdminSDHolder ACL Persistence
+description: >
+  The Domain Admins group (and other protected groups) is protected by AdminSDHolder.
+  Every 60 minutes, SDProp (Security Descriptor Propagator) resets the ACL
+  of all protected objects to match AdminSDHolder. Administrator has intentionally
+  delegated GenericWrite on a Domain Admin user to lowpriv (simulating a
+  compromised admin action). The attacker exploits the 60-minute window between
+  SDProp cycles to modify the user's ACL and gain persistence. Alternatively,
+  the attacker can modify AdminSDHolder itself to create a permanent backdoor
+  (all changes propagate to all protected accounts).
+difficulty: L3
+cve: ATT&CK T1098 (Account Manipulation) / T1484 (Domain Policy Modification)
+dc_ip: 192.168.100.10
+domain: north.sevenkingdoms.local
+entry_user: lowpriv
+entry_password: Password123!
+entry_method: kerberos
+flag_location: >
+  Flag in description attribute of Domain Admin user 'da_admin'.
+  Readable after modifying its ACL within the SDProp window, or via
+  AdminSDHolder backdoor injection.
+admin_sdholder: true
+sdprop_interval: 3600
+target_user: da_admin
+protected_group: Domain Admins
+exploit_tools:
+  - impacket-owneredit (modify object ownership)
+  - impacket-dacledit (modify DACL to grant GenericAll)
+  - impacket-secretsdump (DCSync after obtaining DA privileges)
+  - ldapsearch (verify ACL changes)

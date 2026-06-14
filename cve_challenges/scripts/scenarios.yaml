@@ -7,7 +7,6 @@ scenarios:
     cve: N/A (misconfiguration)
     path: docker/db/redis-unauth
     port: 10205
-
   db-06:
     id: DB-06
     name: MongoDB Unauthorized Access
@@ -16,7 +15,6 @@ scenarios:
     cve: N/A (misconfiguration)
     path: docker/db/mongodb-unauth
     port: 10206
-
   db-07:
     id: DB-07
     name: Elasticsearch Script Injection
@@ -25,7 +23,6 @@ scenarios:
     cve: N/A (script injection)
     path: docker/db/elasticsearch-script
     port: 10207
-
   db-08:
     id: DB-08
     name: CouchDB Arbitrary Command Execution
@@ -34,7 +31,6 @@ scenarios:
     cve: N/A (Erlang native view RCE)
     path: docker/db/couchdb-rce
     port: 10208
-
   db-09:
     id: DB-09
     name: MongoDB NoSQL Injection
@@ -61,7 +57,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10322
-
   lnx-06:
     id: LNX-06
     name: SUID find Privilege Escalation
@@ -72,7 +67,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10301
-
   lnx-07:
     id: LNX-07
     name: SUID vim Privilege Escalation
@@ -83,7 +77,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10302
-
   lnx-08:
     id: LNX-08
     name: Docker Socket Abuse
@@ -94,7 +87,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10303
-
   lnx-09:
     id: LNX-09
     name: CAP_DAC_READ_SEARCH Privilege Escalation
@@ -105,7 +97,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10304
-
   lnx-10:
     id: LNX-10
     name: Cron Job Hijacking Privilege Escalation
@@ -116,7 +107,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10305
-
   lnx-11:
     id: LNX-11
     name: Polkit CVE-2021-4034 PwnKit Privilege Escalation
@@ -127,7 +117,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10307
-
   lnx-12:
     id: LNX-12
     name: LD_PRELOAD Hijacking Privilege Escalation
@@ -138,7 +127,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10308
-
   lnx-13:
     id: LNX-13
     name: Writable /etc/passwd Privilege Escalation
@@ -149,7 +137,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10309
-
   k8s-01:
     id: K8S-01
     name: runC WORKDIR Container Escape
@@ -213,8 +200,6 @@ scenarios:
     difficulty: L1
     cve: N/A (misconfiguration)
     path: k8s/helm-tiller
-
-  # === Phase 9: K8s Expansion ===
   k8s-11:
     id: K8S-11
     name: Privileged Container Breakout
@@ -222,7 +207,6 @@ scenarios:
     difficulty: L2
     cve: N/A (privileged pod)
     path: k8s/privileged-breakout
-
   k8s-12:
     id: K8S-12
     name: hostPath Writable Mount Escape
@@ -230,7 +214,6 @@ scenarios:
     difficulty: L2
     cve: N/A (hostPath mount)
     path: k8s/hostpath-escape
-
   k8s-13:
     id: K8S-13
     name: SA Token Cross-Namespace Lateral
@@ -238,7 +221,6 @@ scenarios:
     difficulty: L2
     cve: N/A (RBAC lateral)
     path: k8s/sa-cross-ns
-
   k8s-14:
     id: K8S-14
     name: CAP_SYS_ADMIN cgroup Escape
@@ -246,7 +228,6 @@ scenarios:
     difficulty: L3
     cve: CAP_SYS_ADMIN abuse
     path: k8s/cap-sys-admin-cgroup
-
   k8s-15:
     id: K8S-15
     name: Mutable Image Tag Supply Chain
@@ -254,7 +235,6 @@ scenarios:
     difficulty: L2
     cve: N/A (image tag mutation)
     path: k8s/mutable-image-tag
-
   ad-01:
     id: AD-01
     name: Kerberoasting
@@ -359,8 +339,6 @@ scenarios:
     cve: MSSQL xp_cmdshell
     path: docker/web/mssql-xp-cmdshell
     port: 10109
-
-  # === Phase 12: Web SSRF & SSTI Scenarios ===
   web-10:
     id: WEB-10
     name: SSRF Internal Service Access
@@ -369,7 +347,6 @@ scenarios:
     cve: N/A (SSRF misconfiguration)
     path: docker/web/ssrf-internal
     port: 10110
-
   web-11:
     id: WEB-11
     name: SSRF Localhost Auth Bypass
@@ -378,7 +355,6 @@ scenarios:
     cve: N/A (SSRF misconfiguration)
     path: docker/web/ssrf-localhost
     port: 10111
-
   web-12:
     id: WEB-12
     name: SSTI Jinja2 Template Injection
@@ -439,8 +415,6 @@ scenarios:
     base_scenario: web-01
     defense: waf
     port: 10101
-
-  # === Phase 10: AD Expansion — Samba-compatible scenarios ===
   ad-13:
     id: AD-13
     name: GPP/cpassword Credential Extraction
@@ -449,7 +423,6 @@ scenarios:
     cve: ATT&CK T1552.006
     path: ad/scenarios/ad-13-gpp
     dc_ip: localhost
-
   ad-14:
     id: AD-14
     name: Silver Ticket Attack
@@ -458,7 +431,6 @@ scenarios:
     cve: ATT&CK T1558.002
     path: ad/scenarios/ad-14-silver
     dc_ip: localhost
-
   ad-15:
     id: AD-15
     name: Targeted Kerberoasting via ACL Abuse
@@ -467,7 +439,6 @@ scenarios:
     cve: ATT&CK T1098
     path: ad/scenarios/ad-15-targeted-kerb
     dc_ip: localhost
-
   ad-16:
     id: AD-16
     name: Constrained Delegation Abuse
@@ -476,7 +447,6 @@ scenarios:
     cve: ATT&CK T1558.003
     path: ad/scenarios/ad-16-constrained-deleg
     dc_ip: localhost
-
   ad-17:
     id: AD-17
     name: RBCD Computer Takeover
@@ -485,7 +455,6 @@ scenarios:
     cve: ATT&CK T1558.003 (RBCD)
     path: ad/scenarios/ad-17-rbcd
     dc_ip: localhost
-
   ad-18:
     id: AD-18
     name: Shadow Credentials via KeyCredentialLink
@@ -494,7 +463,6 @@ scenarios:
     cve: ATT&CK T1606.002
     path: ad/scenarios/ad-18-shadow-credentials
     dc_ip: localhost
-
   ad-19:
     id: AD-19
     name: WriteOwner DACL Abuse Chain
@@ -503,7 +471,6 @@ scenarios:
     cve: ATT&CK T1098 / T1484
     path: ad/scenarios/ad-19-writeowner
     dc_ip: localhost
-
   ad-20:
     id: AD-20
     name: ForceChangePassword Privilege Escalation
@@ -512,7 +479,6 @@ scenarios:
     cve: ATT&CK T1098
     path: ad/scenarios/ad-20-forcechangepass
     dc_ip: localhost
-
   ad-21:
     id: AD-21
     name: Unconstrained Delegation Discovery & Exploitation
@@ -521,8 +487,6 @@ scenarios:
     cve: ATT&CK T1558.001
     path: ad/scenarios/ad-21-unconstrained-deleg
     dc_ip: localhost
-
-  # === Phase 10: K8s Expansion — new escape techniques ===
   k8s-16:
     id: K8S-16
     name: CRI Socket Mount Escape
@@ -530,7 +494,6 @@ scenarios:
     difficulty: L2
     cve: CRI socket abuse
     path: k8s/cri-socket-escape
-
   k8s-17:
     id: K8S-17
     name: Docker Socket Mount Escape
@@ -538,7 +501,6 @@ scenarios:
     difficulty: L1
     cve: Docker socket abuse
     path: k8s/docker-socket-escape
-
   k8s-18:
     id: K8S-18
     name: SA Token Cluster-Admin Escalation
@@ -546,7 +508,6 @@ scenarios:
     difficulty: L2
     cve: RBAC misconfiguration
     path: k8s/sa-cluster-admin
-
   k8s-19:
     id: K8S-19
     name: CAP_SYS_PTRACE Host Process Injection
@@ -554,8 +515,6 @@ scenarios:
     difficulty: L3
     cve: CAP_SYS_PTRACE abuse
     path: k8s/cap-sys-ptrace-inject
-
-  # === Phase 11: K8s ingress/webhook/network expansion ===
   k8s-20:
     id: K8S-20
     name: ingress-nginx Admission Controller RCE (IngressNightmare)
@@ -564,7 +523,6 @@ scenarios:
     cve: CVE-2025-1974
     path: k8s/ingress-nginx-rce
     port: 10443
-
   k8s-21:
     id: K8S-21
     name: ingress-nginx Lua Snippet Secret Extraction
@@ -573,7 +531,6 @@ scenarios:
     cve: CVE-2021-25742
     path: k8s/ingress-snippet
     port: 10480
-
   k8s-22:
     id: K8S-22
     name: Service ExternalIP Traffic Interception
@@ -581,7 +538,6 @@ scenarios:
     difficulty: L2
     cve: CVE-2020-8554
     path: k8s/externalip-hijack
-
   k8s-23:
     id: K8S-23
     name: hostPID ProcFS Host Filesystem Access
@@ -589,7 +545,6 @@ scenarios:
     difficulty: L1
     cve: N/A (misconfiguration)
     path: k8s/seccomp-bypass
-
   k8s-24:
     id: K8S-24
     name: kube-proxy Localhost Boundary Bypass
@@ -597,7 +552,6 @@ scenarios:
     difficulty: L2
     cve: CVE-2020-8558
     path: k8s/localhost-bypass
-
   k8s-25:
     id: K8S-25
     name: Mutating Webhook Sidecar Injection
@@ -605,7 +559,6 @@ scenarios:
     difficulty: L2
     cve: N/A (admission control abuse)
     path: k8s/webhook-inject
-
   k8s-26:
     id: K8S-26
     name: Compromised Node API Server Redirect
@@ -613,7 +566,6 @@ scenarios:
     difficulty: L3
     cve: CVE-2020-8559
     path: k8s/node-redirect
-
   k8s-27:
     id: K8S-27
     name: NetworkPolicy Label Spoofing Bypass
@@ -621,8 +573,6 @@ scenarios:
     difficulty: L2
     cve: N/A (network policy bypass)
     path: k8s/networkpolicy-bypass
-
-  # === Phase 11: Web XXE and JWT Scenarios ===
   web-13:
     id: WEB-13
     name: XXE XML External Entity
@@ -631,7 +581,6 @@ scenarios:
     cve: XXE (XML External Entity)
     path: docker/web/xxe-basic
     port: 10113
-
   web-14:
     id: WEB-14
     name: XXE SVG Upload
@@ -640,7 +589,6 @@ scenarios:
     cve: XXE (XML External Entity)
     path: docker/web/xxe-svg
     port: 10114
-
   web-15:
     id: WEB-15
     name: JWT Algorithm None Attack
@@ -649,7 +597,6 @@ scenarios:
     cve: JWT alg:none
     path: docker/web/jwt-alg-none
     port: 10115
-
   web-16:
     id: WEB-16
     name: GraphQL Introspection + IDOR
@@ -658,7 +605,6 @@ scenarios:
     cve: GraphQL introspection + IDOR
     path: docker/web/graphql-idor
     port: 10116
-
   web-17:
     id: WEB-17
     name: PHP Deserialization Auth Bypass
@@ -667,7 +613,6 @@ scenarios:
     cve: Insecure PHP deserialization
     path: docker/web/php-deserialization
     port: 10117
-
   web-18:
     id: WEB-18
     name: Stored XSS Session Theft
@@ -676,81 +621,179 @@ scenarios:
     cve: Stored XSS
     path: docker/web/xss-stored
     port: 10118
-
-  # === Phase 13: Cloud AWS Scenarios (LocalStack) ===
-  cloud-01:
-    id: CLOUD-01
-    name: S3 Bucket Public Read
-    type: docker
-    difficulty: L1
-    cve: N/A (misconfiguration)
-    path: docker/cloud/s3-public-read
-    port: 10601
-
   cloud-02:
     id: CLOUD-02
-    name: IAM Privilege Escalation
-    type: docker
-    difficulty: L2
-    cve: N/A (misconfiguration)
-    path: docker/cloud/iam-privesc
-    port: 10602
-
+    name: Container Escape via CAP_NET_RAW → Metadata MITM
+    type: k8s
+    difficulty: L3
+    cve: N/A (CAP_NET_RAW + ARP spoofing)
+    path: docker/cloud/cap-netraw-metadata
   cloud-03:
     id: CLOUD-03
-    name: EC2 SSRF Localhost Flag Theft
+    name: K8s SA Token → Cross-Namespace Access
+    type: k8s
+    difficulty: L3
+    cve: N/A (overly permissive RBAC)
+    path: docker/cloud/sa-cross-namespace
+  cloud-19:
+    id: CLOUD-19
+    name: "Multi-Tenant K8s: Container Escape → Cross-Tenant Access"
+    type: k8s
+    difficulty: L3
+    cve: N/A (privileged container + hostPID escape)
+    path: docker/cloud/multi-tenant-k8s
+  cloud-01:
+    id: CLOUD-01
+    name: SSRF to IMDS Credential Theft
     type: docker
     difficulty: L2
-    cve: N/A (SSRF misconfiguration)
-    path: docker/cloud/ssrf-imds
-    port: 10603
-
+    cve: N/A (SSRF → IMDS)
+    path: docker/cloud/ssrf-to-imds
+    port: 10601
   cloud-04:
     id: CLOUD-04
-    name: Lambda Code Injection
+    name: Lambda Code Injection → IAM PassRole
     type: docker
     difficulty: L2
-    cve: N/A (command injection)
-    path: docker/cloud/lambda-injection
+    cve: N/A (command injection + IAM privesc)
+    path: docker/cloud/lambda-passrole
     port: 10604
-
-  cloud-05:
-    id: CLOUD-05
-    name: DynamoDB NoSQL Injection
-    type: docker
-    difficulty: L1
-    cve: N/A (NoSQL injection)
-    path: docker/cloud/dynamodb-injection
-    port: 10605
-
   cloud-06:
     id: CLOUD-06
-    name: SQS Message Interception
+    name: Managed DB COPY FROM PROGRAM → IMDS Access
     type: docker
-    difficulty: L1
-    cve: N/A (misconfiguration)
-    path: docker/cloud/sqs-intercept
+    difficulty: L2
+    cve: N/A (SQLi + COPY FROM PROGRAM)
+    path: docker/cloud/db-to-imds
     port: 10606
-
+  cloud-05:
+    id: CLOUD-05
+    name: CloudFormation Template Injection → SSM
+    type: docker
+    difficulty: L2
+    cve: N/A (CF Fn::Sub injection)
+    path: docker/cloud/cf-injection
+    port: 10605
   cloud-07:
     id: CLOUD-07
-    name: STS AssumeRole Abuse
+    name: S3 Bucket Monopoly → Shadow Resource
     type: docker
     difficulty: L2
-    cve: N/A (misconfiguration)
-    path: docker/cloud/sts-assumerole
+    cve: N/A (global namespace squatting)
+    path: docker/cloud/s3-monopoly
     port: 10607
-
   cloud-08:
     id: CLOUD-08
-    name: KMS Decryption Oracle
+    name: CI/CD Pipeline Poisoning → Secret Exfiltration
     type: docker
     difficulty: L2
-    cve: N/A (misconfiguration)
-    path: docker/cloud/kms-oracle
+    cve: N/A (CI/CD script injection)
+    path: docker/cloud/ci-poisoning
     port: 10608
-
-  # === CI/CD Pipeline Scenarios ===
+  cloud-09:
+    id: CLOUD-09
+    name: AI Notebook Escape → K8s SA Token Theft
+    type: docker
+    difficulty: L3
+    cve: N/A (notebook escape + SA token)
+    path: docker/cloud/notebook-escape
+    port: 10609
+  cloud-10:
+    id: CLOUD-10
+    name: API Gateway Header Smuggling → Admin Access
+    type: docker
+    difficulty: L2
+    cve: N/A (X-Forwarded-For smuggling)
+    path: docker/cloud/gateway-smuggling
+    port: 10610
+  cloud-11:
+    id: CLOUD-11
+    name: OIDC Claim Mismatch → Cross-Repo AssumeRole
+    type: docker
+    difficulty: L2
+    cve: N/A (OIDC federation misconfiguration)
+    path: docker/cloud/oidc-federation
+    port: 10611
+  cloud-12:
+    id: CLOUD-12
+    name: IAM Trust Policy Principal:* → Cross-Account Takeover
+    type: docker
+    difficulty: L2
+    cve: N/A (overly permissive trust policy)
+    path: docker/cloud/cross-account-trust
+    port: 10612
+  cloud-13:
+    id: CLOUD-13
+    name: Golden SAML → Federation Trust Root Compromise
+    type: docker
+    difficulty: L3
+    cve: N/A (SAML signing key exposure)
+    path: docker/cloud/golden-saml
+    port: 10613
+  cloud-14:
+    id: CLOUD-14
+    name: PassRole Abuse → Cross-Service Lambda Execution
+    type: docker
+    difficulty: L2
+    cve: N/A (iam:PassRole + lambda:CreateFunction)
+    path: docker/cloud/passrole-abuse
+    port: 10614
+  cloud-15:
+    id: CLOUD-15
+    name: SCP Bypass via Legacy API Version
+    type: docker
+    difficulty: L2
+    cve: N/A (SCP enforcement gap)
+    path: docker/cloud/scp-bypass
+    port: 10615
+  cloud-16:
+    id: CLOUD-16
+    name: CloudTrail Logging Gap → Silent Enumeration
+    type: docker
+    difficulty: L2
+    cve: N/A (unrecorded API endpoint)
+    path: docker/cloud/logging-gap
+    port: 10616
+  cloud-17:
+    id: CLOUD-17
+    name: Managed Identity Confused Deputy → Cross-Service Access
+    type: docker
+    difficulty: L2
+    cve: N/A (confused deputy abuse)
+    path: docker/cloud/confused-deputy
+    port: 10617
+  cloud-18:
+    id: CLOUD-18
+    name: Service Tag Spoofing → Firewall Bypass
+    type: docker
+    difficulty: L2
+    cve: N/A (service tag header spoofing)
+    path: docker/cloud/svc-tag-spoof
+    port: 10618
+  cloud-20:
+    id: CLOUD-20
+    name: Shared Metadata Proxy → Cross-Tenant Credential Leak
+    type: docker
+    difficulty: L3
+    cve: N/A (shared proxy tenant isolation failure)
+    path: docker/cloud/shared-metadata-proxy
+    port: 10620
+  cloud-21:
+    id: CLOUD-21
+    name: Global S3 Namespace Squatting → Cross-Tenant Data Theft
+    type: docker
+    difficulty: L3
+    cve: N/A (global namespace resource squatting)
+    path: docker/cloud/global-s3-squatting
+    port: 10621
+  cloud-22:
+    id: CLOUD-22
+    name: Shared AI Inference Queue → Cross-Tenant Data Leak
+    type: docker
+    difficulty: L3
+    cve: N/A (multi-tenant queue isolation failure)
+    path: docker/cloud/shared-inference-queue
+    port: 10622
   ci-01:
     id: CI-01
     name: Poisoned Pipeline Execution
@@ -759,7 +802,6 @@ scenarios:
     cve: N/A (CI/CD misconfiguration)
     path: docker/cicd/ppe
     port: 10701
-
   ci-02:
     id: CI-02
     name: Exposed .git Directory
@@ -768,7 +810,6 @@ scenarios:
     cve: N/A (information disclosure)
     path: docker/cicd/exposed-git
     port: 10702
-
   ci-03:
     id: CI-03
     name: Hardcoded Secrets in Pipeline Config
@@ -777,7 +818,6 @@ scenarios:
     cve: N/A (credential exposure)
     path: docker/cicd/hardcoded-secrets
     port: 10703
-
   ci-04:
     id: CI-04
     name: Unprotected Webhook Endpoint
@@ -786,7 +826,6 @@ scenarios:
     cve: N/A (missing authentication)
     path: docker/cicd/webhook
     port: 10704
-
   ci-05:
     id: CI-05
     name: Dockerfile Build Arg Injection
@@ -795,8 +834,6 @@ scenarios:
     cve: N/A (CI/CD misconfiguration)
     path: docker/cicd/build-arg-leak
     port: 10705
-
-  # === Defense Evasion Scenarios ===
   def-01:
     id: DEF-01
     name: WAF Bypass — SQLi Encoding
@@ -805,7 +842,6 @@ scenarios:
     cve: N/A (WAF bypass)
     path: docker/defense/waf-bypass
     port: 10801
-
   def-02:
     id: DEF-02
     name: Log Clearing — Forensic Anti-Tamper
@@ -816,7 +852,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10802
-
   def-03:
     id: DEF-03
     name: Process Hiding — /proc Detection
@@ -827,7 +862,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10803
-
   def-04:
     id: DEF-04
     name: Anti-Forensics — Timestomp Recovery
@@ -838,7 +872,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10804
-
   def-05:
     id: DEF-05
     name: Living off the Land — SUID find Bypass
@@ -849,8 +882,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10805
-
-  # === Phase 14: Network Attack Scenarios ===
   net-01:
     id: NET-01
     name: ARP Spoofing + Credential Sniffing
@@ -861,7 +892,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10901
-
   net-02:
     id: NET-02
     name: DNS Exfiltration Detection
@@ -872,7 +902,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10902
-
   net-03:
     id: NET-03
     name: Container Network Sniffing
@@ -883,8 +912,6 @@ scenarios:
     ssh_user: attacker
     ssh_password: password123
     ssh_port: 10903
-
-  # === WAF Defense Variants ===
   web-12-waf:
     id: WEB-12-WAF
     name: SSTI Jinja2 Template Injection + WAF
@@ -895,7 +922,6 @@ scenarios:
     base_scenario: web-12
     defense: waf
     port: 10112
-
   web-15-waf:
     id: WEB-15-WAF
     name: JWT Algorithm None Attack + WAF
@@ -906,3 +932,88 @@ scenarios:
     base_scenario: web-15
     defense: waf
     port: 10115
+  k8s-28:
+    id: K8S-28
+    name: Node Selector Evasion
+    type: k8s
+    difficulty: L2
+    cve: N/A (scheduling bypass)
+    path: k8s/node-selector-evasion
+  k8s-29:
+    id: K8S-29
+    name: Toleration Abuse (Taint Bypass)
+    type: k8s
+    difficulty: L2
+    cve: N/A (taint bypass)
+    path: k8s/toleration-abuse
+  k8s-30:
+    id: K8S-30
+    name: CNI IP Spoofing (NetworkPolicy Bypass)
+    type: k8s
+    difficulty: L2
+    cve: N/A (IP spoofing)
+    path: k8s/cni-ip-spoof
+  ad-22:
+    id: AD-22
+    name: Cross-Forest Trust Attack (Foreign Domain Takeover)
+    type: samba-ad
+    difficulty: L3
+    cve: ATT&CK T1484 + T1003.006
+    path: ad/scenarios/ad-22-cross-forest
+  ad-23:
+    id: AD-23
+    name: AdminSDHolder ACL Persistence
+    type: samba-ad
+    difficulty: L3
+    cve: ATT&CK T1098 / T1484
+    path: ad/scenarios/ad-23-adminsdholder
+  lkx-01:
+    id: LKX-01
+    name: Kernel Module UAF (Use-After-Free)
+    type: docker
+    difficulty: L3
+    cve: N/A (vulnerable LKM)
+    path: docker/linux/lkm-uaf
+    ssh_user: attacker
+    ssh_password: password123
+    ssh_port: 10310
+  lkx-02:
+    id: LKX-02
+    name: Kernel Module Buffer Overflow
+    type: docker
+    difficulty: L3
+    cve: N/A (vulnerable LKM)
+    path: docker/linux/lkm-overflow
+    ssh_user: attacker
+    ssh_password: password123
+    ssh_port: 10311
+  lkx-03:
+    id: LKX-03
+    name: eBPF Kernel Memory Read
+    type: docker
+    difficulty: L2
+    cve: N/A (eBPF abuse)
+    path: docker/linux/ebpf-read
+    ssh_user: attacker
+    ssh_password: password123
+    ssh_port: 10312
+  lkx-04:
+    id: LKX-04
+    name: eBPF Syscall Hook (LSM Bypass)
+    type: docker
+    difficulty: L2
+    cve: N/A (eBPF abuse)
+    path: docker/linux/ebpf-hook
+    ssh_user: attacker
+    ssh_password: password123
+    ssh_port: 10313
+  lkx-05:
+    id: LKX-05
+    name: Dirty Pipe Container Escape (Conditional)
+    type: docker
+    difficulty: L3
+    cve: CVE-2022-0847
+    path: docker/linux/dirty-pipe
+    ssh_user: attacker
+    ssh_password: password123
+    ssh_port: 10314

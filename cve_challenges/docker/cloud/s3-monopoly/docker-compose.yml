@@ -1,0 +1,29 @@
+services:
+  ui:
+    build:
+      context: ./ui
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-07-default}}
+    ports:
+      - "10607:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-07-default}}
+      - S3_URL=http://s3-sim:5000
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  s3-sim:
+    build:
+      context: ./s3-sim
+    environment:
+      - FLAG2=flag{cloud-07-step2-monopoly}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

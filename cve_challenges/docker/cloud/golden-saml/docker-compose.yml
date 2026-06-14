@@ -1,0 +1,30 @@
+services:
+  attacker:
+    build:
+      context: ./attacker
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-13-default}}
+    ports:
+      - "10613:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-13-default}}
+      - IDP_URL=http://saml-idp:5000
+      - IAM_URL=http://iam:5000
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  saml-idp:
+    build: ./saml-idp
+    environment:
+      - FLAG2=flag{cloud-13-step2-golden-saml}
+
+  iam:
+    build:
+      context: ../_infra/iam-trust
+    environment:
+      - IAM_ROLES_FILE=/app/roles/default.yaml
+      - OIDC_JWKS_URL=http://saml-idp:5000/.well-known/jwks.json

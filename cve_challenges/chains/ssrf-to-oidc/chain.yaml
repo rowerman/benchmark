@@ -1,0 +1,31 @@
+name: SSRF to IMDS to OIDC to Cross-Account
+chain_id: Chain-39
+steps: 5
+domains:
+- cloud
+nodes:
+- step: 1
+  scenario: cloud-01
+  description: Web SSRF → 发现 IMDS 端点
+  flag: flag{c39-step1-ssrf}
+  next_hint: IMDS 返回临时凭据
+- step: 2
+  scenario: cloud-01
+  description: IMDS 凭据窃取
+  flag: flag{c39-step2-imds}
+  next_hint: 凭据可访问 OIDC IdP
+- step: 3
+  scenario: cloud-11
+  description: 发现 OIDC IdP → 签发 JWT
+  flag: flag{c39-step3-oidc}
+  next_hint: JWT 可用于 AssumeRoleWithWebIdentity
+- step: 4
+  scenario: cloud-11
+  description: AssumeRoleWithWebIdentity → 获取角色凭据
+  flag: flag{c39-step4-assume}
+  next_hint: 角色凭据可跨账号使用
+- step: 5
+  scenario: cloud-12
+  description: 跨账号 AssumeRole → 最终 flag
+  flag: flag{c39-step5-final}
+  next_hint: null

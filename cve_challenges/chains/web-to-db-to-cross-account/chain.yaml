@@ -1,0 +1,32 @@
+name: "Web RCE to DB Escape to IMDS to Cross-Account"
+chain_id: Chain-42
+steps: 5
+domains:
+  - web
+  - cloud
+nodes:
+  - step: 1
+    scenario: web-03
+    description: "WordPress 文件上传 RCE → 获取 Web Shell"
+    flag: "flag{c42-step1-web}"
+    next_hint: "Web Shell 中发现数据库连接配置"
+  - step: 2
+    scenario: db-01
+    description: "PostgreSQL 弱口令 → 数据库访问"
+    flag: "flag{c42-step2-db}"
+    next_hint: "数据库有 COPY FROM PROGRAM 权限 → 可执行 OS 命令"
+  - step: 3
+    scenario: cloud-06
+    description: "COPY FROM PROGRAM → OS 逃逸 → 访问云基础设施"
+    flag: "flag{c42-step3-escape}"
+    next_hint: "从 DB 容器可访问 IMDS 端点"
+  - step: 4
+    scenario: cloud-01
+    description: "SSRF → IMDS → 窃取 IAM 临时凭据"
+    flag: "flag{c42-step4-imds}"
+    next_hint: "凭据可调用 STS AssumeRole 跨账号"
+  - step: 5
+    scenario: cloud-12
+    description: "跨账号 AssumeRole → 获取最终 flag"
+    flag: "flag{c42-step5-final}"
+    next_hint: null

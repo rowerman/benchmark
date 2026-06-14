@@ -4,7 +4,11 @@ nodes:
   - role: control-plane
     image: kindest/node:v1.27.3
     extraMounts:
-      - hostPath: /var/run/docker.sock
-        containerPath: /var/run/docker.sock
       - hostPath: /home/kianabin/cve-flags/k8s-17
         containerPath: /host-flag
+      - hostPath: /var/run/docker.sock
+        containerPath: /var/run/docker.sock
+  - role: worker
+    image: kindest/node:v1.27.3
+  - role: worker
+    image: kindest/node:v1.27.3

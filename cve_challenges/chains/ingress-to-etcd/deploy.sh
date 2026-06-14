@@ -24,6 +24,13 @@ nodes:
       - containerPort: 32379
         hostPort: 11379
         protocol: TCP
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        etcd:
+          local:
+            extraArgs:
+              client-cert-auth: "false"
 YAML
 
 FLAG_DIR="/home/kianabin/cve-flags/chain23"

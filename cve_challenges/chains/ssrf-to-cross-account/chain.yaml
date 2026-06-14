@@ -1,0 +1,26 @@
+name: SSRF to IMDS to Cross-Account Takeover
+chain_id: Chain-32
+steps: 4
+domains:
+- cloud
+nodes:
+- step: 1
+  scenario: cloud-01
+  description: Web SSRF → 发现并访问 IMDS 端点
+  flag: flag{c32-step1-ssrf}
+  next_hint: IMDS 返回了临时 IAM 凭据
+- step: 2
+  scenario: cloud-01
+  description: IMDS 凭据窃取 → 获取 S3 读取权限
+  flag: flag{c32-step2-imds}
+  next_hint: S3 桶中包含低权限 IAM 用户的 AK/SK
+- step: 3
+  scenario: cloud-12
+  description: 发现 CrossAccountRole 信任策略允许跨账号 → AssumeRole
+  flag: flag{c32-step3-cross}
+  next_hint: 使用跨账号临时凭据访问 S3 目标桶
+- step: 4
+  scenario: cloud-12
+  description: 跨账号角色访问受保护的 S3 资源 → 获取最终 flag
+  flag: flag{c32-step4-final}
+  next_hint: null
