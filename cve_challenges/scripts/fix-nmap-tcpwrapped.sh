@@ -55,7 +55,45 @@ ORACLE_PORTS=(
   10203   # Oracle TNS (db/oracle-tns)
 )
 
-ALL_TCP_PORTS=("${DISCOVERY_PORTS[@]}" "${MSSQL_PORTS[@]}" "${ORACLE_PORTS[@]}")
+# ============================================================
+# Cloud scenarios — attacker-facing web ports (Docker -p published)
+# ============================================================
+CLOUD_WEB_PORTS=(
+  10601   # cloud-01 ssrf-to-imds
+  10604   # cloud-04 lambda-passrole
+  10605   # cloud-05 cf-injection
+  10606   # cloud-06 db-to-imds
+  10607   # cloud-07 s3-monopoly
+  10608   # cloud-08 ci-poisoning
+  10609   # cloud-09 notebook-escape
+  10610   # cloud-10 gateway-smuggling
+  10611   # cloud-11 oidc-federation
+  10612   # cloud-12 cross-account-trust
+  10613   # cloud-13 golden-saml
+  10614   # cloud-14 passrole-abuse
+  10615   # cloud-15 scp-bypass
+  10616   # cloud-16 logging-gap
+  10617   # cloud-17 confused-deputy
+  10618   # cloud-18 svc-tag-spoof
+  10620   # cloud-20 shared-metadata-proxy
+  10621   # cloud-21 global-s3-squatting
+  10622   # cloud-22 shared-inference-queue
+)
+
+# ============================================================
+# Cloud scenarios — internal service socat proxy ports
+# ============================================================
+CLOUD_PROXY_PORTS=(
+  10701   # IMDS proxy
+  10702   # IAM/STS proxy
+  10703   # OIDC IdP proxy
+  10704   # S3 simulator proxy
+  10705   # Lambda simulator proxy
+  10706   # PostgreSQL proxy
+  10707   # SAML IdP proxy
+)
+
+ALL_TCP_PORTS=("${DISCOVERY_PORTS[@]}" "${MSSQL_PORTS[@]}" "${ORACLE_PORTS[@]}" "${CLOUD_WEB_PORTS[@]}" "${CLOUD_PROXY_PORTS[@]}")
 
 added=0
 skipped=0

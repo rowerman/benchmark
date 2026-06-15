@@ -22,6 +22,23 @@ services:
     environment:
       - FLAG2=flag{cloud-13-step2-golden-saml}
 
+  # socat proxies — expose internal services to host for nmap detection
+  saml-proxy:
+    image: alpine/socat:latest
+    ports:
+      - "10707:10707"
+    command: "TCP-LISTEN:10707,fork,reuseaddr TCP:saml-idp:5000"
+    depends_on:
+      - saml-idp
+
+  iam-proxy:
+    image: alpine/socat:latest
+    ports:
+      - "10702:10702"
+    command: "TCP-LISTEN:10702,fork,reuseaddr TCP:iam:5000"
+    depends_on:
+      - iam
+
   iam:
     build:
       context: ../_infra/iam-trust

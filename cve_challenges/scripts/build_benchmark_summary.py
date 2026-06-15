@@ -76,6 +76,8 @@ CI_ORDER = [
 K8S_ORDER = [
     # container escape
     "k8s-01", "k8s-02", "k8s-03", "k8s-11", "k8s-14", "k8s-19",
+    # cloud k8s scenarios
+    "cloud-02", "cloud-03", "cloud-19",
     # host resource abuse
     "k8s-12", "k8s-16", "k8s-17", "k8s-23", "k8s-05",
     # RBAC privilege escalation
@@ -127,7 +129,7 @@ CHAIN_ORDER_BY_DOMAIN = [
     "kubelet-to-etcd", "privilege-to-etcd", "sa-lateral-escape", "seccomp-to-escape",
     # pure AD (5)
     "asrep-to-golden", "gpp-to-dcsync", "kerb-to-deleg", "rbcd-to-dcsync", "shadow-to-golden",
-    # pure Cloud (Phase 4 + Phase 6)
+    # pure Cloud (12)
     "ssrf-to-cross-account", "lambda-to-cross-account", "ci-to-oidc",
     "db-to-cross-account", "s3-to-cf", "gateway-to-deputy",
     "notebook-to-scp", "ssrf-to-oidc", "db-to-passrole", "cf-to-scp",
@@ -172,7 +174,6 @@ CLOUD_ORDER = [
     "cloud-17",             # Confused Deputy
     "cloud-18",             # Service Tag Spoofing
     # Multi-Tenant (Phase 5 + Phase 6)
-    "cloud-19",             # Multi-Tenant K8s
     "cloud-20",             # Shared Metadata Proxy
     "cloud-21",             # Global S3 Squatting
     "cloud-22",             # Shared AI Inference
@@ -280,7 +281,7 @@ def append_section(parts: list[str], source_rel: str, content: str, extra_commen
 def build_toc(included_sources: list[tuple[str, str]], n_chains: int) -> str:
     lines = ["## 目录", ""]
     lines.append("- [一、单点场景](#一单点场景)")
-    lines.append("  - [1.1 Docker：Web / 数据库 / Linux / DEF / NET / CI / LKX](#11-dockerweb--数据库--linux--def--net--ci--lkx)")
+    lines.append("  - [1.1 Docker：Web / 数据库 / Linux / Cloud / DEF / NET / CI / LKX](#11-dockerweb--数据库--linux--cloud--def--net--ci--lkx)")
     lines.append("  - [1.2 Kubernetes 单点场景](#12-kubernetes-单点场景)")
     lines.append("  - [1.3 Active Directory 单点场景](#13-active-directory-单点场景)")
     lines.append(f"- [二、攻击链场景（{n_chains}）](#chains-section)")

@@ -1,0 +1,61 @@
+# Custom nmap service probes for DARWIN Cloud Benchmark scenarios
+# ==========================================================================
+# Usage: merge into ~/.nmap/nmap-service-probes or pass to nmap with:
+#   nmap --servicedb <(cat /usr/share/nmap/nmap-service-probes nmap-cloud-probes.txt) -sV ...
+#
+# These probes allow nmap -sV to correctly identify simulated cloud services
+# running inside Docker containers, exposed via socat TCP proxies.
+
+# --------------------------------------------------------------------------
+# 1. Flask/Werkzeug HTTP server (used by all cloud web services on 106xx)
+# Repeats GetRequest probe to attach Werkzeug match rule
+# --------------------------------------------------------------------------
+Probe TCP GetRequest q|GET / HTTP/1.0\r\n\r\n|
+match http m|^HTTP/1\.[01] \d\d\d .*\r\nServer: Werkzeug/| p/Werkzeug httpd/ i/Python Flask dev server/
+
+# --------------------------------------------------------------------------
+# 2. EC2 Instance Metadata Service (IMDS)
+# Custom probe GET /latest/meta-data/ returns "Server: EC2ws" header
+# Note: Flask prepends "Server: Werkzeug" so we match anywhere in headers
+# Port: 10701 (socat proxy)
+# --------------------------------------------------------------------------
+Probe TCP IMDS q|GET /latest/meta-data/ HTTP/1.0\r\n\r\n|
+rarity 5
+ports 10701
+
+match ec2-imds m|^HTTP/1\.[01] \d\d\d .*\r\n.*Server: EC2ws|s p/Amazon EC2 Instance Metadata Service/ i/IMDS v1-v2 simulator/
+
+# --------------------------------------------------------------------------
+# 3. AWS Security Token Service (STS)
+# Sends GetCallerIdentity via POST (form-encoded, like real AWS STS)
+# Response is XML with <GetCallerIdentityResponse> or <ErrorResponse>
+# Port: 10702 (socat proxy)
+# --------------------------------------------------------------------------
+Probe TCP STS q|POST / HTTP/1.0\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 23\r\n\r\nAction=GetCallerIdentity|
+rarity 5
+ports 10702
+
+match aws-sts m|<GetCallerIdentityResponse|s p/AWS Security Token Service/ i/STS API simulator/
+
+# --------------------------------------------------------------------------
+# 4. OpenID Connect Identity Provider
+# Fetches JWKS endpoint (standard OIDC discovery)
+# Response contains "keys" JSON array
+# Port: 10703 (socat proxy)
+# --------------------------------------------------------------------------
+Probe TCP OIDC-JWKS q|GET /.well-known/jwks.json HTTP/1.0\r\n\r\n|
+rarity 5
+ports 10703
+
+match oidc-idp m|"keys"\s*:\s*\[|s p/OpenID Connect Identity Provider/ i/JWKS endpoint/
+
+# --------------------------------------------------------------------------
+# 5. S3-compatible Object Storage (DARWIN simulator — returns JSON)
+# GET / returns JSON: {"objects":[...]}
+# Port: 10704 (socat proxy)
+# --------------------------------------------------------------------------
+Probe TCP S3-JSON q|GET / HTTP/1.0\r\n\r\n|
+rarity 5
+ports 10704
+
+match s3-storage m|"objects"\s*:\s*\[| p/S3-compatible Object Storage/ i/DARWIN S3 simulator API/

@@ -52,6 +52,29 @@ services:
       retries: 5
       start_period: 10s
 
+  # socat proxies — expose internal services to host for nmap detection
+  iam-proxy:
+    image: alpine/socat:latest
+    ports:
+      - "10702:10702"
+    command: "TCP-LISTEN:10702,fork,reuseaddr TCP:iam:5000"
+    networks:
+      - cloud-net
+    depends_on:
+      iam:
+        condition: service_healthy
+
+  lambda-proxy:
+    image: alpine/socat:latest
+    ports:
+      - "10705:10705"
+    command: "TCP-LISTEN:10705,fork,reuseaddr TCP:lambda:5000"
+    networks:
+      - cloud-net
+    depends_on:
+      lambda:
+        condition: service_healthy
+
 networks:
   cloud-net:
     driver: bridge

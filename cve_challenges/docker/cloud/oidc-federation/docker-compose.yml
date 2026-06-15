@@ -36,3 +36,21 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  # socat proxies — expose internal services to host for nmap detection
+  oidc-proxy:
+    image: alpine/socat:latest
+    ports:
+      - "10703:10703"
+    command: "TCP-LISTEN:10703,fork,reuseaddr TCP:oidc:5000"
+    depends_on:
+      - oidc
+
+  iam-proxy:
+    image: alpine/socat:latest
+    ports:
+      - "10702:10702"
+    command: "TCP-LISTEN:10702,fork,reuseaddr TCP:iam:5000"
+    depends_on:
+      iam:
+        condition: service_healthy
