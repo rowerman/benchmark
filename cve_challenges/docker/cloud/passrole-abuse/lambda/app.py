@@ -3,7 +3,7 @@ import os, subprocess, tempfile
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG2 = os.environ.get("FLAG2", "flag{cloud-14-step2-passrole}")
+FLAG = os.environ.get("FLAG", "flag{cloud-14-step2-passrole}")
 
 @app.route("/health")
 def health(): return {"status":"ok"}
@@ -20,7 +20,7 @@ def invoke():
     try:
         result = subprocess.check_output(f"python3 {tmp} 2>&1",shell=True,timeout=10,
             stderr=subprocess.STDOUT,
-            env={**os.environ,"ASSUMED_ROLE":role,"FLAG2":FLAG2})
+            env={**os.environ,"ASSUMED_ROLE":role,"FLAG":FLAG})
         return result.decode(errors="replace"),200
     except Exception as e: return str(e),500
     finally: os.unlink(tmp)

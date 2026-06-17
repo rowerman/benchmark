@@ -245,6 +245,161 @@ def health():
     }
 
 
+# ---------------------------------------------------------------------------
+# Discovery endpoints (for multi-step reasoning)
+# ---------------------------------------------------------------------------
+@app.route("/roles")
+def list_roles():
+    """List all IAM roles (public — no auth required for discovery)."""
+    roles = []
+    for r in _config.get("roles", []):
+        roles.append({
+            "name": r["name"],
+            "arn": r["arn"],
+            "description": r.get("description", ""),
+            "permissions": r.get("permissions", []),
+        })
+    return {"roles": roles}
+
+
+@app.route("/roles/<name>")
+def get_role(name: str):
+    """Get role detail with partially redacted trust policy.
+
+    The trust policy's Principal field is partially redacted to simulate
+    what iam:GetRole returns for external users — showing the structure
+    but hiding exact account IDs.
+    """
+    role = _roles_by_name.get(name)
+    if not role:
+        return {"error": "role not found"}, 404
+
+    policy = role.get("trust_policy", {})
+    statements = policy.get("Statement", [])
+    redacted = []
+    for stmt in statements:
+        principal = stmt.get("Principal", {})
+        redacted_principal = {}
+        for ptype, pval in principal.items():
+            if pval == "*":
+                redacted_principal[ptype] = "*"
+            elif pval.endswith(":root"):
+                # Show pattern but hide account ID: arn:aws:iam::*:root
+                parts = pval.split(":")
+                parts[4] = "*"
+                redacted_principal[ptype] = ":".join(parts)
+            else:
+                redacted_principal[ptype] = pval
+        redacted.append({
+            "Effect": stmt.get("Effect"),
+            "Principal": redacted_principal,
+            "Action": stmt.get("Action"),
+            "Condition": _redact_condition(stmt.get("Condition")),
+        })
+
+    return {
+        "name": role["name"],
+        "arn": role["arn"],
+        "description": role.get("description", ""),
+        "permissions": role.get("permissions", []),
+        "trust_policy": {
+            "Version": policy.get("Version"),
+            "Statement": redacted,
+        }
+    }
+
+
+def _redact_condition(condition: dict | None) -> dict | None:
+    """Partially redact condition values — show key names but hide exact values."""
+    if not condition:
+        return None
+    redacted = {}
+    for op, checks in condition.items():
+        redacted[op] = {}
+        for key, val in checks.items():
+            # Show the condition key name but hide exact matching value
+            # Replace last segment with placeholder showing pattern length
+            redacted[op][key] = _redact_value(val)
+    return redacted
+
+
+def _redact_value(val: str) -> str:
+    """Redact a condition value to show structure without exact match.
+
+    E.g. "repo:demo-org/demo-repo:*" → "repo:*-org/*-repo:*"
+    """
+    parts = val.split(":")
+    if len(parts) >= 2:
+        # Keep first segment, redact middle by replacing chars with *
+        middle = parts[1] if len(parts) > 1 else parts[-1]
+        redacted_middle = re.sub(r'[a-z0-9]', '*', middle)
+        parts[1] = redacted_middle
+        return ":".join(parts)
+    # If no colon, show pattern with length hint
+    if len(val) > 4:
+        return val[0] + "*" * (len(val) - 2) + val[-1]
+    return val
+
+
+# ---------------------------------------------------------------------------
+# SCP evaluation (for CLOUD-15)
+# ---------------------------------------------------------------------------
+def _evaluate_scp(user: dict, action: str, resource: str, api_version: str = "") -> tuple[bool, str]:
+    """Evaluate Service Control Policy.
+
+    Returns (allowed: bool, reason: str).
+
+    Key vulnerability: API versions before 2011-06-15 do NOT have SCP enforcement
+    (these old API versions predate AWS Organizations SCP introduction).
+    """
+    # If no version or version >= 2011-06-15, SCP is enforced
+    # If version < 2011-06-15, SCP is NOT enforced (legacy API)
+    scp_enforced = True
+    if api_version:
+        try:
+            # Parse version string like "2011-06-15"
+            parts = api_version.split("-")
+            year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
+            if (year, month, day) < (2011, 6, 15):
+                scp_enforced = False
+        except (ValueError, IndexError):
+            pass  # Malformed version → default to enforced
+
+    if not scp_enforced:
+        return (True, "SCP not enforced for API version " + api_version)
+
+    # Evaluate SCP policies
+    scps = _config.get("scp", [])
+    for scp in scps:
+        if scp.get("effect", "").lower() != "deny":
+            continue
+        scp_actions = scp.get("action", "")
+        if isinstance(scp_actions, str):
+            scp_actions = [scp_actions]
+        if action not in scp_actions:
+            continue
+
+        # Check resource match
+        scp_resource = scp.get("resource", "")
+        if scp_resource and scp_resource != resource and scp_resource != "*":
+            continue
+
+        # Check condition (principal match)
+        condition = scp.get("condition", {})
+        for op, checks in condition.items():
+            if op == "StringEquals":
+                principal_arn = checks.get("aws:PrincipalArn", "")
+                user_arn = f"arn:aws:iam::{ACCOUNT_ID}:user/{user['name']}"
+                if principal_arn == user_arn or principal_arn == "*":
+                    return (False, f"explicit deny by SCP ({scp.get('sid','unknown')})")
+
+    return (True, "")
+
+
+import re
+
+
+
 @app.route("/", methods=["POST"])
 def sts_handler():
     """AWS STS Query API handler — dispatches by Action parameter."""
@@ -290,6 +445,7 @@ def _handle_assume_role(params: dict):
     session_name = params.get("RoleSessionName", "unknown")
     ak = params.get("AccessKeyId", "")
     sk = params.get("SecretAccessKey", "")
+    api_version = params.get("Version", "")  # AWS API version (for SCP bypass)
 
     # Find role
     role = _roles_by_arn.get(role_arn)
@@ -305,6 +461,13 @@ def _handle_assume_role(params: dict):
             return _xml_error("SignatureDoesNotMatch", "Secret access key mismatch")
         if "sts:AssumeRole" not in user.get("permissions", []):
             return _xml_error("AccessDenied", "User does not have sts:AssumeRole")
+
+        # SCP evaluation
+        allowed, scp_reason = _evaluate_scp(user, "sts:AssumeRole", role_arn, api_version)
+        if not allowed:
+            return _xml_error("AccessDenied",
+                              f"User lacks permissions to assume this role: {scp_reason}")
+
         # Evaluate trust policy: can this user assume this role?
         if not _evaluate_trust_policy(role, "AWS", f"arn:aws:iam::{ACCOUNT_ID}:user/{user['name']}"):
             return _xml_error("AccessDenied", "Trust policy does not allow this principal")

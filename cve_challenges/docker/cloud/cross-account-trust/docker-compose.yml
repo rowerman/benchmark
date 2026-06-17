@@ -47,4 +47,4 @@ services:
   s3:
     build: ./s3
     environment:
-      - FLAG2=flag{cloud-12-step2-cross-account}
+      - FLAG=flag{cloud-12-step2-cross-account}

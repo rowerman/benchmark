@@ -4,7 +4,6 @@ services:
     ports:
       - "10610:5000"
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-10-default}}
       - BACKEND_URL=http://backend:5000
       - ADMIN_URL=http://admin:5000
     healthcheck:
@@ -19,10 +18,7 @@ services:
       context: ./backend
       args:
         CVE_FLAG: ${CVE_FLAG:-flag{cloud-10-default}}
-    environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-10-default}}
-
   admin:
     build: ./admin
     environment:
-      - FLAG2=flag{cloud-10-step2-admin}
+      - FLAG=${CVE_FLAG:-flag{cloud-10-gateway-admin}}

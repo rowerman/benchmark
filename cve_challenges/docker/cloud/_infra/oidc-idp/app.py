@@ -72,6 +72,17 @@ def health():
     return {"status": "ok", "issuer": ISSUER}
 
 
+@app.route("/orgs")
+def list_orgs():
+    """List known GitHub organizations and their repositories.
+
+    This endpoint allows discovery of which repos can be used
+    as sub claims in OIDC tokens — a necessary reconnaissance
+    step before crafting a JWT for AssumeRoleWithWebIdentity.
+    """
+    return {"organizations": _known_repos}
+
+
 @app.route("/.well-known/openid-configuration")
 def oidc_config():
     """OIDC Discovery document (RFC 8414)."""
@@ -113,13 +124,29 @@ def jwks():
     }
 
 
+# Known organizations and repos (for multi-step discovery)
+# The /token endpoint NOW validates that the sub claim references a known repo
+# — but only at the EXACT match level. Wildcards in the sub are NOT validated.
+# This allows attackers to use StringLike patterns to widen their access.
+_known_repos = {
+    "demo-org": ["demo-repo", "demo-api"],
+    "prod-org": ["prod-frontend", "prod-backend"],
+}
+
+
 @app.route("/token", methods=["POST"])
 def token():
     """Issue a JWT with caller-supplied sub/aud claims.
 
-    Deliberately insecure: accepts ANY sub claim value, allowing
-    attackers to forge tokens with overly broad subject matches
-    (e.g., 'repo:*:*:*').
+    NOW WITH REPO VALIDATION: the sub claim must reference a known
+    repo (checked by EXACT match only). Wildcard patterns like
+    'repo:demo-org/*:*' bypass this validation because '*' is not
+    a known repo name — but the IAM trust policy's StringLike
+    condition WILL match this pattern.
+
+    This accurately simulates the real OIDC trust policy bypass:
+    the IdP correctly validates exact repos, but the IAM condition
+    (StringLike) is more permissive than the IdP.
 
     Request:  {"sub": "repo:org/repo:ref:...", "aud": "sts.amazonaws.com"}
     Response: {"access_token": "...", "token_type": "Bearer", "expires_in": 3600}
@@ -128,7 +155,28 @@ def token():
     if body is None:
         return {"error": "missing or invalid json body"}, 400
 
-    sub = body.get("sub") or "repo:demo-org/demo-repo:ref:refs/heads/main"
+    sub = body.get("sub", "")
+    if not sub:
+        return {"error": "sub claim is required"}, 400
+
+    # Validate that sub references a known repo (exact match OR wildcard)
+    # If sub contains wildcards, skip validation (the IdP can't validate them)
+    if "*" not in sub:
+        valid_repo = False
+        for org, repos in _known_repos.items():
+            for repo in repos:
+                expected = f"repo:{org}/{repo}:ref:refs/heads/main"
+                if sub == expected:
+                    valid_repo = True
+                    break
+            if valid_repo:
+                break
+        if not valid_repo:
+            return {
+                "error": "unknown repository",
+                "hint": f"Known organizations: {list(_known_repos.keys())}",
+            }, 403
+
     aud = body.get("aud", "sts.amazonaws.com")
 
     now = int(time.time())

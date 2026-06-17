@@ -3,11 +3,11 @@ import os, json
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG2 = os.environ.get("FLAG2", "flag{cloud-21-step2-squatting}")
+FLAG = os.environ.get("FLAG", "flag{cloud-21-step2-squatting}")
 _buckets = {}  # Global namespace — all tenants share this
 
 # Victim tenant's data (pre-created, simulating CF auto-creation that references a bucket)
-_buckets["prod-assets-2024"] = {"owner": "victim-tenant", "objects": {"flag.txt": FLAG2, "config.json": '{"db":"prod-db-01"}'}}
+_buckets["prod-assets-2024"] = {"owner": "victim-tenant", "objects": {"flag.txt": FLAG, "config.json": '{"db":"prod-db-01"}'}}
 _buckets["prod-logs-2024"] = {"owner": "victim-tenant", "objects": {"access.log": "192.168.1.1 - admin login"}}
 
 @app.route("/health")

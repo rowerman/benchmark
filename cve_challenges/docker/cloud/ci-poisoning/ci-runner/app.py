@@ -3,7 +3,7 @@ import os, subprocess, json
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG2 = os.environ.get("FLAG2", "flag{cloud-08-step2-pipeline}")
+FLAG = os.environ.get("FLAG", "flag{cloud-08-step2-pipeline}")
 
 @app.route("/health")
 def health(): return {"status": "ok"}
@@ -25,6 +25,6 @@ def run():
 @app.route("/secrets")
 def secrets():
     # Internal endpoint — contains flag
-    return {"FLAG2": FLAG2, "DB_PASSWORD": "ci-db-password"}
+    return {"FLAG": FLAG, "DB_PASSWORD": "ci-db-password"}
 
 if __name__ == "__main__": app.run(host="0.0.0.0", port=5000)

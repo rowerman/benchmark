@@ -47,7 +47,7 @@ services:
     environment:
       S3_ACCESS_KEY: AKIACLOUD01EXAMPLE
       S3_SECRET_KEY: cloud01-imds-secret-key
-      FLAG2: flag{cloud-01-step2-imds}
+      FLAG: flag{cloud-01-imds-s3}
     networks:
       cloud-net:
         ipv4_address: 169.254.0.20

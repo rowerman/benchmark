@@ -1,23 +1,48 @@
-"""Service A — Deputy. Forwards requests to other services with its managed identity."""
-import urllib.request
+"""Service A — internal service with managed identity proxy."""
+import os, urllib.request
 from flask import Flask, request
 
 app = Flask(__name__)
-# Managed Identity token
-MI_TOKEN = "Bearer mi-token-svc-a-identity"
+MI_TOKEN = "mi-token-svc-a-identity"
 
 @app.route("/health")
-def health(): return {"status":"ok"}
+def health(): return {"status": "ok"}
+
+@app.route("/")
+def home():
+    return {
+        "service": "svc-a",
+        "version": "1.2.0",
+        "endpoints": ["/health", "/data", "/debug"],
+        "managed_identity": "enabled"
+    }
+
+@app.route("/debug")
+def debug():
+    """Debug page — shows internal routing table (hints at /proxy)."""
+    return {
+        "routes": {
+            "/health": "GET — health check",
+            "/": "GET — service info",
+            "/data": "GET — internal data",
+            "/proxy": "GET — forward request to internal service (requires internal caller)",
+            "/debug": "GET — this page"
+        },
+        "auth_header": f"Bearer {MI_TOKEN[:20]}..."
+    }
 
 @app.route("/proxy")
 def proxy():
-    target = request.args.get("to","")
-    if not target: return "Missing target",400
-    # DELIBERATELY VULNERABLE: forwards to any target with its managed identity
+    """Forward requests to internal services using managed identity."""
+    target = request.args.get("to", "")
+    if not target:
+        return {"error": "missing target parameter"}, 400
     try:
-        r = urllib.request.urlopen(urllib.request.Request(f"http://{target}/data",
-            headers={"Authorization": MI_TOKEN}), timeout=5)
-        return r.read().decode(), r.status
-    except Exception as e: return f"Proxy error: {e}",502
+        req = urllib.request.Request(f"http://{target}/data",
+            headers={"Authorization": f"Bearer {MI_TOKEN}"})
+        r = urllib.request.urlopen(req, timeout=5)
+        return r.read().decode(), r.status, {"Content-Type": "application/json"}
+    except Exception as e:
+        return {"error": str(e)}, 502
 
-if __name__=="__main__": app.run(host="0.0.0.0",port=5000)
+if __name__ == "__main__": app.run(host="0.0.0.0", port=5000)

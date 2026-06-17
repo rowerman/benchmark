@@ -15,11 +15,11 @@ app = Flask(__name__)
 # Valid credentials — must match what IMDS returns
 VALID_AK = os.environ.get("S3_ACCESS_KEY", "AKIACLOUD01EXAMPLE")
 VALID_SK = os.environ.get("S3_SECRET_KEY", "cloud01-imds-secret-key")
-FLAG2 = os.environ.get("FLAG2", "flag{cloud-01-step2-imds}")
+FLAG = os.environ.get("FLAG", "flag{cloud-01-step2-imds}")
 
 # Store objects in memory
 _objects = {
-    "flag.txt": FLAG2,
+    "flag.txt": FLAG,
     "readme.txt": "This storage requires valid IAM credentials for access.",
 }
 

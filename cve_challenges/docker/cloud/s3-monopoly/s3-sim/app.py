@@ -3,14 +3,20 @@ import os, json
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG2 = os.environ.get("FLAG2","flag{cloud-07-step2-monopoly}")
+FLAG = os.environ.get("FLAG","flag{cloud-07-s3-monopoly}")
 _buckets = {}  # global bucket namespace
 
-# Pre-create a "target" bucket that's referenced by CF
-_buckets["demo-app-assets"] = {"owner": "victim", "objects": {"flag.txt": FLAG2, "config.yml": "db: cloudsql-01"}}
+# Pre-create buckets
+_buckets["demo-app-assets"] = {"owner": "victim", "objects": {"flag.txt": FLAG, "readme.txt": "Public bucket for demo app static assets"}}
+_buckets["dev-logs"] = {"owner": "dev-team", "objects": {"error.log": "2024-01-15 ERROR: null pointer"}}
 
 @app.route("/health")
 def health(): return {"status":"ok"}
+
+@app.route("/")
+def list_buckets():
+    """List all buckets in the global namespace."""
+    return json.dumps({"buckets": list(_buckets.keys())})
 
 @app.route("/buckets/<name>", methods=["PUT","GET"])
 def bucket(name):

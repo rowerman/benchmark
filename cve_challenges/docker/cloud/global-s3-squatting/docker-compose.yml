@@ -2,7 +2,7 @@ services:
   s3-global:
     build: ./s3-global
     environment:
-      - FLAG2=flag{cloud-21-step2-squatting}
+      - FLAG=flag{cloud-21-step2-squatting}
   tenant-a:
     build:
       context: ./tenant-a
@@ -11,5 +11,5 @@ services:
     ports:
       - "10621:5000"
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-21-default}}
+      
       - S3_URL=http://s3-global:5000

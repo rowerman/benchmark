@@ -20,7 +20,7 @@ services:
   saml-idp:
     build: ./saml-idp
     environment:
-      - FLAG2=flag{cloud-13-step2-golden-saml}
+      - FLAG=${CVE_FLAG:-flag{cloud-13-golden-saml}}
 
   # socat proxies — expose internal services to host for nmap detection
   saml-proxy:

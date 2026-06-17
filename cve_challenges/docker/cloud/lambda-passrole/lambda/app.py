@@ -5,7 +5,7 @@ Simulates an AWS Lambda function with a command injection vulnerability.
 The function executes user-supplied code via os.system() and returns output.
 
 Environment variables contain:
-- FLAG2: Control-plane flag (accessible after code execution)
+- FLAG: Control-plane flag (accessible after code execution)
 - IAM_ACCESS_KEY_ID, IAM_SECRET_KEY: Temporary IAM credentials
   (simulating Lambda execution role credentials)
 
@@ -17,7 +17,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-FLAG2 = os.environ.get("FLAG2", "flag{cloud-04-step2-lambda}")
+FLAG = os.environ.get("FLAG", "flag{cloud-04-step2-lambda}")
 IAM_AK = os.environ.get("IAM_ACCESS_KEY_ID", "AKIALAMBDAEXAMPLE")
 IAM_SK = os.environ.get("IAM_SECRET_KEY", "lambda-iam-secret-key")
 

@@ -3,7 +3,7 @@ import os, json
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG2 = os.environ.get("FLAG2", "flag{cloud-22-step2-inference}")
+FLAG = os.environ.get("FLAG", "flag{cloud-22-step2-inference}")
 
 # Shared inference queue — all tenants share this
 _queue = []
@@ -11,7 +11,7 @@ _results = {}  # job_id → result
 
 # Pre-populate with a victim tenant's job that includes sensitive data
 _queue.append({"job_id": "job-001", "tenant": "victim", "model": "classifier",
-               "input_data": f"Sensitive: credit_card=4111-1111-1111-1111, flag={FLAG2}"})
+               "input_data": f"Sensitive: credit_card=4111-1111-1111-1111, flag={FLAG}"})
 
 @app.route("/health")
 def health(): return {"status":"ok"}

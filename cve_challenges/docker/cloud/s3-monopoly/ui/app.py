@@ -1,48 +1,51 @@
-"""S3 Bucket Monopoly — Attacker UI"""
+"""S3 Bucket Monopoly — Attacker UI with bucket enumeration."""
 import os, urllib.request, json
 from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG","flag{cloud-07-default}")
-S3_URL = os.environ.get("S3_URL","http://s3-sim:5000")
+S3 = os.environ.get("S3_URL", "http://s3-sim:5000")
 
-HTML="""<!DOCTYPE html><html><head><title>S3 Explorer</title></head><body>
-<h1>S3 Bucket Explorer</h1>
-<form method="post" action="/create-bucket">
-<input name="bucket" placeholder="bucket-name"><button>Create Bucket</button></form>
-<form method="get" action="/list"><input name="bucket" placeholder="bucket-name"><button>List</button></form>
-<p>{{msg}}</p></body></html>"""
+HTML="""<!DOCTYPE html><html><head><title>S3 Bucket Explorer</title></head><body>
+<h1>S3 Global Namespace Explorer</h1>
+<div style="background:#f0f0f0;padding:10px;margin:10px 0">
+<strong>Step 1: List all buckets</strong> — Enumerate the global S3 namespace.
+<form method=post action=/step1><button>List Buckets</button></form></div>
+<div style="background:#f0f0f0;padding:10px;margin:10px 0">
+<strong>Step 2: Explore a bucket</strong> — View objects and read files.
+<form method=post action=/step2>
+<label>Bucket name: <input name=bucket placeholder="demo-app-assets"></label>
+<button>Explore</button></form></div>
+<pre>{{output}}</pre></body></html>"""
 
 @app.route("/")
-def home(): return render_template_string(HTML, msg="")
+def home(): return render_template_string(HTML, output="Ready — use Step 1 to discover buckets")
 
-@app.route("/create-bucket",methods=["POST"])
-def create():
-    b=request.form.get("bucket","")
+@app.route("/step1", methods=["POST"])
+def step1():
     try:
-        r=urllib.request.urlopen(urllib.request.Request(f"{S3_URL}/buckets/{b}",method="PUT"),timeout=5)
-        return render_template_string(HTML,msg=f"Bucket {b} created: {r.read().decode()}")
-    except Exception as e: return render_template_string(HTML,msg=f"Error: {e}")
+        r = urllib.request.urlopen(f"{S3}/", timeout=5)
+        buckets = json.loads(r.read().decode())
+        return render_template_string(HTML, output=f"[+] Buckets in global namespace:\n{json.dumps(buckets, indent=2)}\n\n[→] Look for buckets that may contain interesting objects.")
+    except Exception as e:
+        return render_template_string(HTML, output=f"[-] Error: {e}")
 
-@app.route("/list")
-def list_bucket():
-    b=request.args.get("bucket","")
+@app.route("/step2", methods=["POST"])
+def step2():
+    bucket = request.form.get("bucket", "")
+    if not bucket:
+        return render_template_string(HTML, output="Error: bucket name required")
     try:
-        r=urllib.request.urlopen(f"{S3_URL}/buckets/{b}",timeout=5)
-        return r.read().decode(),200
-    except Exception as e: return f"Error: {e}",500
+        r = urllib.request.urlopen(f"{S3}/buckets/{bucket}", timeout=5)
+        info = json.loads(r.read().decode())
+        output = f"Bucket: {bucket}\nOwner: {info.get('owner', 'unknown')}\nObjects: {info.get('objects', [])}\n"
+        for obj in info.get("objects", []):
+            try:
+                r2 = urllib.request.urlopen(f"{S3}/buckets/{bucket}/{obj}", timeout=5)
+                output += f"\n--- {obj} ---\n{r2.read().decode()}"
+            except Exception as e:
+                output += f"\n--- {obj} --- Error: {e}"
+        return render_template_string(HTML, output=output)
+    except Exception as e:
+        return render_template_string(HTML, output=f"[-] Error: {e}")
 
-@app.route("/get")
-def get_object():
-    b=request.args.get("bucket",""); k=request.args.get("key","")
-    try:
-        r=urllib.request.urlopen(f"{S3_URL}/buckets/{b}/{k}",timeout=5)
-        return r.read().decode(),200
-    except Exception as e: return f"Error: {e}",500
-
-@app.route("/flag")
-def flag():
-    if request.remote_addr not in ("127.0.0.1","::1"): return "Forbidden",403
-    return FLAG
-
-if __name__=="__main__": app.run(host="0.0.0.0",port=5000)
+if __name__ == "__main__": app.run(host="0.0.0.0", port=5000)

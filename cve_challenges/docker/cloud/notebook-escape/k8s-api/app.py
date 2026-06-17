@@ -3,7 +3,7 @@ import os
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG2 = os.environ.get("FLAG2", "flag{cloud-09-step2-sa-token}")
+FLAG = os.environ.get("FLAG", "flag{cloud-09-step2-sa-token}")
 SA_TOKEN = os.environ.get("SA_TOKEN", "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06YnJpZGdlIiwiaWF0IjoxNTE2MjM5MDIyfQ.")
 
 @app.route("/health")
@@ -24,7 +24,7 @@ def exec_pod(ns, pod):
     # Simulates k8s exec — if using bridge SA token, returns flag
     auth = request.headers.get("Authorization", "")
     if "bridge" in auth or SA_TOKEN in auth:
-        return FLAG2, 200
+        return FLAG, 200
     return "Forbidden", 403
 
 if __name__ == "__main__": app.run(host="0.0.0.0", port=5000)

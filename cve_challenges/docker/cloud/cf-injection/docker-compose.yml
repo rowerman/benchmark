@@ -20,7 +20,7 @@ services:
     build:
       context: ./parser
     environment:
-      - FLAG2=flag{cloud-05-step2-cf-inject}
+      - FLAG=flag{cloud-05-step2-cf-inject}
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
       interval: 15s

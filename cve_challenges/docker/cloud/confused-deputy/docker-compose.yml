@@ -7,11 +7,11 @@ services:
     ports:
       - "10617:5000"
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-17-default}}
+      
       - SVC_A_URL=http://svc-a:5000
   svc-a:
     build: ./svc-a
   svc-b:
     build: ./svc-b
     environment:
-      - FLAG2=flag{cloud-17-step2-deputy}
+      - FLAG=flag{cloud-17-deputy}

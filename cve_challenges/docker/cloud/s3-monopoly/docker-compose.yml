@@ -20,7 +20,7 @@ services:
     build:
       context: ./s3-sim
     environment:
-      - FLAG2=flag{cloud-07-step2-monopoly}
+      - FLAG=flag{cloud-07-step2-monopoly}
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
       interval: 15s

@@ -13,7 +13,7 @@ services:
   lambda:
     build: ./lambda
     environment:
-      - FLAG2=flag{cloud-14-step2-passrole}
+      - FLAG=flag{cloud-14-step2-passrole}
   iam:
     build:
       context: ../_infra/iam-trust

@@ -16,7 +16,7 @@ _tenant_creds = {
                   "Token": "token-for-tenant-b", "role": "s3-readonly"},
 }
 
-FLAG2 = "flag{cloud-20-step2-cross-tenant}"
+FLAG = "flag{cloud-20-step2-cross-tenant}"
 
 @app.route("/health")
 def health(): return {"status": "ok"}
@@ -33,7 +33,7 @@ def get_credentials():
         return {"error": "unknown tenant"}, 404
     creds = dict(_tenant_creds[tenant])
     if tenant == "tenant-a":
-        creds["flag"] = FLAG2  # Tenant A's flag is accessible via proxy
+        creds["flag"] = FLAG  # Tenant A's flag is accessible via proxy
     return creds
 
 if __name__ == "__main__": app.run(host="0.0.0.0", port=5000)

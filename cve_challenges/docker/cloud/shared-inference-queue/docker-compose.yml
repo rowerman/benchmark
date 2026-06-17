@@ -2,7 +2,7 @@ services:
   inference:
     build: ./inference
     environment:
-      - FLAG2=flag{cloud-22-step2-inference}
+      - FLAG=flag{cloud-22-step2-inference}
   tenant-a:
     build:
       context: ./tenant-a
@@ -11,5 +11,5 @@ services:
     ports:
       - "10622:5000"
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-22-default}}
+      
       - INFERENCE_URL=http://inference:5000

@@ -9,6 +9,7 @@ roles:
   # EC2Role — can only be assumed by EC2 service, has S3 read
   - name: EC2Role
     arn: arn:aws:iam::000000000000:role/EC2Role
+    description: Basic EC2 instance role with S3 read access
     trust_policy:
       Version: "2012-10-17"
       Statement:
@@ -23,6 +24,7 @@ roles:
   # AdminRole — trust policy has Principal:"*" with no Condition (deliberately insecure)
   - name: AdminRole
     arn: arn:aws:iam::000000000000:role/AdminRole
+    description: Full admin role with broad trust policy — externally assumable
     trust_policy:
       Version: "2012-10-17"
       Statement:
@@ -39,6 +41,7 @@ roles:
   # GitHubActionsRole — OIDC federation, condition restricts sub claim
   - name: GitHubActionsRole
     arn: arn:aws:iam::000000000000:role/GitHubActionsRole
+    description: OIDC-federated role for GitHub Actions — CI/CD deployments
     trust_policy:
       Version: "2012-10-17"
       Statement:
@@ -57,6 +60,7 @@ roles:
   # Phase 3: CrossAccountRole — trust policy allows cross-account AssumeRole
   - name: CrossAccountRole
     arn: arn:aws:iam::111111111111:role/CrossAccountRole
+    description: Cross-account role trusting external AWS account principals
     trust_policy:
       Version: "2012-10-17"
       Statement:
@@ -85,6 +89,7 @@ roles:
   # Phase 3: SAML Federation Role
   - name: SAMLAdminRole
     arn: arn:aws:iam::000000000000:role/SAMLAdminRole
+    description: Admin role accessible via corporate SAML identity federation
     trust_policy:
       Version: "2012-10-17"
       Statement:
@@ -169,3 +174,17 @@ users:
       - s3:ListBucket
       - iam:GetRole
       - sts:AssumeRole
+
+# Service Control Policies (SCP) — organizational-level guardrails
+# Key: SCP enforcement depends on API version.
+# API versions < 2011-06-15 predate AWS Organizations SCP and
+# are not subject to SCP evaluation (the bypass).
+scp:
+  - sid: DenyScpBypassUserAssumeRoleToAdmin
+    effect: Deny
+    action:
+      - sts:AssumeRole
+    resource: "arn:aws:iam::000000000000:role/AdminRole"
+    condition:
+      StringEquals:
+        "aws:PrincipalArn": "arn:aws:iam::000000000000:user/scp-bypass-user"

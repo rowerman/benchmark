@@ -7,7 +7,7 @@ services:
       args:
         CVE_FLAG: ${CVE_FLAG:-flag{cloud-20-default}}
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-20-default}}
+      
   tenant-b:
     build: ./tenant-b
     ports:

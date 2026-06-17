@@ -3,7 +3,7 @@ import os, urllib.request
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG2 = os.environ.get("FLAG2","flag{cloud-16-step2-silent}")
+FLAG = os.environ.get("FLAG","flag{cloud-16-step2-silent}")
 AUDIT = os.environ.get("AUDIT_URL","http://audit-log:5000")
 
 def log_event(path, caller):
@@ -21,6 +21,6 @@ def api_resources():
 @app.route("/admin/list")
 def admin_list():
     # DELIBERATELY UNLOGGED — this endpoint bypasses audit logging
-    return {"resources":[{"id":"i-001","type":"ec2"},{"id":"flag-store","type":"s3","flag":FLAG2}]}
+    return {"resources":[{"id":"i-001","type":"ec2"},{"id":"flag-store","type":"s3","flag":FLAG}]}
 
 if __name__=="__main__": app.run(host="0.0.0.0",port=5000)

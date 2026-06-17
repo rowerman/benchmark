@@ -22,5 +22,5 @@ services:
   k8s-api:
     build: ./k8s-api
     environment:
-      - FLAG2=flag{cloud-09-step2-sa-token}
+      - FLAG=flag{cloud-09-step2-sa-token}
       - SA_TOKEN=eyJhbGciOiJub25lIn0.eyJzdWIiOiJicmlkZ2UifQ.
