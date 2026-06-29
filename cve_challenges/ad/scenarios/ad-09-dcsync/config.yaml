@@ -4,7 +4,7 @@ scenario:
   technique: "DCSync (ATT&CK T1003.006)"
   difficulty: L2
 network:
-  dc_ip: 192.168.56.10
+  dc_ip: 192.168.100.10
   domain: north.sevenkingdoms.local
 attacker:
   credentials:

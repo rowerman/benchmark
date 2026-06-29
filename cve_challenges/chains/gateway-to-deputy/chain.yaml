@@ -1,5 +1,5 @@
 name: Gateway Header Smuggling to Confused Deputy to Service Tag
-chain_id: Chain-37
+chain_id: Chain-47
 steps: 4
 domains:
 - cloud
@@ -7,20 +7,20 @@ nodes:
 - step: 1
   scenario: cloud-10
   description: X-Forwarded-For 伪造 → 绕过 IP 白名单
-  flag: flag{c37-step1-gateway}
+  flag: flag{c47-step1-gateway}
   next_hint: 访问 admin API 获得内部服务地址
 - step: 2
   scenario: cloud-10
   description: Admin API → 发现内部服务
-  flag: flag{c37-step2-admin}
+  flag: flag{c47-step2-admin}
   next_hint: 内部服务可被 Confused Deputy 利用
 - step: 3
   scenario: cloud-17
   description: Confused Deputy → svc-a 代理到 svc-b
-  flag: flag{c37-step3-deputy}
+  flag: flag{c47-step3-deputy}
   next_hint: svc-b 返回了防火墙配置信息
 - step: 4
   scenario: cloud-18
   description: Service Tag 伪造 → 绕过防火墙 → 最终 flag
-  flag: flag{c37-step4-final}
+  flag: flag{c47-step4-final}
   next_hint: null

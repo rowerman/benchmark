@@ -62,8 +62,8 @@ services:
   imds-proxy:
     image: alpine/socat:latest
     ports:
-      - "10701:10701"
-    command: "TCP-LISTEN:10701,fork,reuseaddr TCP:169.254.169.254:5000"
+      - "10670:10670"
+    command: "TCP-LISTEN:10670,fork,reuseaddr TCP:169.254.169.254:5000"
     networks:
       cloud-net:
     depends_on:
@@ -73,8 +73,8 @@ services:
   s3-proxy:
     image: alpine/socat:latest
     ports:
-      - "10704:10704"
-    command: "TCP-LISTEN:10704,fork,reuseaddr TCP:s3:5000"
+      - "10671:10671"
+    command: "TCP-LISTEN:10671,fork,reuseaddr TCP:s3:5000"
     networks:
       cloud-net:
     depends_on:

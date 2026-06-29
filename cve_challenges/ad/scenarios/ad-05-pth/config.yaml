@@ -4,8 +4,8 @@ scenario:
   technique: "Pass-the-Hash (ATT&CK T1550.002)"
   difficulty: L2
 network:
-  dc_ip: 192.168.56.10
-  target_host: "castelblack (192.168.56.11)"
+  dc_ip: 192.168.100.10
+  target_host: "castelblack (192.168.100.11)"
   domain: north.sevenkingdoms.local
 attacker:
   entry: "After compromising lowpriv credentials and extracting NTLM hash"

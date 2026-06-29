@@ -122,11 +122,11 @@ kubectl exec -n ingress-nginx "$CONTROLLER_POD" -- sh -c "echo '$FLAG' > /tmp/fl
 }
 
 k8s_info
-echo "    Admission Webhook: https://localhost:10443/validate"
+echo "    Admission Webhook: https://localhost:10443/networking/v1/ingresses"
 echo ""
 echo "    Exploitation steps:"
 echo "    1. Verify webhook access:"
-echo "       curl -k https://localhost:10443/validate"
+echo "       curl -k https://localhost:10443/networking/v1/ingresses"
 echo "    2. Craft malicious AdmissionReview payload (see docs/k8s-20)"
 echo "    3. Send exploit to achieve RCE in ingress-nginx controller"
 echo "    4. Read flag: cat /tmp/flag.txt (inside controller pod)"

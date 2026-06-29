@@ -1,8 +1,8 @@
 # Chain: "Container Escape to Cluster Admin" (K8s-Chain-1)
-# Steps: 4 | Domains: K8s only
+# Steps: 3 | Domains: K8s only
 name: "Container Escape to Cluster Admin"
 chain_id: K8s-Chain-1
-steps: 4
+steps: 3
 domains: [k8s]
 nodes:
   - step: 1

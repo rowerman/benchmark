@@ -170,6 +170,31 @@ k8s_wait_pods_label "app=mutating-webhook" "webhook-ns"
 k8s_wait_pods_label "app=target-app" "target-ns"
 sleep 5
 
+echo "[*] Creating MutatingWebhookConfiguration..."
+# Get the CA bundle from the cluster (self-signed in KIND)
+CA_BUNDLE=$(kubectl config view --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
+kubectl apply -f - << YAML
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: sidecar-injector
+webhooks:
+  - name: sidecar-injector.webhook-ns.svc
+    clientConfig:
+      url: "https://mutating-webhook.webhook-ns.svc:443/mutate"
+      caBundle: ${CA_BUNDLE}
+    rules:
+      - operations: ["CREATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: target-ns
+    sideEffects: None
+    admissionReviewVersions: ["v1"]
+YAML
+
 k8s_info
 echo "    Flag Secret: vault-flag in target-ns namespace"
 echo "    Webhook: mutating-webhook.webhook-ns.svc:443/mutate"

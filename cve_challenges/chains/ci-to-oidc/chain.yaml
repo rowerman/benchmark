@@ -1,5 +1,5 @@
 name: CI/CD Poisoning to OIDC Federation to Logging Gap
-chain_id: Chain-34
+chain_id: Chain-45
 steps: 4
 domains:
 - cloud
@@ -7,20 +7,20 @@ nodes:
 - step: 1
   scenario: cloud-08
   description: CI/CD 脚本注入 → 泄露 CI 环境
-  flag: flag{c34-step1-ci}
+  flag: flag{c45-step1-ci}
   next_hint: CI 环境中发现了 OIDC IdP 的 URL
 - step: 2
   scenario: cloud-11
   description: 发现 OIDC IdP → 签发 JWT → AssumeRoleWithWebIdentity
-  flag: flag{c34-step2-oidc}
+  flag: flag{c45-step2-oidc}
   next_hint: 角色凭据可访问跨账号资源
 - step: 3
   scenario: cloud-12
   description: 跨账号 AssumeRole → 获取管理员权限
-  flag: flag{c34-step3-cross}
+  flag: flag{c45-step3-cross}
   next_hint: 使用管理员权限静默枚举资源
 - step: 4
   scenario: cloud-16
   description: Logging Gap → 无痕窃取最终 flag
-  flag: flag{c34-step4-final}
+  flag: flag{c45-step4-final}
   next_hint: null

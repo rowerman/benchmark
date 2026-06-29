@@ -1,6 +1,6 @@
 name: "CAP_SYS_ADMIN to Full Cluster"
 id: chain-12
-steps: 4
+steps: 3
 nodes:
   - scenario: k8s-14
     flag: "flag{chain12-step1-capsys}"

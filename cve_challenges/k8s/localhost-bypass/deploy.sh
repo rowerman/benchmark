@@ -16,7 +16,7 @@ k8s_load_images alpine:latest nginx:1.24-alpine
 echo "[*] Setting up node-localhost service with flag..."
 # Deploy a pod with hostNetwork that listens on 127.0.0.1:11080
 # This simulates a sensitive service bound only to localhost on the node
-k8s_apply << 'YAML'
+k8s_apply << YAML
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -34,8 +34,8 @@ spec:
       image: nginx:1.24-alpine
       imagePullPolicy: IfNotPresent
       command: ["sh", "-c"]
-          args:
-            -           - "printf 'server { listen 127.0.0.1:11080; location /flag { return 200 FLAG_CONTENT\\\\n; } }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+      args:
+        - "printf 'server { listen 127.0.0.1:11080; location /flag { return 200 \"${CVE_FLAG}\"; } }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
       securityContext:
         privileged: false
 ---

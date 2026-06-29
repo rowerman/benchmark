@@ -19,8 +19,10 @@ services:
   parser:
     build:
       context: ./parser
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-05-default}}
     environment:
-      - FLAG=flag{cloud-05-step2-cf-inject}
+      - FLAG=${CVE_FLAG:-flag{cloud-05-default}}
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
       interval: 15s

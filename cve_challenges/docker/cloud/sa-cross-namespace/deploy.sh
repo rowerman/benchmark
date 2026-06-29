@@ -2,7 +2,7 @@
 set -euo pipefail
 K8S_ID="cloud-03"
 CLUSTER_NAME="cve-cloud03-sa-cross-ns"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[CLOUD-03] K8s SA Token → Cross-Namespace Access"
 k8s_init
@@ -58,6 +58,9 @@ spec:
     - name: attacker
       image: python:3.11-slim
       command: ["sleep", "infinity"]
+      env:
+        - name: STEP1_FLAG
+          value: "flag{cloud-03-step1-sa}"
 YAML
 
 # Deploy target pod in tenant-b with flag secret

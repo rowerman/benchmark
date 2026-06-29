@@ -98,7 +98,7 @@ spec:
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c"]
           args:
-            -           - "printf 'server { listen 8080; location /health { return 200 \\"{\\\\\\"status\\\\\\":\\\\\\"ok\\\\\\"}\\\\"; } location / { return 200 \\"API v1.0\\\"; } }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+            - "printf 'server { listen 8080; location /health { return 200 ok; } location / { return 200; } }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
           ports:
             - containerPort: 8080
 ---
@@ -115,9 +115,8 @@ spec:
       image: nginx:1.24-alpine
       imagePullPolicy: IfNotPresent
       command: ["sh", "-c"]
-          args:
-          - "apk add --no-cache curl bash >/dev/null 2>&1 && echo attacker-ready && nginx -g 'daemon off;' & sleep 3600"
-          sleep 3600
+      args:
+        - "apk add --no-cache curl bash >/dev/null 2>&1 && echo attacker-ready && nginx -g 'daemon off;' & sleep 3600"
       ports:
         - containerPort: 8080
 YAML

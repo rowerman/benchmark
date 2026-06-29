@@ -2,7 +2,7 @@
 set -euo pipefail
 K8S_ID="cloud-02"
 CLUSTER_NAME="cve-cloud02-cap-netraw"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[CLOUD-02] Container Escape via CAP_NET_RAW → Metadata MITM"
 k8s_init
@@ -69,7 +69,7 @@ spec:
           value: "flag{cloud-02-step1-netraw}"
 YAML
 
-# Deploy attacker pod with CAP_NET_RAW
+# Deploy attacker pod with CAP_NET_RAW + network tools
 kubectl apply -f - << 'YAML'
 apiVersion: v1
 kind: Pod
@@ -81,7 +81,9 @@ spec:
   containers:
     - name: attacker
       image: python:3.11-slim
-      command: ["sleep", "infinity"]
+      command: ["sh", "-c"]
+      args:
+        - "apt-get update -qq && apt-get install -y -qq dsniff tcpdump iproute2 2>/dev/null; echo 'Tools ready: arpspoof, tcpdump, ip'; sleep infinity"
       securityContext:
         capabilities:
           add: ["NET_RAW"]

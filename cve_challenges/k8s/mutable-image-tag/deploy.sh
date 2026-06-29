@@ -14,7 +14,7 @@ k8s_create_cluster
 k8s_wait_ready
 
 # Deploy with mutable tag + Always pull
-k8s_apply << 'YAML'
+k8s_apply << YAML
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,6 +29,7 @@ spec:
       labels:
         app: vulnerable-app
     spec:
+      serviceAccountName: default
       containers:
         - name: app
           image: nginx:1.24-alpine
@@ -36,6 +37,30 @@ spec:
           env:
             - name: FLAG
               value: "${CVE_FLAG}"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: configmap-reader
+  namespace: default
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: default-configmap-reader
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: default
+roleRef:
+  kind: Role
+  name: configmap-reader
+  apiGroup: rbac.authorization.k8s.io
 YAML
 
 k8s_create_k8s_configmap "app-config"

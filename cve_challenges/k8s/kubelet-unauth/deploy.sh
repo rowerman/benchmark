@@ -11,7 +11,7 @@ k8s_wait_ready
 # Flag in kube-system as a secret
 k8s_create_k8s_secret "kubelet-flag" "kube-system"
 
-# Deploy a pod with flag
+# Deploy a pod with flag mounted as env var (visible via kubelet /pods API)
 k8s_apply << 'YAML'
 apiVersion: v1
 kind: Pod
@@ -22,6 +22,12 @@ spec:
   containers:
     - name: nginx
       image: nginx:1.24-alpine
+      env:
+        - name: FLAG
+          valueFrom:
+            secretKeyRef:
+              name: kubelet-flag
+              key: flag
 YAML
 
 k8s_info

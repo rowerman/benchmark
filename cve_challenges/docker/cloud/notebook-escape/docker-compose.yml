@@ -10,8 +10,12 @@ services:
       - FLAG=${CVE_FLAG:-flag{cloud-09-default}}
       - K8S_API_URL=http://k8s-api:5000
     # Mount docker socket to simulate container escape path
+    # Flag is on host at /tmp/cloud-09-flag/flag.txt — requires Docker escape to read
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/cloud-09-flag:/tmp/cloud-09-flag
+    # Write flag to host-accessible location for Docker escape attack path
+    entrypoint: ["sh", "-c", "mkdir -p /tmp/cloud-09-flag && echo \"${CVE_FLAG:-flag{cloud-09-default}}\" > /tmp/cloud-09-flag/flag.txt && exec python /app/app.py"]
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
       interval: 15s

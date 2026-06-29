@@ -960,6 +960,8 @@ scenarios:
     difficulty: L3
     cve: ATT&CK T1484 + T1003.006
     path: ad/scenarios/ad-22-cross-forest
+    status: not_implemented
+    note: "Documentation-only; requires second Samba AD DC with cross-forest trust"
   ad-23:
     id: AD-23
     name: AdminSDHolder ACL Persistence
@@ -967,6 +969,8 @@ scenarios:
     difficulty: L3
     cve: ATT&CK T1098 / T1484
     path: ad/scenarios/ad-23-adminsdholder
+    status: not_implemented
+    note: "Documentation-only; requires AdminSDHolder ACL setup in Samba AD"
   lkx-01:
     id: LKX-01
     name: Kernel Module UAF (Use-After-Free)

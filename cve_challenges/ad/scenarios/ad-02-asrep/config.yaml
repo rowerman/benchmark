@@ -4,10 +4,10 @@ scenario:
   technique: "AS-REP Roasting (ATT&CK T1558.004)"
   difficulty: L1
 network:
-  dc_ip: 192.168.56.10
+  dc_ip: 192.168.100.10
   domain: north.sevenkingdoms.local
 attacker:
-  entry: "Kali Linux (192.168.56.50)"
+  entry: "Samba AD DC (Docker) at 192.168.100.10"
   credentials:
     username: lowpriv
     password: "Password123!"

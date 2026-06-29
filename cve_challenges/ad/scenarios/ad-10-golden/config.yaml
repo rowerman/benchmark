@@ -4,7 +4,7 @@ scenario:
   technique: "Golden Ticket (ATT&CK T1558.001)"
   difficulty: L3
 network:
-  dc_ip: 192.168.56.10
+  dc_ip: 192.168.100.10
   domain: north.sevenkingdoms.local
   parent_domain: sevenkingdoms.local
   forest: "3 domains, 2 forests (full GOAD)"

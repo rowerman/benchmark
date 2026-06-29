@@ -13,6 +13,11 @@ _buckets["prod-logs-2024"] = {"owner": "victim-tenant", "objects": {"access.log"
 @app.route("/health")
 def health(): return {"status":"ok"}
 
+@app.route("/")
+def list_buckets():
+    """List all buckets in the global namespace (public metadata)."""
+    return json.dumps({"buckets": list(_buckets.keys())})
+
 @app.route("/buckets/<name>", methods=["PUT","GET"])
 def bucket(name):
     if request.method == "PUT":
