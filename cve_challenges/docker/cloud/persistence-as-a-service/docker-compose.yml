@@ -1,0 +1,43 @@
+services:
+  credential-vault:
+    build: ./credential-vault
+    environment:
+      - VAULT_TOKEN=vault-token-abc
+      - INITIAL_SECRET=secret-v1
+    networks:
+      c42-net:
+        ipv4_address: 10.42.0.10
+  victim-resource:
+    build: ./victim-resource
+    environment:
+      - FLAG=flag{cloud-42-persistence}
+    networks:
+      c42-net:
+        ipv4_address: 10.42.0.20
+  automation-service:
+    build: ./automation-service
+    environment:
+      - VAULT_URL=http://credential-vault:5000
+      - VAULT_TOKEN=vault-token-abc
+      - VICTIM_URL=http://victim-resource:5000
+    networks:
+      c42-net:
+        ipv4_address: 10.42.0.30
+  attacker:
+    build: ./attacker
+    ports:
+      - "10642:5000"
+    environment:
+      - AUTOMATION_URL=http://automation-service:5000
+      - VAULT_URL=http://credential-vault:5000
+      - VICTIM_URL=http://victim-resource:5000
+      - VAULT_TOKEN=vault-token-abc
+    networks:
+      c42-net:
+        ipv4_address: 10.42.0.40
+networks:
+  c42-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.42.0.0/24

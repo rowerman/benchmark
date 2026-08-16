@@ -2,11 +2,11 @@
 """Translate BENCHMARK_SUMMARY.md to Chinese, preserving technical terms.
 
 Workflow:
-  1. python benchmarks/cve_challenges/scripts/build_benchmark_summary.py
+  1. python cve_challenges/scripts/build_benchmark_summary.py
   2. pip install deep-translator
-  3. python benchmarks/cve_challenges/scripts/translate_benchmark_summary.py
+  3. python cve_challenges/scripts/translate_benchmark_summary.py
 
-Output: benchmarks/BENCHMARK_SUMMARY.zh.md (English source unchanged)
+Output: BENCHMARK_SUMMARY.zh.md (English source unchanged)
 """
 
 from __future__ import annotations
@@ -207,7 +207,7 @@ PROTECT_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("cve", re.compile(r"CVE-\d{4}-\d+")),
     ("cvss", re.compile(r"CVSS\s+[\d.]+")),
     ("attack", re.compile(r"T\d{4}(?:\.\d{3})?")),
-    ("scenario_id", re.compile(r"\b(?:WEB|DB|LNX|CLOUD|DEF|NET|CI|LKX|K8S|AD)-\d{2}\b")),
+    ("scenario_id", re.compile(r"\b(?:WEB|DB|CLOUD|K8S)-\d{2}\b")),
     ("url", re.compile(r"https?://[^\s)\]`>]+")),
     ("localhost", re.compile(r"localhost(?::\d+)?(?:/[^\s)\]`>]*)?")),
     ("docker_image", re.compile(r"\b[\w.-]+:\d[\w.-]*(?:-[\w.-]+)*\b")),
@@ -228,7 +228,7 @@ FENCE_RE = re.compile(r"^(```+)(\s*(\w[\w-]*)?\s*)$")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$")
 TABLE_SEP_RE = re.compile(r"^\|[-:\s|]+\|$")
 SCENARIO_TITLE_RE = re.compile(
-    r"^(#{2,6})\s+((?:WEB|DB|LNX|CLOUD|DEF|NET|CI|LKX|K8S|AD)-\d{2}:\s*)(.+)$"
+    r"^(#{2,6})\s+((?:WEB|DB|CLOUD|K8S)-\d{2}:\s*)(.+)$"
 )
 MAX_CHUNK = 4500
 REQUEST_DELAY = 0.4

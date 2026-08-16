@@ -1,0 +1,43 @@
+services:
+  build-worker:
+    build: ./build-worker
+    environment:
+      - BUILD_SECRET=build-fleet-internal-secret
+    networks:
+      c29-net:
+        ipv4_address: 10.29.0.10
+  internal-registry:
+    build: ./internal-registry
+    environment:
+      - VICTIM_IMAGE=echo 'victim app running'; id
+    networks:
+      c29-net:
+        ipv4_address: 10.29.0.20
+  tenant-puller:
+    build:
+      context: ./tenant-puller
+      args:
+        CVE_FLAG: flag{cloud-29-victim-image}
+    environment:
+      - REGISTRY_URL=http://internal-registry:5000
+      - IMAGE_NAME=victim-app:latest
+    networks:
+      c29-net:
+        ipv4_address: 10.29.0.30
+  attacker:
+    build: ./attacker
+    ports:
+      - "10629:5000"
+    environment:
+      - BUILD_URL=http://build-worker:5000
+      - REGISTRY_URL=http://internal-registry:5000
+      - PULLER_URL=http://tenant-puller:5000
+    networks:
+      c29-net:
+        ipv4_address: 10.29.0.40
+networks:
+  c29-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.29.0.0/24

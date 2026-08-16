@@ -54,24 +54,6 @@ case "$TYPE" in
     echo "[+] Flag: $FLAG"
     ;;
 
-  vagrant)
-    cd "$SCENARIO_PATH"
-    echo "[+] Starting VM..."
-    echo "[+] Flag: $FLAG"
-    # Try QEMU first (works without VirtualBox), fallback to Vagrant
-    if [ -f qemu.sh ]; then
-      echo "[+] Using QEMU TCG mode (no KVM required)"
-      echo "[+] Run: cd $SCENARIO_PATH && bash qemu.sh"
-    elif command -v vagrant &>/dev/null; then
-      vagrant up
-      echo "[+] Scenario $SCENARIO_ID started (Vagrant)"
-    else
-      echo "[!] No VM runtime available. Options:"
-      echo "[!]   QEMU: cd $SCENARIO_PATH && bash qemu.sh"
-      echo "[!]   Vagrant: install VirtualBox, then vagrant up"
-    fi
-    ;;
-
   k8s)
     cd "$SCENARIO_PATH"
     echo "[+] Starting K8s scenario..."
@@ -84,25 +66,6 @@ case "$TYPE" in
     echo "[+] Scenario $SCENARIO_ID started (K8s)"
     echo "[+] Flag: $FLAG"
     ;;
-
-  samba-ad)
-    echo "[+] Starting Samba AD DC (shared Docker container)..."
-    AD_COMPOSE="$ROOT_DIR/ad/docker-compose.yml"
-    if docker ps --format '{{.Names}}' | grep -q ad-dc01; then
-      echo "[+] AD DC already running"
-    else
-      docker compose -f "$AD_COMPOSE" up -d --build 2>&1 | tail -3
-      echo "[*] Waiting for AD provisioning (~60s)..."
-      sleep 15
-    fi
-    echo "[+] AD DC at 192.168.100.10, domain: north.sevenkingdoms.local"
-    echo "[+] Scenario $SCENARIO_ID ready (Samba AD)"
-    ;;
-
-  ad)
-    echo "[*] AD scenario (Windows-Only) — requires GOAD + VirtualBox/Windows Server"
-    echo "[!] Platform: windows-only — not deployable on this host"
-    echo "[+] Config at: $SCENARIO_PATH/config.yaml"  ;;
 
   *)
     echo "[!] Unknown scenario type: $TYPE"

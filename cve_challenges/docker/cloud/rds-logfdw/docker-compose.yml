@@ -1,0 +1,41 @@
+services:
+  db:
+    build: ./db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: clouddb
+    networks:
+      c24-net:
+        ipv4_address: 10.24.0.20
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  console:
+    build: ./console
+    ports:
+      - "10624:5000"
+    environment:
+      - DB_URL=postgresql://postgres:postgres@db:5432/clouddb
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      c24-net:
+        ipv4_address: 10.24.0.10
+  internal-api:
+    build: ./internal-api
+    environment:
+      - INTERNAL_TOKEN=grover-internal-credential-token
+      - FLAG2=flag{cloud-24-internal-api}
+    networks:
+      c24-net:
+        ipv4_address: 10.24.0.30
+networks:
+  c24-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.24.0.0/24

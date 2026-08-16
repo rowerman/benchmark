@@ -1,6 +1,6 @@
-name: Lambda Injection to Cross-Account Takeover
+name: Lambda Injection to Invisible Recon to Cross-Account
 chain_id: Chain-33
-steps: 4
+steps: 3
 domains:
 - cloud
 nodes:
@@ -10,17 +10,12 @@ nodes:
   flag: flag{c33-step1-lambda}
   next_hint: 环境变量中有 IAM AK/SK
 - step: 2
-  scenario: cloud-14
-  description: PassRole 滥用 → Lambda 特权执行
-  flag: flag{c33-step2-passrole}
-  next_hint: Lambda 返回了更高权限的凭据
+  scenario: cloud-34
+  description: IAM 枚举 oracle → 无日志发现目标角色
+  flag: flag{c33-step2-enum}
+  next_hint: 枚举到可跨账号假设的角色
 - step: 3
   scenario: cloud-12
-  description: AssumeRole AdminRole → 获取管理员权限
-  flag: flag{c33-step3-admin}
-  next_hint: 管理员凭据可访问跨账号资源
-- step: 4
-  scenario: cloud-12
-  description: 跨账号访问 S3 → 最终 flag
-  flag: flag{c33-step4-final}
+  description: AssumeRole → 跨账号访问 → 最终 flag
+  flag: flag{c33-step3-final}
   next_hint: null

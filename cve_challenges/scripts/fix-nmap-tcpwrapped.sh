@@ -5,11 +5,6 @@
 # 此脚本在 DOCKER-USER chain 插入 ACCEPT 规则（Docker 重启后保留）
 # 需要 root/sudo 权限执行
 #
-# 注意：Samba AD 场景的 TCP 端口通过以下方式解决 tcpwrapped：
-#   1. ad-proxy (eager-connect, host network) — 用于 localhost 访问
-#   2. configure_samba_for_nmap.sh — 配置 Samba 响应 nmap 探测（直接扫描 DC）
-# 此脚本仅需处理 UDP 端口和通过 Docker -p 发布的非 AD TCP 端口。
-
 set -euo pipefail
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -18,26 +13,6 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 echo "[*] Fixing nmap tcpwrapped for Docker-published ports..."
-
-# ============================================================
-# AD DC (Samba AD) UDP ports
-# UDP 端口仍使用 Docker -p 发布，需要通过 iptables 规则
-# 避免 tcpwrapped。TCP 端口已通过 ad-proxy (host network)
-# 解决，不需要额外 iptables 规则。
-# ============================================================
-AD_UDP_PORTS=(
-  10053   # DNS (UDP)
-  10088   # Kerberos (UDP)
-  10464   # Kerberos Change/Set Password (UDP)
-)
-
-# ============================================================
-# AD Service Discovery — HTTP endpoint on DC container
-# Docker -p 发布，可能受 iptables 影响
-# ============================================================
-DISCOVERY_PORTS=(
-  10080   # AD service discovery JSON endpoint (on dc01)
-)
 
 # ============================================================
 # MSSQL scenarios — TDS 协议不发送明文 banner
@@ -62,22 +37,33 @@ CLOUD_WEB_PORTS=(
   10601   # cloud-01 ssrf-to-imds
   10604   # cloud-04 lambda-passrole
   10605   # cloud-05 cf-injection
-  10606   # cloud-06 db-to-imds
-  10607   # cloud-07 s3-monopoly
   10608   # cloud-08 ci-poisoning
   10609   # cloud-09 notebook-escape
-  10610   # cloud-10 gateway-smuggling
   10611   # cloud-11 oidc-federation
   10612   # cloud-12 cross-account-trust
   10613   # cloud-13 golden-saml
-  10614   # cloud-14 passrole-abuse
   10615   # cloud-15 scp-bypass
-  10616   # cloud-16 logging-gap
-  10617   # cloud-17 confused-deputy
-  10618   # cloud-18 svc-tag-spoof
-  10620   # cloud-20 shared-metadata-proxy
   10621   # cloud-21 global-s3-squatting
-  10622   # cloud-22 shared-inference-queue
+  10623   # cloud-23 cosmiss-notebook
+  10624   # cloud-24 rds-logfdw
+  10625   # cloud-25 cloudsql-index-rce
+  10626   # cloud-26 synlapse-ir
+  10627   # cloud-27 extrareplica-repl
+  10628   # cloud-28 wireserver-bootstrap
+  10629   # cloud-29 buildfleet-registry
+  10630   # cloud-30 pickle-model
+  10631   # cloud-31 attachme-volume
+  10632   # cloud-32 actor-token
+  10633   # cloud-33 omigod-agent
+  10634   # cloud-34 iam-enum-oracle
+  10635   # cloud-35 beta-endpoint
+  10636   # cloud-36 resource-explorer
+  10637   # cloud-37 composer-depconf
+  10638   # cloud-38 lowcode-secrets
+  10639   # cloud-39 shared-nat
+  10640   # cloud-40 dataform-pt
+  10641   # cloud-41 serverless-sa
+  10642   # cloud-42 persistence-as-a-service
 )
 
 # ============================================================
@@ -93,25 +79,12 @@ CLOUD_PROXY_PORTS=(
   10707   # SAML IdP proxy
 )
 
-ALL_TCP_PORTS=("${DISCOVERY_PORTS[@]}" "${MSSQL_PORTS[@]}" "${ORACLE_PORTS[@]}" "${CLOUD_WEB_PORTS[@]}" "${CLOUD_PROXY_PORTS[@]}")
+ALL_TCP_PORTS=("${MSSQL_PORTS[@]}" "${ORACLE_PORTS[@]}" "${CLOUD_WEB_PORTS[@]}" "${CLOUD_PROXY_PORTS[@]}")
 
 added=0
 skipped=0
 
-# ── UDP ports (AD Kerberos, DNS, KDC) ────────────────────────────
-for port in "${AD_UDP_PORTS[@]}"; do
-  if ! iptables -C DOCKER-USER -p udp --dport "$port" -j ACCEPT 2>/dev/null; then
-    iptables -I DOCKER-USER 1 -p udp --dport "$port" -j ACCEPT
-    echo "  + ACCEPT udp/$port"
-    ((added++))
-  else
-    ((skipped++))
-  fi
-done
-
-# ── TCP ports (discovery, MSSQL, Oracle) ─────────────────────────
-# AD TCP ports are handled by ad-proxy (eager-connect, host network)
-# so they don't need iptables rules here.
+# ── TCP ports (MSSQL, Oracle, Cloud) ─────────────────────────────
 for port in "${ALL_TCP_PORTS[@]}"; do
   if ! iptables -C DOCKER-USER -p tcp --dport "$port" -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT 2>/dev/null; then
     iptables -I DOCKER-USER 1 -p tcp --dport "$port" -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT

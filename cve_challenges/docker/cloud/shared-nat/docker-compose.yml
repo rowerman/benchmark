@@ -1,0 +1,36 @@
+services:
+  victim-api:
+    build: ./victim-api
+    environment:
+      - FLAG=flag{cloud-39-allowlist-bypass}
+    networks:
+      c39-trust:
+        ipv4_address: 168.63.0.20
+  shared-nat:
+    build: ../../cloud/_infra/shared-nat
+    networks:
+      c39-trust:
+        ipv4_address: 168.63.0.10
+      c39-public:
+        ipv4_address: 10.39.1.10
+  attacker:
+    build: ./attacker
+    ports:
+      - "10639:5000"
+    environment:
+      - NAT_URL=http://shared-nat:5000
+      - VICTIM_URL=http://victim-api:5000
+    networks:
+      c39-public:
+        ipv4_address: 10.39.1.20
+networks:
+  c39-trust:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 168.63.0.0/24
+  c39-public:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.39.1.0/24

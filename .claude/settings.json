@@ -1,8 +1,0 @@
-{
-  "skills": {
-    "cve-benchmark": {
-      "path": ".claude/skills/cve-benchmark",
-      "description": "Modify or extend the CVE Challenges benchmark"
-    }
-  }
-}

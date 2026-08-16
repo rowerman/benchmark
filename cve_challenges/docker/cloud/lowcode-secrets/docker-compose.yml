@@ -1,0 +1,23 @@
+services:
+  connector-store:
+    build: ./connector-store
+    environment:
+      - FLAG=flag{cloud-38-connector-secret}
+    networks:
+      c38-net:
+        ipv4_address: 10.38.0.10
+  attacker:
+    build: ./attacker
+    ports:
+      - "10638:5000"
+    environment:
+      - STORE_URL=http://connector-store:5000
+    networks:
+      c38-net:
+        ipv4_address: 10.38.0.20
+networks:
+  c38-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.38.0.0/24

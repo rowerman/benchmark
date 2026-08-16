@@ -1,4 +1,4 @@
-name: "Web RCE to DB Escape to IMDS to Cross-Account"
+name: "Web RCE to Managed DB Escape to IMDS to Cross-Account"
 chain_id: Chain-42
 steps: 5
 domains:
@@ -14,12 +14,12 @@ nodes:
     scenario: db-01
     description: "PostgreSQL 弱口令 → 数据库访问"
     flag: "flag{c42-step2-db}"
-    next_hint: "数据库有 COPY FROM PROGRAM 权限 → 可执行 OS 命令"
+    next_hint: "数据库是托管引擎且带供应商补丁缺陷"
   - step: 3
-    scenario: cloud-06
-    description: "COPY FROM PROGRAM → OS 逃逸 → 访问云基础设施"
+    scenario: cloud-25
+    description: "引擎补丁 → 索引函数以供应商角色执行 → 宿主 RCE"
     flag: "flag{c42-step3-escape}"
-    next_hint: "从 DB 容器可访问 IMDS 端点"
+    next_hint: "从宿主可访问 IMDS 端点"
   - step: 4
     scenario: cloud-01
     description: "SSRF → IMDS → 窃取 IAM 临时凭据"

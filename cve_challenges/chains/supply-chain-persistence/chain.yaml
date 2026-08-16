@@ -1,0 +1,21 @@
+name: Build Fleet Registry to Dependency Confusion to Persistence
+chain_id: Chain-53
+steps: 3
+domains:
+- cloud
+nodes:
+- step: 1
+  scenario: cloud-29
+  description: 构建舰队 → 内部 registry 覆盖受害者镜像
+  flag: flag{c53-step1-registry}
+  next_hint: 供应链控制权可投递到托管数据平台
+- step: 2
+  scenario: cloud-37
+  description: 依赖混淆 → 平台 worker 执行恶意包
+  flag: flag{c53-step2-depconf}
+  next_hint: 平台身份可注册托管自动化
+- step: 3
+  scenario: cloud-42
+  description: 持久化即服务 → 轮换后仍可持续访问 → 最终 flag
+  flag: flag{c53-step3-final}
+  next_hint: null

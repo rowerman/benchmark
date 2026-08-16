@@ -1,0 +1,33 @@
+services:
+  control-api:
+    build: ./control-api
+    environment:
+      - WORKER_URL=http://ir-worker:5000
+    networks:
+      c26-net:
+        ipv4_address: 10.26.0.10
+  ir-worker:
+    build: ./ir-worker
+    networks:
+      c26-net:
+        ipv4_address: 10.26.0.20
+  tenant-b:
+    build: ./tenant-b
+    networks:
+      c26-net:
+        ipv4_address: 10.26.0.30
+  attacker:
+    build: ./attacker
+    ports:
+      - "10626:5000"
+    environment:
+      - API_URL=http://control-api:5000
+    networks:
+      c26-net:
+        ipv4_address: 10.26.0.40
+networks:
+  c26-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.26.0.0/24

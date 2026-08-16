@@ -1,0 +1,21 @@
+name: Cloud Middleware RCE to Shared Egress to Shared Runtime
+chain_id: Chain-52
+steps: 3
+domains:
+- cloud
+nodes:
+- step: 1
+  scenario: cloud-33
+  description: OMI 类中间件无鉴权通道 → 租户 VM root
+  flag: flag{c52-step1-root}
+  next_hint: VM 上的流量经共享 NAT 出口
+- step: 2
+  scenario: cloud-39
+  description: 共享 NAT 出口 → 源 IP 白名单绕过
+  flag: flag{c52-step2-egress}
+  next_hint: 内网可提交管道到共享集成运行时
+- step: 3
+  scenario: cloud-26
+  description: 共享集成运行时 → 转储 co-tenant 凭据 → 最终 flag
+  flag: flag{c52-step3-final}
+  next_hint: null

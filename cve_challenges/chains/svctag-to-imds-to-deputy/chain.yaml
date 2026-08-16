@@ -1,26 +1,21 @@
-name: "Service Tag Spoofing to IMDS to Confused Deputy"
+name: "Shared Egress Bypass to IMDS to Cross-Account"
 chain_id: Chain-44
-steps: 4
+steps: 3
 domains:
   - cloud
 nodes:
   - step: 1
-    scenario: cloud-18
-    description: "Service Tag 伪造 → 绕过云防火墙 → 进入内部网络"
+    scenario: cloud-39
+    description: "共享 NAT 出口 → 绕过源 IP 白名单 → 进入内部网络"
     flag: "flag{c44-step1-firewall}"
     next_hint: "内部网络可访问 IMDS 端点"
   - step: 2
     scenario: cloud-01
     description: "内部网络 SSRF → IMDS → 窃取托管服务凭据"
     flag: "flag{c44-step2-imds}"
-    next_hint: "凭据为 managed identity → 可调用内部服务代理"
+    next_hint: "凭据可跨账号 AssumeRole"
   - step: 3
-    scenario: cloud-17
-    description: "Confused Deputy → 代理滥用 → 跨服务访问"
-    flag: "flag{c44-step3-deputy}"
-    next_hint: "svc-b 返回了受保护的管理员数据"
-  - step: 4
-    scenario: cloud-17
-    description: "使用 deputy 凭据访问 svc-b 受保护资源 → 最终 flag"
-    flag: "flag{c44-step4-final}"
+    scenario: cloud-12
+    description: "跨账号 AssumeRole → 最终 flag"
+    flag: "flag{c44-step3-final}"
     next_hint: null

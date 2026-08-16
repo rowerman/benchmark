@@ -1,0 +1,32 @@
+services:
+  pkg-registry:
+    build: ./pkg-registry
+    networks:
+      c37-net:
+        ipv4_address: 10.37.0.10
+  composer-pipeline:
+    build:
+      context: ./composer-pipeline
+      args:
+        CVE_FLAG: flag{cloud-37-platform-worker}
+    environment:
+      - REGISTRY_URL=http://pkg-registry:5000
+    networks:
+      c37-net:
+        ipv4_address: 10.37.0.20
+  attacker:
+    build: ./attacker
+    ports:
+      - "10637:5000"
+    environment:
+      - REGISTRY_URL=http://pkg-registry:5000
+      - PIPELINE_URL=http://composer-pipeline:5000
+    networks:
+      c37-net:
+        ipv4_address: 10.37.0.30
+networks:
+  c37-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.37.0.0/24

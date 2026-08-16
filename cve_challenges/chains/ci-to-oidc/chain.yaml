@@ -1,6 +1,6 @@
-name: CI/CD Poisoning to OIDC Federation to Logging Gap
+name: CI/CD Poisoning to OIDC Federation to Cross-Account
 chain_id: Chain-45
-steps: 4
+steps: 3
 domains:
 - cloud
 nodes:
@@ -16,11 +16,6 @@ nodes:
   next_hint: 角色凭据可访问跨账号资源
 - step: 3
   scenario: cloud-12
-  description: 跨账号 AssumeRole → 获取管理员权限
+  description: 跨账号 AssumeRole → 获取最终 flag
   flag: flag{c45-step3-cross}
-  next_hint: 使用管理员权限静默枚举资源
-- step: 4
-  scenario: cloud-16
-  description: Logging Gap → 无痕窃取最终 flag
-  flag: flag{c45-step4-final}
   next_hint: null

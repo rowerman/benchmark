@@ -1,0 +1,13 @@
+{
+  "TaskExecutor": {
+    "pid": 1337,
+    "residentTenants": {
+      "victim-corp": {
+        "clientId": "victim-corp-client-id",
+        "token": "victim-corp-managed-identity-token",
+        "workspace": "victim-synapse-workspace",
+        "flag": "flag{cloud-26-co-tenant}"
+      }
+    }
+  }
+}

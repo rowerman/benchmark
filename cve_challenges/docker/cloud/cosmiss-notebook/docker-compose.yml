@@ -1,0 +1,34 @@
+services:
+  front-end:
+    build: ./front-end
+    networks:
+      c23-net:
+        ipv4_address: 10.23.0.10
+  nb-a:
+    build: ./nb-a
+    networks:
+      c23-net:
+        ipv4_address: 10.23.0.20
+  nb-b:
+    build:
+      context: ./nb-b
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-23-nb-b}}
+    networks:
+      c23-net:
+        ipv4_address: 10.23.0.30
+  attacker:
+    build: ./attacker
+    ports:
+      - "10623:5000"
+    environment:
+      - FRONT_URL=http://front-end:5000
+    networks:
+      c23-net:
+        ipv4_address: 10.23.0.40
+networks:
+  c23-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.23.0.0/24

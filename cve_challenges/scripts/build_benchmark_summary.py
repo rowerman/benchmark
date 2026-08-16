@@ -42,37 +42,6 @@ DB_ORDER = [
     "db-09",              # NoSQL injection
 ]
 
-LNX_ORDER = [
-    "lnx-06", "lnx-07",   # SUID abuse
-    "lnx-08",             # container escape (docker.sock)
-    "lnx-09",             # capability abuse
-    "lnx-10",             # cron hijack
-    "lnx-11",             # kernel CVE (Polkit)
-    "lnx-12",             # environment injection (LD_PRELOAD)
-    "lnx-13",             # filesystem permission abuse
-    "lnx-05",             # chroot escape
-]
-
-DEF_ORDER = [
-    "def-01",             # WAF bypass
-    "def-02",             # log tampering
-    "def-03", "def-05",   # process hiding / LoTL
-    "def-04",             # anti-forensics (timestomp)
-]
-
-NET_ORDER = [
-    "net-01",             # ARP spoofing (L2)
-    "net-03",             # container sniffing (app-layer)
-    "net-02",             # DNS exfiltration (covert channel)
-]
-
-CI_ORDER = [
-    "ci-01",              # poisoned pipeline
-    "ci-02", "ci-03",     # credential leaks
-    "ci-04",              # unprotected webhook
-    "ci-05",              # build arg injection
-]
-
 K8S_ORDER = [
     # container escape
     "k8s-01", "k8s-02", "k8s-03", "k8s-11", "k8s-14", "k8s-19",
@@ -96,39 +65,12 @@ K8S_ORDER = [
     "k8s-07",
 ]
 
-AD_ORDER = [
-    # credential theft
-    "ad-01", "ad-02", "ad-13", "ad-15",
-    # credential lateral movement
-    "ad-05",
-    # ticket forgery
-    "ad-10", "ad-14",
-    # delegation abuse
-    "ad-16", "ad-17", "ad-21",
-    # ACL abuse
-    "ad-19", "ad-20", "ad-23",
-    # certificate / key attacks
-    "ad-18",
-    # DCSync
-    "ad-09",
-    # cross-forest
-    "ad-22",
-]
-
-LKX_ORDER = [
-    "lkx-01", "lkx-02",   # kernel module exploits
-    "lkx-03", "lkx-04",   # eBPF abuse
-    "lkx-05",             # kernel CVE (conditional)
-]
-
 # Chain ordering by domain group, then by step count within each group
 CHAIN_ORDER_BY_DOMAIN = [
     # pure K8s (11)
     "container-to-admin", "caps-to-cluster", "cri-to-etcd", "docker-to-etcd",
     "externalip-to-secrets", "hostpath-to-daemonset", "ingress-to-etcd",
     "kubelet-to-etcd", "privilege-to-etcd", "sa-lateral-escape", "seccomp-to-escape",
-    # pure AD (5)
-    "asrep-to-golden", "gpp-to-dcsync", "kerb-to-deleg", "rbcd-to-dcsync", "shadow-to-golden",
     # pure Cloud (12)
     "ssrf-to-cross-account", "lambda-to-cross-account", "ci-to-oidc",
     "db-to-cross-account", "s3-to-cf", "gateway-to-deputy",
@@ -140,46 +82,49 @@ CHAIN_ORDER_BY_DOMAIN = [
     "xxe-to-es", "php-to-mongo",
     # DB + K8s (1)
     "redis-to-k8s",
-    # Web + K8s (2)
-    "wp-lfi-to-cluster", "tomcat-to-k8s",
+    # Web + K8s (1)
+    "wp-lfi-to-cluster",
     # Web + DB + K8s (1)
     "pg-sqli-to-node",
-    # Web + Linux + K8s (2)
-    "tomcat-race-to-etcd", "graphql-to-root",
-    # DB + Linux + K8s (1)
-    "db-to-cluster",
-    # Web + Linux + AD (3)
-    "web-to-admin", "tomcat-to-rbcd", "cross-forest-ad",
-    # multi-domain (2)
-    "mssql-to-da", "wordpress-to-shadow",
 ]
 
 CLOUD_ORDER = [
     # Data Plane (Phase 2)
     "cloud-01",             # SSRF → IMDS
     "cloud-04",             # Lambda → PassRole
-    "cloud-06",             # DB → IMDS
     "cloud-05",             # CF Injection
-    "cloud-07",             # S3 Monopoly
     "cloud-08",             # CI/CD Poisoning
     "cloud-09",             # Notebook Escape
-    "cloud-10",             # Gateway Smuggling
+    "cloud-24",             # RDS log_fdw Host Read
+    "cloud-25",             # Cloud SQL Engine Patch RCE
+    "cloud-27",             # ExtraReplica Cross-Tenant Replication
+    "cloud-30",             # Model-as-Code Pickle
     # Control Plane (Phase 3)
     "cloud-11",             # OIDC Federation
     "cloud-12",             # Cross-Account Trust
     "cloud-13",             # Golden SAML
-    "cloud-14",             # PassRole Abuse
     "cloud-15",             # SCP Bypass
-    "cloud-16",             # Logging Gap
-    "cloud-17",             # Confused Deputy
-    "cloud-18",             # Service Tag Spoofing
+    "cloud-28",             # WireServing Host-Agent Channel
+    "cloud-31",             # AttachMe Volume Ownership
+    "cloud-32",             # Entra Actor Token
+    "cloud-33",             # OMIGOD Middleware
+    "cloud-34",             # IAM Enumeration Oracle
+    "cloud-35",             # Beta Endpoint Invisible Write
+    "cloud-36",             # Resource Explorer Quiet Enum
+    "cloud-38",             # Low-Code Connector Secrets
+    "cloud-41",             # Serverless Default SA
+    "cloud-42",             # Persistence-as-a-Service
     # Multi-Tenant (Phase 5 + Phase 6)
-    "cloud-20",             # Shared Metadata Proxy
     "cloud-21",             # Global S3 Squatting
-    "cloud-22",             # Shared AI Inference
+    "cloud-23",             # CosMiss Notebook Front-End
+    "cloud-26",             # SynLapse Shared IR
+    "cloud-29",             # Build Fleet Registry
+    "cloud-37",             # CloudImposer Dependency Confusion
+    "cloud-39",             # Shared NAT Egress
+    "cloud-40",             # Dataform Cross-Tenant Path Traversal
 ]
 
-ALL_DOCKER_ORDER = WEB_ORDER + DB_ORDER + LNX_ORDER + CLOUD_ORDER + DEF_ORDER + NET_ORDER + CI_ORDER + LKX_ORDER
+ALL_DOCKER_ORDER = WEB_ORDER + DB_ORDER + CLOUD_ORDER
 
 DOCKER_DOC = DOCS_DIR / "scenarios" / "docker-scenarios-exploitation.md"
 
@@ -206,12 +151,6 @@ def slugify(text: str) -> str:
 
 def k8s_doc_path(scenario_id: str) -> Path | None:
     folder = DOCS_DIR / "scenarios" / "k8s"
-    matches = sorted(folder.glob(f"{scenario_id}-*-exploitation.md"))
-    return matches[0] if matches else None
-
-
-def ad_doc_path(scenario_id: str) -> Path | None:
-    folder = DOCS_DIR / "scenarios" / "ad"
     matches = sorted(folder.glob(f"{scenario_id}-*-exploitation.md"))
     return matches[0] if matches else None
 
@@ -252,7 +191,7 @@ def load_scenarios_registry() -> list[dict]:
 def parse_docker_sections(text: str) -> dict[str, str]:
     """Split docker-scenarios-exploitation.md into per-scenario sections."""
     sections: dict[str, str] = {}
-    pattern = re.compile(r"^#{2,3}\s+(WEB-\d+|DB-\d+|LNX-\d+|CLOUD-\d+|DEF-\d+|NET-\d+|CI-\d+|LKX-\d+):", re.MULTILINE)
+    pattern = re.compile(r"^#{2,3}\s+(WEB-\d+|DB-\d+|CLOUD-\d+):", re.MULTILINE)
     parts = pattern.split(text)
     # parts[0] = content before first scenario heading
     # parts[1] = id, parts[2] = content, parts[3] = id, parts[4] = content, ...
@@ -281,9 +220,8 @@ def append_section(parts: list[str], source_rel: str, content: str, extra_commen
 def build_toc(included_sources: list[tuple[str, str]], n_chains: int) -> str:
     lines = ["## 目录", ""]
     lines.append("- [一、单点场景](#一单点场景)")
-    lines.append("  - [1.1 Docker：Web / 数据库 / Linux / Cloud / DEF / NET / CI / LKX](#11-dockerweb--数据库--linux--cloud--def--net--ci--lkx)")
+    lines.append("  - [1.1 Docker：Web / 数据库 / Cloud](#11-dockerweb--数据库--cloud)")
     lines.append("  - [1.2 Kubernetes 单点场景](#12-kubernetes-单点场景)")
-    lines.append("  - [1.3 Active Directory 单点场景](#13-active-directory-单点场景)")
     lines.append(f"- [二、攻击链场景（{n_chains}）](#chains-section)")
     for _, anchor in included_sources:
         if anchor.startswith("chain-"):
@@ -296,7 +234,7 @@ def build_toc(included_sources: list[tuple[str, str]], n_chains: int) -> str:
 
 def build_appendix_a(rows: list[dict]) -> str:
     lines = ["## 附录 A：可部署场景注册表", ""]
-    lines.append("来源：`benchmarks/cve_challenges/scripts/scenarios.yaml`。")
+    lines.append("来源：`cve_challenges/scripts/scenarios.yaml`。")
     lines.append("")
     lines.append("| Key | ID | 名称 | 类型 | 难度 | CVE/技术 | 端口 | 路径 |")
     lines.append("|-----|-----|------|------|------|----------|------|------|")
@@ -377,9 +315,9 @@ def main() -> None:
 
     parts.append("# CVE Benchmark 利用说明总览（BENCHMARK_SUMMARY）")
     parts.append("")
-    parts.append("> **范围**：仅包含当前环境可部署、可端到端测试的场景与攻击链（Docker / KIND / Samba AD）。")
-    parts.append("> **源目录**：[benchmarks/cve_challenges/docs/](benchmarks/cve_challenges/docs/)")
-    parts.append("> **生成**：运行 `python benchmarks/cve_challenges/scripts/build_benchmark_summary.py` 可复现。")
+    parts.append("> **范围**：仅包含当前环境可部署、可端到端测试的场景与攻击链（Docker / KIND）。")
+    parts.append("> **源目录**：[cve_challenges/docs/](cve_challenges/docs/)")
+    parts.append("> **生成**：运行 `python cve_challenges/scripts/build_benchmark_summary.py` 可复现。")
 
     for path in chain_doc_paths():
         chain_name = path.stem.replace("-exploitation", "")
@@ -392,11 +330,11 @@ def main() -> None:
     parts.append("")
 
     # 1.1 Docker — output in ordered sequence
-    parts.append("### 1.1 Docker：Web / 数据库 / Linux / Cloud / DEF / NET / CI / LKX")
+    parts.append("### 1.1 Docker：Web / 数据库 / Cloud")
     parts.append("")
     docker_text = DOCKER_DOC.read_text(encoding="utf-8")
     docker_sections = parse_docker_sections(docker_text)
-    rel = "benchmarks/cve_challenges/docs/scenarios/docker-scenarios-exploitation.md"
+    rel = "cve_challenges/docs/scenarios/docker-scenarios-exploitation.md"
     section_count = 0
     for key in ALL_DOCKER_ORDER:
         if key in docker_sections:
@@ -418,23 +356,10 @@ def main() -> None:
         doc = k8s_doc_path(kid)
         if doc is None:
             continue
-        rel = f"benchmarks/cve_challenges/docs/scenarios/k8s/{doc.name}"
+        rel = f"cve_challenges/docs/scenarios/k8s/{doc.name}"
         append_section(parts, rel, doc.read_text(encoding="utf-8"))
         index.append((rel, f"1.2 K8s / {kid.upper()}"))
         k8s_count += 1
-
-    # 1.3 AD
-    ad_count = 0
-    parts.append("### 1.3 Active Directory 单点场景")
-    parts.append("")
-    for aid in AD_ORDER:
-        doc = ad_doc_path(aid)
-        if doc is None:
-            continue
-        rel = f"benchmarks/cve_challenges/docs/scenarios/ad/{doc.name}"
-        append_section(parts, rel, doc.read_text(encoding="utf-8"))
-        index.append((rel, f"1.3 AD / {aid.upper()}"))
-        ad_count += 1
 
     # II Chains
     parts.append('<a id="chains-section"></a>')
@@ -443,9 +368,9 @@ def main() -> None:
     parts.append("")
     for path in chain_paths_for_toc:
         chain_name = path.stem.replace("-exploitation", "")
-        rel = f"benchmarks/cve_challenges/docs/chains/{path.name}"
+        rel = f"cve_challenges/docs/chains/{path.name}"
         yaml_path = CHAINS_DIR / chain_name / "chain.yaml"
-        extra = f"chain.yaml: benchmarks/cve_challenges/chains/{chain_name}/chain.yaml"
+        extra = f"chain.yaml: cve_challenges/chains/{chain_name}/chain.yaml"
         if not yaml_path.exists():
             extra = ""
 
@@ -477,11 +402,10 @@ def main() -> None:
     output = output.rstrip() + "\n"
     OUTPUT_PATH.write_text(output, encoding="utf-8")
 
-    total_scenarios = section_count + k8s_count + ad_count
+    total_scenarios = section_count + k8s_count
     print(f"Wrote {OUTPUT_PATH}")
     print(f"  Docker scenarios: {section_count}")
     print(f"  K8s scenarios: {k8s_count}")
-    print(f"  AD scenarios: {ad_count}")
     print(f"  Total scenarios: {total_scenarios}")
     print(f"  Chains: {len(chain_paths_for_toc)}")
     print(f"  Source files merged: {len(index)}")

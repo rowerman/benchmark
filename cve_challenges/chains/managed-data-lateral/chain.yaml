@@ -1,0 +1,26 @@
+name: Shared Runtime to Cross-Tenant Workspace to Managed DB to IMDS
+chain_id: Chain-56
+steps: 4
+domains:
+- cloud
+nodes:
+- step: 1
+  scenario: cloud-26
+  description: 共享集成运行时 → 转储 co-tenant 凭据
+  flag: flag{c56-step1-ir}
+  next_hint: 凭据可访问托管数据工作流
+- step: 2
+  scenario: cloud-40
+  description: Dataform 路径穿越 → 跨租户工作区读写
+  flag: flag{c56-step2-workspace}
+  next_hint: 工作区发现目标租户托管数据库配置
+- step: 3
+  scenario: cloud-25
+  description: 托管 DB 引擎补丁 → 宿主 RCE
+  flag: flag{c56-step3-host}
+  next_hint: 宿主可访问 IMDS 端点
+- step: 4
+  scenario: cloud-01
+  description: IMDS 凭据窃取 → 最终 flag
+  flag: flag{c56-step4-final}
+  next_hint: null

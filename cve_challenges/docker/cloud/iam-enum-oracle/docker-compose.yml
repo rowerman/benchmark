@@ -1,0 +1,36 @@
+services:
+  control-api:
+    build: ./control-api
+    environment:
+      - AUDIT_URL=http://audit-log:5000
+    networks:
+      c34-net:
+        ipv4_address: 10.34.0.10
+  sts:
+    build: ./sts
+    networks:
+      c34-net:
+        ipv4_address: 10.34.0.20
+  audit-log:
+    build: ../../cloud/_infra/audit-log
+    networks:
+      c34-net:
+        ipv4_address: 10.34.0.30
+  attacker:
+    build: ./attacker
+    ports:
+      - "10634:5000"
+    environment:
+      - API_URL=http://control-api:5000
+      - STS_URL=http://sts:5000
+      - AUDIT_URL=http://audit-log:5000
+      - FLAG=flag{cloud-34-zero-audit-enum}
+    networks:
+      c34-net:
+        ipv4_address: 10.34.0.40
+networks:
+  c34-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.34.0.0/24

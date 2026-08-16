@@ -1,0 +1,34 @@
+services:
+  vm-a:
+    build: ./vm-a
+    networks:
+      c33-net:
+        ipv4_address: 10.33.0.10
+  vm-b:
+    build: ./vm-b
+    networks:
+      c33-net:
+        ipv4_address: 10.33.0.20
+  omi-agent:
+    build:
+      context: ./omi-agent
+      args:
+        CVE_FLAG: flag{cloud-33-vm-root}
+    networks:
+      c33-net:
+        ipv4_address: 10.33.0.30
+  attacker:
+    build: ./attacker
+    ports:
+      - "10633:5000"
+    environment:
+      - AGENT_URL=http://omi-agent:5986
+    networks:
+      c33-net:
+        ipv4_address: 10.33.0.40
+networks:
+  c33-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.33.0.0/24
