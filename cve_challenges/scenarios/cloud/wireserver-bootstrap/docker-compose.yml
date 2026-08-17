@@ -1,0 +1,41 @@
+services:
+  host-agent:
+    build: ../../../infra/cloud/host-agent
+    environment:
+      - BOOTSTRAP_SCRIPT=TLS_BOOTSTRAP_TOKEN=token-abcdef
+      - FLAG=flag{cloud-28-bootstrap}
+    networks:
+      c28-net:
+        ipv4_address: 168.63.129.16
+  control-plane:
+    build: ./control-plane
+    environment:
+      - BOOTSTRAP_TOKEN=token-abcdef
+      - FLAG=flag{cloud-28-node-secrets}
+    networks:
+      c28-net:
+        ipv4_address: 168.63.129.20
+  node:
+    build: ./node
+    networks:
+      c28-net:
+        ipv4_address: 168.63.129.30
+  attacker:
+    build: ./attacker
+    ports:
+      - "10628:5000"
+    environment:
+      - HOST_AGENT_URL=http://168.63.129.16:5000
+      - CONTROL_URL=http://control-plane:5000
+    depends_on:
+      - host-agent
+      - control-plane
+    networks:
+      c28-net:
+        ipv4_address: 168.63.129.40
+networks:
+  c28-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 168.63.129.0/24

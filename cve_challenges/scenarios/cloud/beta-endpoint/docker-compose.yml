@@ -1,0 +1,43 @@
+services:
+  console:
+    build: ./console
+    networks:
+      c35-net:
+        ipv4_address: 10.35.0.10
+  prod-api:
+    build: ./prod-api
+    environment:
+      - AUDIT_URL=http://audit-log:5000
+    networks:
+      c35-net:
+        ipv4_address: 10.35.0.20
+  beta-api:
+    build: ./beta-api
+    environment:
+      - FLAG=flag{cloud-35-invisible-write}
+    networks:
+      c35-net:
+        ipv4_address: 10.35.0.30
+  audit-log:
+    build: ../../../infra/cloud/audit-log
+    networks:
+      c35-net:
+        ipv4_address: 10.35.0.40
+  attacker:
+    build: ./attacker
+    ports:
+      - "10635:5000"
+    environment:
+      - CONSOLE_URL=http://console:5000
+      - PROD_URL=http://prod-api:5000
+      - BETA_URL=http://beta-api:5000
+      - AUDIT_URL=http://audit-log:5000
+    networks:
+      c35-net:
+        ipv4_address: 10.35.0.50
+networks:
+  c35-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.35.0.0/24

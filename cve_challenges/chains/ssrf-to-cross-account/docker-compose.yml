@@ -1,7 +1,7 @@
 services:
   web:
     build:
-      context: ../../docker/cloud/ssrf-to-imds/web
+      context: ../../scenarios/cloud/ssrf-to-imds/web
       args:
         CVE_FLAG: flag{c32-step1-ssrf}
     environment:
@@ -14,7 +14,7 @@ services:
 
   imds:
     build:
-      context: ../../docker/cloud/_infra/imds-server
+      context: ../../infra/cloud/imds-server
     environment:
       - IMDS_ROLE_NAME=ec2-role
       - IMDS_ACCESS_KEY_ID=AKIACHAIN32EXAMPLE
@@ -26,7 +26,7 @@ services:
 
   s3:
     build:
-      context: ../../docker/cloud/ssrf-to-imds/s3
+      context: ../../scenarios/cloud/ssrf-to-imds/s3
     environment:
       - S3_ACCESS_KEY=AKIACHAIN32EXAMPLE
       - S3_SECRET_KEY=chain32-imds-secret
@@ -37,7 +37,7 @@ services:
 
   iam:
     build:
-      context: ../../docker/cloud/_infra/iam-trust
+      context: ../../infra/cloud/iam-trust
     environment:
       - IAM_ROLES_FILE=/app/roles/default.yaml
     networks:
@@ -46,7 +46,7 @@ services:
 
   attacker-ui:
     build:
-      context: ../../docker/cloud/cross-account-trust/attacker
+      context: ../../scenarios/cloud/cross-account-trust/attacker
       args:
         CVE_FLAG: flag{c32-step3-cross}
     ports:

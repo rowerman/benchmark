@@ -12,7 +12,7 @@ echo "[Chain 16] Redis to K8s Cluster Admin — 4 steps"
 
 # Step 1: Redis (Docker)
 echo "[*] Starting DB-05 Redis..."
-docker compose -f "$ROOT/docker/db/redis-unauth/docker-compose.yml" up -d --build 2>&1 | tail -2
+docker compose -f "$ROOT/scenarios/db/redis-unauth/docker-compose.yml" up -d --build 2>&1 | tail -2
 
 # Steps 2-4: Unified K8s cluster
 mkdir -p /home/kianabin/cve-flags/chain16

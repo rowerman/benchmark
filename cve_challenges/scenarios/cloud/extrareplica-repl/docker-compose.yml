@@ -1,0 +1,54 @@
+services:
+  victim-pg:
+    build: ./victim-pg
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    depends_on:
+      internal-ca:
+        condition: service_started
+    networks:
+      c27-internal:
+        ipv4_address: 10.0.0.20
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+  internal-ca:
+    build: ../../../infra/cloud/internal-ca
+    environment:
+      - CN_REGEX=^replication\..*\.database\.azure\.com.*$
+    networks:
+      c27-internal:
+        ipv4_address: 10.0.0.30
+  attacker:
+    build: ./attacker
+    ports:
+      - "10627:5000"
+    environment:
+      - CA_URL=http://internal-ca:5000
+      - VICTIM_HOST=victim-pg
+    depends_on:
+      victim-pg:
+        condition: service_healthy
+    networks:
+      c27-internal:
+        ipv4_address: 10.0.0.7
+  firewall-proxy:
+    build: ./firewall-proxy
+    networks:
+      c27-public:
+        ipv4_address: 10.27.1.10
+networks:
+  c27-internal:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24
+  c27-public:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.27.1.0/24

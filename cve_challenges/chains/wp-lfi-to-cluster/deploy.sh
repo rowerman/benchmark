@@ -11,7 +11,7 @@ FLAG4="flag{chain17-step4-etcd-final}"
 echo "[Chain 17] WordPress LFI to Cluster Admin"
 
 # Step 1: WordPress Jupiter X Core
-docker compose -f "$ROOT/docker/web/wordpress-jupiterx-lfi/docker-compose.yml" up -d --build 2>&1 | tail -2
+docker compose -f "$ROOT/scenarios/web/wordpress-jupiterx-lfi/docker-compose.yml" up -d --build 2>&1 | tail -2
 
 # Steps 2-4: Unified K8s cluster
 mkdir -p /home/kianabin/cve-flags/chain17

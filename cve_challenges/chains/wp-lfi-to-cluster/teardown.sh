@@ -6,7 +6,7 @@ CLUSTER_NAME="cve-chain17-wp-lfi"
 echo "[Chain 17] Tearing down..."
 
 # Stop Docker scenarios
-docker compose -f "$ROOT/docker/web/wordpress-jupiterx-lfi/docker-compose.yml" down -v 2>/dev/null || true
+docker compose -f "$ROOT/scenarios/web/wordpress-jupiterx-lfi/docker-compose.yml" down -v 2>/dev/null || true
 
 # Delete K8s cluster
 kind delete cluster --name "$CLUSTER_NAME" 2>/dev/null || true

@@ -5,7 +5,7 @@ scenarios:
     type: docker
     difficulty: L1
     cve: N/A (misconfiguration)
-    path: docker/db/redis-unauth
+    path: scenarios/db/redis-unauth
     port: 10205
   db-06:
     id: DB-06
@@ -13,7 +13,7 @@ scenarios:
     type: docker
     difficulty: L1
     cve: N/A (misconfiguration)
-    path: docker/db/mongodb-unauth
+    path: scenarios/db/mongodb-unauth
     port: 10206
   db-07:
     id: DB-07
@@ -21,7 +21,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (script injection)
-    path: docker/db/elasticsearch-script
+    path: scenarios/db/elasticsearch-script
     port: 10207
   db-08:
     id: DB-08
@@ -29,7 +29,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (Erlang native view RCE)
-    path: docker/db/couchdb-rce
+    path: scenarios/db/couchdb-rce
     port: 10208
   db-09:
     id: DB-09
@@ -37,7 +37,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (NoSQL injection)
-    path: docker/db/mongodb-nosqli
+    path: scenarios/db/mongodb-nosqli
     port: 10209
   web-03:
     id: WEB-03
@@ -45,7 +45,7 @@ scenarios:
     type: docker
     difficulty: L1
     cve: CVE-2025-34085
-    path: docker/web/wordpress-simple-file-list
+    path: scenarios/web/wordpress-simple-file-list
     port: 10103
   k8s-01:
     id: K8S-01
@@ -53,105 +53,105 @@ scenarios:
     type: k8s
     difficulty: L2
     cve: CVE-2024-21626
-    path: k8s/runc-cve-2024-21626
+    path: scenarios/k8s/runc-cve-2024-21626
   k8s-02:
     id: K8S-02
     name: runC /dev/null Symlink Escape
     type: k8s
     difficulty: L2
     cve: CVE-2025-31133
-    path: k8s/runc-cve-2025-31133
+    path: scenarios/k8s/runc-cve-2025-31133
   k8s-03:
     id: K8S-03
     name: runC LSM Bypass Escape
     type: k8s
     difficulty: L3
     cve: CVE-2025-52881
-    path: k8s/runc-cve-2025-52881
+    path: scenarios/k8s/runc-cve-2025-52881
   k8s-05:
     id: K8S-05
     name: K8s gitRepo Volume Escape
     type: k8s
     difficulty: L2
     cve: CVE-2024-10220
-    path: k8s/gitrepo-cve-2024-10220
+    path: scenarios/k8s/gitrepo-cve-2024-10220
   k8s-06:
     id: K8S-06
     name: K8s RBAC Secrets Abuse
     type: k8s
     difficulty: L1
     cve: N/A (misconfiguration)
-    path: k8s/rbac-secrets
+    path: scenarios/k8s/rbac-secrets
   k8s-07:
     id: K8S-07
     name: Kubelet API Anonymous Access
     type: k8s
     difficulty: L2
     cve: N/A (misconfiguration)
-    path: k8s/kubelet-unauth
+    path: scenarios/k8s/kubelet-unauth
   k8s-08:
     id: K8S-08
     name: etcd Unauthorized Access
     type: k8s
     difficulty: L3
     cve: N/A (misconfiguration)
-    path: k8s/etcd-unauth
+    path: scenarios/k8s/etcd-unauth
   k8s-09:
     id: K8S-09
     name: Private Registry Poisoning
     type: k8s
     difficulty: L2
     cve: N/A (misconfiguration)
-    path: k8s/registry-poison
+    path: scenarios/k8s/registry-poison
   k8s-10:
     id: K8S-10
     name: Helm v2 Tiller Unauthenticated
     type: k8s
     difficulty: L1
     cve: N/A (misconfiguration)
-    path: k8s/helm-tiller
+    path: scenarios/k8s/helm-tiller
   k8s-11:
     id: K8S-11
     name: Privileged Container Breakout
     type: k8s
     difficulty: L2
     cve: N/A (privileged pod)
-    path: k8s/privileged-breakout
+    path: scenarios/k8s/privileged-breakout
   k8s-12:
     id: K8S-12
     name: hostPath Writable Mount Escape
     type: k8s
     difficulty: L2
     cve: N/A (hostPath mount)
-    path: k8s/hostpath-escape
+    path: scenarios/k8s/hostpath-escape
   k8s-13:
     id: K8S-13
     name: SA Token Cross-Namespace Lateral
     type: k8s
     difficulty: L2
     cve: N/A (RBAC lateral)
-    path: k8s/sa-cross-ns
+    path: scenarios/k8s/sa-cross-ns
   k8s-14:
     id: K8S-14
     name: CAP_SYS_ADMIN cgroup Escape
     type: k8s
     difficulty: L3
     cve: CAP_SYS_ADMIN abuse
-    path: k8s/cap-sys-admin-cgroup
+    path: scenarios/k8s/cap-sys-admin-cgroup
   k8s-15:
     id: K8S-15
     name: Mutable Image Tag Supply Chain
     type: k8s
     difficulty: L2
     cve: N/A (image tag mutation)
-    path: k8s/mutable-image-tag
+    path: scenarios/k8s/mutable-image-tag
   web-01:
     id: WEB-01
     name: Apache Tomcat Deserialization RCE
     type: docker
     difficulty: L2
     cve: CVE-2025-24813
-    path: docker/web/tomcat-deserialization
+    path: scenarios/web/tomcat-deserialization
     port: 10101
   web-02:
     id: WEB-02
@@ -159,7 +159,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: CVE-2024-50379
-    path: docker/web/tomcat-race-condition
+    path: scenarios/web/tomcat-race-condition
     port: 10102
   web-04:
     id: WEB-04
@@ -167,7 +167,7 @@ scenarios:
     type: docker
     difficulty: L1
     cve: CVE-2025-6058
-    path: docker/web/wordpress-wpbookit
+    path: scenarios/web/wordpress-wpbookit
     port: 10104
   web-05:
     id: WEB-05
@@ -175,7 +175,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: CVE-2025-8625
-    path: docker/web/wordpress-jwt-copypress
+    path: scenarios/web/wordpress-jwt-copypress
     port: 10105
   web-06:
     id: WEB-06
@@ -183,7 +183,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: CVE-2025-0366
-    path: docker/web/wordpress-jupiterx-lfi
+    path: scenarios/web/wordpress-jupiterx-lfi
     port: 10106
   web-07:
     id: WEB-07
@@ -191,7 +191,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: CVE-2025-1094
-    path: docker/web/postgres-sqli
+    path: scenarios/web/postgres-sqli
     port: 10107
   web-08:
     id: WEB-08
@@ -199,7 +199,7 @@ scenarios:
     type: docker
     difficulty: L3
     cve: MySQL UDF Abuse
-    path: docker/web/mysql-udf
+    path: scenarios/web/mysql-udf
     port: 10108
   web-09:
     id: WEB-09
@@ -207,7 +207,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: MSSQL xp_cmdshell
-    path: docker/web/mssql-xp-cmdshell
+    path: scenarios/web/mssql-xp-cmdshell
     port: 10109
   web-10:
     id: WEB-10
@@ -215,7 +215,7 @@ scenarios:
     type: docker
     difficulty: L1
     cve: N/A (SSRF misconfiguration)
-    path: docker/web/ssrf-internal
+    path: scenarios/web/ssrf-internal
     port: 10110
   web-11:
     id: WEB-11
@@ -223,7 +223,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (SSRF misconfiguration)
-    path: docker/web/ssrf-localhost
+    path: scenarios/web/ssrf-localhost
     port: 10111
   web-12:
     id: WEB-12
@@ -231,7 +231,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (SSTI vulnerability)
-    path: docker/web/ssti-jinja2
+    path: scenarios/web/ssti-jinja2
     port: 10112
   db-01:
     id: DB-01
@@ -239,7 +239,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (misconfiguration)
-    path: docker/db/postgres-weak-auth
+    path: scenarios/db/postgres-weak-auth
     port: 10201
   db-02:
     id: DB-02
@@ -247,7 +247,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: MySQL UDF Abuse
-    path: docker/db/mysql-udf-direct
+    path: scenarios/db/mysql-udf-direct
     port: 10202
   db-03:
     id: DB-03
@@ -255,7 +255,7 @@ scenarios:
     type: docker
     difficulty: L3
     cve: TNS Poisoning
-    path: docker/db/oracle-tns
+    path: scenarios/db/oracle-tns
     port: 10203
   db-04:
     id: DB-04
@@ -263,7 +263,7 @@ scenarios:
     type: docker
     difficulty: L3
     cve: MSSQL Linked Server
-    path: docker/db/mssql-linked-server
+    path: scenarios/db/mssql-linked-server
     port: 10204
   k8s-16:
     id: K8S-16
@@ -271,35 +271,35 @@ scenarios:
     type: k8s
     difficulty: L2
     cve: CRI socket abuse
-    path: k8s/cri-socket-escape
+    path: scenarios/k8s/cri-socket-escape
   k8s-17:
     id: K8S-17
     name: Docker Socket Mount Escape
     type: k8s
     difficulty: L1
     cve: Docker socket abuse
-    path: k8s/docker-socket-escape
+    path: scenarios/k8s/docker-socket-escape
   k8s-18:
     id: K8S-18
     name: SA Token Cluster-Admin Escalation
     type: k8s
     difficulty: L2
     cve: RBAC misconfiguration
-    path: k8s/sa-cluster-admin
+    path: scenarios/k8s/sa-cluster-admin
   k8s-19:
     id: K8S-19
     name: CAP_SYS_PTRACE Host Process Injection
     type: k8s
     difficulty: L3
     cve: CAP_SYS_PTRACE abuse
-    path: k8s/cap-sys-ptrace-inject
+    path: scenarios/k8s/cap-sys-ptrace-inject
   k8s-20:
     id: K8S-20
     name: ingress-nginx Admission Controller RCE (IngressNightmare)
     type: k8s
     difficulty: L3
     cve: CVE-2025-1974
-    path: k8s/ingress-nginx-rce
+    path: scenarios/k8s/ingress-nginx-rce
     port: 10443
   k8s-21:
     id: K8S-21
@@ -307,7 +307,7 @@ scenarios:
     type: k8s
     difficulty: L2
     cve: CVE-2021-25742
-    path: k8s/ingress-snippet
+    path: scenarios/k8s/ingress-snippet
     port: 10480
   k8s-22:
     id: K8S-22
@@ -315,49 +315,49 @@ scenarios:
     type: k8s
     difficulty: L2
     cve: CVE-2020-8554
-    path: k8s/externalip-hijack
+    path: scenarios/k8s/externalip-hijack
   k8s-23:
     id: K8S-23
     name: hostPID ProcFS Host Filesystem Access
     type: k8s
     difficulty: L1
     cve: N/A (misconfiguration)
-    path: k8s/seccomp-bypass
+    path: scenarios/k8s/seccomp-bypass
   k8s-24:
     id: K8S-24
     name: kube-proxy Localhost Boundary Bypass
     type: k8s
     difficulty: L2
     cve: CVE-2020-8558
-    path: k8s/localhost-bypass
+    path: scenarios/k8s/localhost-bypass
   k8s-25:
     id: K8S-25
     name: Mutating Webhook Sidecar Injection
     type: k8s
     difficulty: L2
     cve: N/A (admission control abuse)
-    path: k8s/webhook-inject
+    path: scenarios/k8s/webhook-inject
   k8s-26:
     id: K8S-26
     name: Compromised Node API Server Redirect
     type: k8s
     difficulty: L3
     cve: CVE-2020-8559
-    path: k8s/node-redirect
+    path: scenarios/k8s/node-redirect
   k8s-27:
     id: K8S-27
     name: NetworkPolicy Label Spoofing Bypass
     type: k8s
     difficulty: L2
     cve: N/A (network policy bypass)
-    path: k8s/networkpolicy-bypass
+    path: scenarios/k8s/networkpolicy-bypass
   web-13:
     id: WEB-13
     name: XXE XML External Entity
     type: docker
     difficulty: L1
     cve: XXE (XML External Entity)
-    path: docker/web/xxe-basic
+    path: scenarios/web/xxe-basic
     port: 10113
   web-14:
     id: WEB-14
@@ -365,7 +365,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: XXE (XML External Entity)
-    path: docker/web/xxe-svg
+    path: scenarios/web/xxe-svg
     port: 10114
   web-15:
     id: WEB-15
@@ -373,7 +373,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: JWT alg:none
-    path: docker/web/jwt-alg-none
+    path: scenarios/web/jwt-alg-none
     port: 10115
   web-16:
     id: WEB-16
@@ -381,7 +381,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: GraphQL introspection + IDOR
-    path: docker/web/graphql-idor
+    path: scenarios/web/graphql-idor
     port: 10116
   web-17:
     id: WEB-17
@@ -389,7 +389,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: Insecure PHP deserialization
-    path: docker/web/php-deserialization
+    path: scenarios/web/php-deserialization
     port: 10117
   web-18:
     id: WEB-18
@@ -397,7 +397,7 @@ scenarios:
     type: docker
     difficulty: L1
     cve: Stored XSS
-    path: docker/web/xss-stored
+    path: scenarios/web/xss-stored
     port: 10118
   cloud-02:
     id: CLOUD-02
@@ -405,28 +405,28 @@ scenarios:
     type: k8s
     difficulty: L3
     cve: N/A (CAP_NET_RAW + ARP spoofing)
-    path: docker/cloud/cap-netraw-metadata
+    path: scenarios/cloud/cap-netraw-metadata
   cloud-03:
     id: CLOUD-03
     name: K8s SA Token → Cross-Namespace Access
     type: k8s
     difficulty: L3
     cve: N/A (overly permissive RBAC)
-    path: docker/cloud/sa-cross-namespace
+    path: scenarios/cloud/sa-cross-namespace
   cloud-19:
     id: CLOUD-19
     name: "Multi-Tenant K8s: Container Escape → Cross-Tenant Access"
     type: k8s
     difficulty: L3
     cve: N/A (privileged container + hostPID escape)
-    path: docker/cloud/multi-tenant-k8s
+    path: scenarios/cloud/multi-tenant-k8s
   cloud-01:
     id: CLOUD-01
     name: SSRF to IMDS Credential Theft
     type: docker
     difficulty: L2
     cve: N/A (SSRF → IMDS)
-    path: docker/cloud/ssrf-to-imds
+    path: scenarios/cloud/ssrf-to-imds
     port: 10601
   cloud-04:
     id: CLOUD-04
@@ -434,7 +434,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (command injection + IAM privesc)
-    path: docker/cloud/lambda-passrole
+    path: scenarios/cloud/lambda-passrole
     port: 10604
   cloud-05:
     id: CLOUD-05
@@ -442,7 +442,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (CF Fn::Sub injection)
-    path: docker/cloud/cf-injection
+    path: scenarios/cloud/cf-injection
     port: 10605
   cloud-08:
     id: CLOUD-08
@@ -450,7 +450,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (CI/CD script injection)
-    path: docker/cloud/ci-poisoning
+    path: scenarios/cloud/ci-poisoning
     port: 10608
   cloud-09:
     id: CLOUD-09
@@ -458,7 +458,7 @@ scenarios:
     type: docker
     difficulty: L3
     cve: N/A (notebook escape + SA token)
-    path: docker/cloud/notebook-escape
+    path: scenarios/cloud/notebook-escape
     port: 10609
   cloud-11:
     id: CLOUD-11
@@ -466,7 +466,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (OIDC federation misconfiguration)
-    path: docker/cloud/oidc-federation
+    path: scenarios/cloud/oidc-federation
     port: 10611
   cloud-12:
     id: CLOUD-12
@@ -474,7 +474,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (overly permissive trust policy)
-    path: docker/cloud/cross-account-trust
+    path: scenarios/cloud/cross-account-trust
     port: 10612
   cloud-13:
     id: CLOUD-13
@@ -482,7 +482,7 @@ scenarios:
     type: docker
     difficulty: L3
     cve: N/A (SAML signing key exposure)
-    path: docker/cloud/golden-saml
+    path: scenarios/cloud/golden-saml
     port: 10613
   cloud-15:
     id: CLOUD-15
@@ -490,7 +490,7 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (SCP enforcement gap)
-    path: docker/cloud/scp-bypass
+    path: scenarios/cloud/scp-bypass
     port: 10615
   cloud-21:
     id: CLOUD-21
@@ -498,71 +498,71 @@ scenarios:
     type: docker
     difficulty: L3
     cve: N/A (global namespace resource squatting)
-    path: docker/cloud/global-s3-squatting
+    path: scenarios/cloud/global-s3-squatting
     port: 10621
   cloud-23:
     id: CLOUD-23
     name: "CosMiss: Managed Notebook Front-End → Cross-Tenant RCE"
     type: docker
     difficulty: L2
-    cve: N/A (forwardingId authz bypass, case #073)
-    path: docker/cloud/cosmiss-notebook
+    cve: "N/A (forwardingId authz bypass, case #073)"
+    path: scenarios/cloud/cosmiss-notebook
     port: 10623
   cloud-24:
     id: CLOUD-24
     name: "RDS log_fdw: Managed DB Host File Read → Provider Internal Creds"
     type: docker
     difficulty: L2
-    cve: N/A (log_fdw path traversal, case #015)
-    path: docker/cloud/rds-logfdw
+    cve: "N/A (log_fdw path traversal, case #015)"
+    path: scenarios/cloud/rds-logfdw
     port: 10624
   cloud-25:
     id: CLOUD-25
     name: "Cloud SQL Engine Patch: Index Function Runs as Provider Role → Host RCE"
     type: docker
     difficulty: L3
-    cve: N/A (ATExecChangeOwner patch + ANALYZE, case #052)
-    path: docker/cloud/cloudsql-index-rce
+    cve: "N/A (ATExecChangeOwner patch + ANALYZE, case #052)"
+    path: scenarios/cloud/cloudsql-index-rce
     port: 10625
   cloud-26:
     id: CLOUD-26
     name: "SynLapse: Shared Integration Runtime → Co-Tenant Credentials"
     type: docker
     difficulty: L3
-    cve: N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062)
-    path: docker/cloud/synlapse-ir
+    cve: "N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062)"
+    path: scenarios/cloud/synlapse-ir
     port: 10626
   cloud-27:
     id: CLOUD-27
     name: "ExtraReplica: Internal Subnet + CN Regex → Cross-Tenant DB Replication"
     type: docker
     difficulty: L3
-    cve: N/A (internal subnet + mis-anchored cert regex, case #061)
-    path: docker/cloud/extrareplica-repl
+    cve: "N/A (internal subnet + mis-anchored cert regex, case #061)"
+    path: scenarios/cloud/extrareplica-repl
     port: 10627
   cloud-28:
     id: CLOUD-28
     name: "WireServing: Host-Agent Channel → Node Bootstrap Secrets"
     type: docker
     difficulty: L3
-    cve: N/A (unvalidated transport cert, case #255/#184)
-    path: docker/cloud/wireserver-bootstrap
+    cve: "N/A (unvalidated transport cert, case #255/#184)"
+    path: scenarios/cloud/wireserver-bootstrap
     port: 10628
   cloud-29:
     id: CLOUD-29
     name: "Build Fleet + Internal Registry: Image Supply-Chain Overwrite"
     type: docker
     difficulty: L2
-    cve: N/A (unauth internal registry, case #260 lineage)
-    path: docker/cloud/buildfleet-registry
+    cve: "N/A (unauth internal registry, case #260 lineage)"
+    path: scenarios/cloud/buildfleet-registry
     port: 10629
   cloud-30:
     id: CLOUD-30
     name: "Model-as-Code: Malicious Pickle → Inference Pod → Node IMDS"
     type: docker
     difficulty: L2
-    cve: N/A (pickle deserialization, case #091)
-    path: docker/cloud/pickle-model
+    cve: "N/A (pickle deserialization, case #091)"
+    path: scenarios/cloud/pickle-model
     port: 10630
   cloud-31:
     id: CLOUD-31
@@ -570,15 +570,15 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (control-plane ownership check missing)
-    path: docker/cloud/attachme-volume
+    path: scenarios/cloud/attachme-volume
     port: 10631
   cloud-32:
     id: CLOUD-32
     name: "Entra Actor Token: Tenant-A Token Accepted by Tenant-B Directory"
     type: docker
     difficulty: L2
-    cve: N/A (actor/tenant validation bug, case #246)
-    path: docker/cloud/actor-token
+    cve: "N/A (actor/tenant validation bug, case #246)"
+    path: scenarios/cloud/actor-token
     port: 10632
   cloud-33:
     id: CLOUD-33
@@ -586,79 +586,79 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (auth bypass in provider agent, CVE-2021-38647 lineage)
-    path: docker/cloud/omigod-agent
+    path: scenarios/cloud/omigod-agent
     port: 10633
   cloud-34:
     id: CLOUD-34
     name: "IAM Enumeration 2.0: Unlogged AccessDenied Oracle"
     type: docker
     difficulty: L2
-    cve: N/A (uncovered service error oracle, case #134/#137)
-    path: docker/cloud/iam-enum-oracle
+    cve: "N/A (uncovered service error oracle, case #134/#137)"
+    path: scenarios/cloud/iam-enum-oracle
     port: 10634
   cloud-35:
     id: CLOUD-35
     name: "Service Catalog Beta Endpoint: Invisible Write"
     type: docker
     difficulty: L2
-    cve: N/A (non-production endpoint skips audit, case #154)
-    path: docker/cloud/beta-endpoint
+    cve: "N/A (non-production endpoint skips audit, case #154)"
+    path: scenarios/cloud/beta-endpoint
     port: 10635
   cloud-36:
     id: CLOUD-36
     name: "Resource Explorer: Feature-Inherent Quiet Enumeration"
     type: docker
     difficulty: L2
-    cve: N/A (unlogged search API, case #148)
-    path: docker/cloud/resource-explorer
+    cve: "N/A (unlogged search API, case #148)"
+    path: scenarios/cloud/resource-explorer
     port: 10636
   cloud-37:
     id: CLOUD-37
     name: "CloudImposer: Dependency Confusion in Managed Data Platform"
     type: docker
     difficulty: L3
-    cve: N/A (global namespace dependency confusion, case #270)
-    path: docker/cloud/composer-depconf
+    cve: "N/A (global namespace dependency confusion, case #270)"
+    path: scenarios/cloud/composer-depconf
     port: 10637
   cloud-38:
     id: CLOUD-38
     name: "Silent Reaper: Low-Code Connector Secrets via Control Plane"
     type: docker
     difficulty: L2
-    cve: N/A (connector store tenant-scope missing, case #249/#197)
-    path: docker/cloud/lowcode-secrets
+    cve: "N/A (connector store tenant-scope missing, case #249/#197)"
+    path: scenarios/cloud/lowcode-secrets
     port: 10638
   cloud-39:
     id: CLOUD-39
     name: "Shared NAT Egress: Source-IP Allowlist Bypass"
     type: docker
     difficulty: L2
-    cve: N/A (service-tag source-IP trust, case #259)
-    path: docker/cloud/shared-nat
+    cve: "N/A (service-tag source-IP trust, case #259)"
+    path: scenarios/cloud/shared-nat
     port: 10639
   cloud-40:
     id: CLOUD-40
     name: "Dataform: Cross-Tenant Path Traversal in Managed Data Service"
     type: docker
     difficulty: L3
-    cve: N/A (cross-tenant path traversal, case #267)
-    path: docker/cloud/dataform-pt
+    cve: "N/A (cross-tenant path traversal, case #267)"
+    path: scenarios/cloud/dataform-pt
     port: 10640
   cloud-41:
     id: CLOUD-41
     name: "Serverless Default Service Account: Platform Identity Escalation"
     type: docker
     difficulty: L2
-    cve: N/A (over-scoped default SA, case #266/#272)
-    path: docker/cloud/serverless-sa
+    cve: "N/A (over-scoped default SA, case #266/#272)"
+    path: scenarios/cloud/serverless-sa
     port: 10641
   cloud-42:
     id: CLOUD-42
     name: "Persistence-as-a-Service: Managed Automation Backdoor"
     type: docker
     difficulty: L3
-    cve: N/A (automation-runbook persistence, case #149)
-    path: docker/cloud/persistence-as-a-service
+    cve: "N/A (automation-runbook persistence, case #149)"
+    path: scenarios/cloud/persistence-as-a-service
     port: 10642
   k8s-28:
     id: K8S-28
@@ -666,18 +666,18 @@ scenarios:
     type: k8s
     difficulty: L2
     cve: N/A (scheduling bypass)
-    path: k8s/node-selector-evasion
+    path: scenarios/k8s/node-selector-evasion
   k8s-29:
     id: K8S-29
     name: Toleration Abuse (Taint Bypass)
     type: k8s
     difficulty: L2
     cve: N/A (taint bypass)
-    path: k8s/toleration-abuse
+    path: scenarios/k8s/toleration-abuse
   k8s-30:
     id: K8S-30
     name: CNI IP Spoofing (NetworkPolicy Bypass)
     type: k8s
     difficulty: L2
     cve: N/A (IP spoofing)
-    path: k8s/cni-ip-spoof
+    path: scenarios/k8s/cni-ip-spoof

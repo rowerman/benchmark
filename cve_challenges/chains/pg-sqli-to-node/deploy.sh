@@ -12,8 +12,8 @@ echo "[Chain 15] PostgreSQL SQLi to Node Compromise"
 
 # Step 1: PostgreSQL + web app
 echo "[*] Starting WEB-07 + DB-01..."
-docker compose -f "$ROOT/docker/web/postgres-sqli/docker-compose.yml" up -d --build 2>&1 | tail -2
-docker compose -f "$ROOT/docker/db/postgres-weak-auth/docker-compose.yml" up -d 2>&1 | tail -2
+docker compose -f "$ROOT/scenarios/web/postgres-sqli/docker-compose.yml" up -d --build 2>&1 | tail -2
+docker compose -f "$ROOT/scenarios/db/postgres-weak-auth/docker-compose.yml" up -d 2>&1 | tail -2
 
 # Step 2-4: K8s cluster
 mkdir -p /home/kianabin/cve-flags/chain15

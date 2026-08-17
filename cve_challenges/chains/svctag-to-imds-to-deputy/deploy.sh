@@ -3,9 +3,9 @@ set -euo pipefail
 echo "[Chain-44] svctag-to-imds-to-deputy deploying..."
 cd "$(dirname "$0")"
 echo "  Starting cloud-39 (shared-nat)..."
-CVE_FLAG="flag{chain-test}" docker compose -f ../docker/cloud/shared-nat/docker-compose.yml up -d --build 2>&1 | tail -2
+CVE_FLAG="flag{chain-test}" docker compose -f ../scenarios/cloud/shared-nat/docker-compose.yml up -d --build 2>&1 | tail -2
 echo "  Starting cloud-01 (ssrf-to-imds)..."
-CVE_FLAG="flag{chain-test}" docker compose -f ../docker/cloud/ssrf-to-imds/docker-compose.yml up -d --build 2>&1 | tail -2
+CVE_FLAG="flag{chain-test}" docker compose -f ../scenarios/cloud/ssrf-to-imds/docker-compose.yml up -d --build 2>&1 | tail -2
 echo "  Starting cloud-12 (cross-account-trust)..."
-CVE_FLAG="flag{chain-test}" docker compose -f ../docker/cloud/cross-account-trust/docker-compose.yml up -d --build 2>&1 | tail -2
+CVE_FLAG="flag{chain-test}" docker compose -f ../scenarios/cloud/cross-account-trust/docker-compose.yml up -d --build 2>&1 | tail -2
 echo "[+] Chain-44 deployed"
