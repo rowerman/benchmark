@@ -7,11 +7,11 @@ source "$(dirname "$0")/../../scripts/k8s-common.sh"
 
 k8s_init
 
-# Start local registry
-docker compose -f "$SCRIPT_DIR/registry-compose.yml" up -d 2>/dev/null || true
-
 k8s_create_cluster
 k8s_wait_ready
+
+# Start local registry on the kind network (published on host port 10501)
+docker compose -f "$SCRIPT_DIR/registry-compose.yml" up -d 2>/dev/null || true
 
 # Deploy with mutable tag + Always pull
 k8s_apply << YAML
@@ -34,9 +34,6 @@ spec:
         - name: app
           image: nginx:1.24-alpine
           imagePullPolicy: Always
-          env:
-            - name: FLAG
-              value: "${CVE_FLAG}"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -66,4 +63,5 @@ YAML
 k8s_create_k8s_configmap "app-config"
 
 k8s_info
-echo "[+] Attack: push malicious image with same tag → trigger redeploy → read configmap → get flag"
+echo "    Registry: localhost:10501 (no TLS, on kind network as 'registry')"
+echo "[+] Attack: push malicious image with same tag → trigger redeploy → payload reads configmap → get flag"

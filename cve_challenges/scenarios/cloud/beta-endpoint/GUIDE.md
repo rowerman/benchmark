@@ -27,9 +27,13 @@
 
 ## 利用步骤
 1. 读取控制台页面源码，从 CSP `connect-src` 中发现 beta 端点。
-2. 携带普通凭据（模拟 SigV4 签名）POST `/portfolios` 到 beta 端点——
-   创建成功，响应直接包含 flag。
-3. 查询 `/logs`：审计记录数为 0，写操作完全不可见。
+2. 携带模拟签名凭据（`X-Api-Key`）POST `/portfolios` 到 beta 端点——
+   创建成功，响应只返回 `portfolio_id`，不直接暴露 flag。
+3. 用同一凭据 `GET /portfolios/<portfolio_id>` 读取资源，获得 flag。
+4. 查询 `/logs`：审计记录数为 0，写操作完全不可见。
+
+> 无凭据或错误凭据的请求返回 403——本场景刻画的是“审计盲区”而非
+> “未鉴权接口”，因此调用者校验与生产端点保持一致。
 
 ## Flag
 `flag{cloud-26-invisible-write}`

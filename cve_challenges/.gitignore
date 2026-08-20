@@ -18,3 +18,5 @@ kubeconfig*
 # 临时文件
 *.tmp
 *.log
+
+**/__pycache__/

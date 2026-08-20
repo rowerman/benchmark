@@ -27,6 +27,10 @@
 - PostgreSQL：索引表达式、ANALYZE、表属主、VOLATILE/IMMUTABLE 函数
 - 托管数据库角色阶梯：客户角色 < 供应商超级角色 < 宿主 OS
 
+> 边界说明：`cloudsqluser` 不是超级用户，直接执行
+> `COPY ... FROM PROGRAM` 或读取宿主文件会被拒绝；以下漏洞链是唯一
+> 能以供应商角色执行命令的路径。
+
 ## 利用步骤
 1. 建表并建一个无害 IMMUTABLE 函数和索引（让索引合法建立）：
    ```sql

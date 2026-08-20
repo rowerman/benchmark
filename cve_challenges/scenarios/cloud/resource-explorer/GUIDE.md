@@ -27,7 +27,9 @@
 
 ## 利用步骤
 1. 用空查询/关键词（prod、role、flag）调用 `/search`，枚举全部资源。
-2. 发现 `flag-store` 资源，读取其详情获得 flag。
+2. 搜索只返回资源元数据（不含 secret）；发现 `flag-store` 后，携带
+   调用者上下文（`X-Caller-ARN`）请求 `/resources/s-001` 读取详情，
+   获得 flag；缺少调用者上下文时返回 403。
 3. 检查 `/logs`：审计为 0，枚举不可见。
 
 ## Flag

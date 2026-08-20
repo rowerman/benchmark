@@ -26,9 +26,14 @@
 - IAM trust policy 主体语义；跨账号 AssumeRole；角色枚举
 
 ## 利用步骤
-1. 枚举角色名（文档/错误信息提示）。
-2. 用攻击者身份调用 AssumeRole 目标角色（信任策略 Principal:*）。
-3. 用角色凭据读取 S3 目标中的 flag。
+1. 枚举角色名：`GET /roles` 与 `GET /roles/<name>` 可查看脱敏后的
+   信任策略（Principal 与 Condition 结构可见、具体账号被隐藏）。
+2. 用攻击者身份的 AK/SK 调用 AssumeRole，目标为信任策略过宽的角色
+   （如 `CrossAccountRole` 信任本账号 root，或 `AdminRole` 为
+   `Principal:*`）。
+3. 用返回的三段式临时凭据（AccessKeyId / SecretAccessKey /
+   SessionToken）请求 S3 的 `/flag.txt`。S3 会向 IAM 校验会话有效性
+   与角色权限；匿名、伪造或权限不足的凭据一律返回 403。
 
 ## Flag
 `flag{cloud-09-...}`（S3 对象）
