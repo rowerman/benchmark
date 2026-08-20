@@ -1,10 +1,10 @@
-# CLOUD-42 持久化即服务：托管自动化后门
+# CLOUD-33 持久化即服务：托管自动化后门
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-42 |
+| ID | CLOUD-33 |
 | 名称 | Persistence-as-a-Service: Managed Automation Backdoor |
 | 技术/CVE | N/A (automation-runbook persistence, case #149) |
 | 难度 | L3 |
@@ -34,7 +34,7 @@ as-a-service）。
 3. 等待 runbook 下一轮执行（每 5s）——它自动用新凭据再次读到 flag。
 
 ## Flag
-`flag{cloud-42-persistence}`
+`flag{cloud-33-persistence}`
 
 ## 此场景利用了哪些知识
 

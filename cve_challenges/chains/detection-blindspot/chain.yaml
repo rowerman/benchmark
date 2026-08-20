@@ -5,22 +5,22 @@ domains:
 - cloud
 nodes:
 - step: 1
-  scenario: cloud-36
+  scenario: cloud-27
   description: Resource Explorer 静默枚举 → 全量资源拓扑
   flag: flag{c55-step1-enum}
   next_hint: 资源拓扑暴露未记录的错误 oracle
 - step: 2
-  scenario: cloud-34
+  scenario: cloud-25
   description: IAM 枚举 oracle → 确认账号身份（零审计）
   flag: flag{c55-step2-oracle}
   next_hint: 身份可用于非生产端点
 - step: 3
-  scenario: cloud-35
+  scenario: cloud-26
   description: Beta 端点不可见写 → 建立资源控制
   flag: flag{c55-step3-write}
   next_hint: 控制权可注册托管自动化
 - step: 4
-  scenario: cloud-42
+  scenario: cloud-33
   description: 持久化即服务 → 全程零审计 → 最终 flag
   flag: flag{c55-step4-final}
   next_hint: null

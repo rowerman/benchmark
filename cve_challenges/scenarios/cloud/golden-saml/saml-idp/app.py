@@ -10,7 +10,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 KEY_DIR = Path(os.environ.get("KEY_DIR", "/app/keys"))
-FLAG = os.environ.get("FLAG", "flag{cloud-13-golden-saml}")
+FLAG = os.environ.get("FLAG", "flag{cloud-10-golden-saml}")
 
 # Load keys
 _private_key = serialization.load_pem_private_key(

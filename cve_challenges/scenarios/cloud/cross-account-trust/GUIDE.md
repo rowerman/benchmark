@@ -1,10 +1,10 @@
-# CLOUD-12 IAM 信任策略 Principal:* → 跨账号接管
+# CLOUD-09 IAM 信任策略 Principal:* → 跨账号接管
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-12 |
+| ID | CLOUD-09 |
 | 名称 | IAM Trust Policy Principal:* → Cross-Account Takeover |
 | 技术/CVE | N/A (overly permissive trust policy) |
 | 难度 | L2 |
@@ -31,7 +31,7 @@
 3. 用角色凭据读取 S3 目标中的 flag。
 
 ## Flag
-`flag{cloud-12-...}`（S3 对象）
+`flag{cloud-09-...}`（S3 对象）
 
 ## 此场景利用了哪些知识
 

@@ -1,10 +1,10 @@
-# CLOUD-09 AI Notebook 逃逸 → K8s SA Token 窃取
+# CLOUD-07 AI Notebook 逃逸 → K8s SA Token 窃取
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-09 |
+| ID | CLOUD-07 |
 | 名称 | AI Notebook Escape → K8s SA Token Theft |
 | 技术/CVE | N/A (notebook escape + SA token) |
 | 难度 | L3 |
@@ -32,7 +32,7 @@
    K8s API 读取 Secret/flag。
 
 ## Flag
-`flag{cloud-09-step2-...}`（集群 Secret）
+`flag{cloud-07-step2-...}`（集群 Secret）
 
 ## 此场景利用了哪些知识
 

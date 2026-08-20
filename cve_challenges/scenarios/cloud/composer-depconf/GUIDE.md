@@ -1,10 +1,10 @@
-# CLOUD-37 CloudImposer：托管数据平台依赖混淆
+# CLOUD-28 CloudImposer：托管数据平台依赖混淆
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-37 |
+| ID | CLOUD-28 |
 | 名称 | CloudImposer: Dependency Confusion in Managed Data Platform |
 | 技术/CVE | N/A (global namespace dependency confusion, case #270) |
 | 难度 | L3 |
@@ -33,7 +33,7 @@
    输出平台 worker 上的 flag。
 
 ## Flag
-`flag{cloud-37-platform-worker}`
+`flag{cloud-28-platform-worker}`
 
 ## 此场景利用了哪些知识
 

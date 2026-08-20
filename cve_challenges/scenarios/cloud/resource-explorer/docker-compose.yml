@@ -2,7 +2,8 @@ services:
   explorer-api:
     build: ./explorer-api
     environment:
-      - FLAG=flag{cloud-36-flag-store}
+      - FLAG=flag{cloud-27-flag-store}
+      - RESOURCE_READER_ARN=arn:aws:iam::111122223333:user/attacker
     networks:
       c36-net:
         ipv4_address: 10.36.0.10
@@ -18,6 +19,7 @@ services:
     environment:
       - EXPLORER_URL=http://explorer-api:5000
       - AUDIT_URL=http://audit-log:5000
+      - CALLER_ARN=arn:aws:iam::111122223333:user/attacker
     networks:
       c36-net:
         ipv4_address: 10.36.0.30

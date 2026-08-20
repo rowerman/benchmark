@@ -2,7 +2,7 @@ services:
   connector-store:
     build: ./connector-store
     environment:
-      - FLAG=flag{cloud-38-connector-secret}
+      - FLAG=flag{cloud-29-connector-secret}
     networks:
       c38-net:
         ipv4_address: 10.38.0.10

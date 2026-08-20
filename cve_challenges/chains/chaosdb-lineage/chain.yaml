@@ -5,17 +5,17 @@ domains:
 - cloud
 nodes:
 - step: 1
-  scenario: cloud-23
+  scenario: cloud-14
   description: 前端路由缺陷 → 跨租户 notebook 代码执行
   flag: flag{c50-step1-notebook}
   next_hint: notebook 所在宿主可访问 host-agent 通道
 - step: 2
-  scenario: cloud-28
+  scenario: cloud-19
   description: WireServer 通道 → 引导密钥 → 伪造 node 身份
   flag: flag{c50-step2-node}
   next_hint: node 身份可调控制面块存储 API
 - step: 3
-  scenario: cloud-31
+  scenario: cloud-22
   description: 可预测卷 ID + 属主校验缺失 → 附加受害者卷 → 最终 flag
   flag: flag{c50-step3-final}
   next_hint: null

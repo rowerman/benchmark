@@ -1,10 +1,10 @@
-# CLOUD-34 IAM 枚举 2.0：无日志访问拒绝 oracle
+# CLOUD-25 IAM 枚举 2.0：无日志访问拒绝 oracle
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-34 |
+| ID | CLOUD-25 |
 | 名称 | IAM Enumeration 2.0: Unlogged AccessDenied Oracle |
 | 技术/CVE | N/A (uncovered service error oracle, case #134/#137) |
 | 难度 | L2 |
@@ -35,7 +35,7 @@ CloudTrail 并不覆盖所有服务：调用不支持的 API 不产生任何审�
 3. 检查 `/logs`——审计记录数为 0，侦察完全不可见。
 
 ## Flag
-`flag{cloud-34-zero-audit-enum}`
+`flag{cloud-25-zero-audit-enum}`
 
 ## 此场景利用了哪些知识
 

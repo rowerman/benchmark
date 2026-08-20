@@ -1,10 +1,10 @@
-# CLOUD-11 OIDC Claim 错配 → 跨仓库 AssumeRole
+# CLOUD-08 OIDC Claim 错配 → 跨仓库 AssumeRole
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-11 |
+| ID | CLOUD-08 |
 | 名称 | OIDC Claim Mismatch → Cross-Repo AssumeRole |
 | 技术/CVE | N/A (OIDC federation misconfiguration) |
 | 难度 | L2 |
@@ -32,7 +32,7 @@ ref），攻击者可以伪造或利用其他仓库的 OIDC token 通过信任�
    获得角色凭据与 flag。
 
 ## Flag
-`flag{cloud-11-...}`（角色凭据换取的资源）
+`flag{cloud-08-...}`（角色凭据换取的资源）
 
 ## 此场景利用了哪些知识
 

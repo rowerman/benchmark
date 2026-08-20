@@ -1,10 +1,10 @@
-# CLOUD-26 SynLapse：共享集成运行时跨租户凭据
+# CLOUD-17 SynLapse：共享集成运行时跨租户凭据
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-26 |
+| ID | CLOUD-17 |
 | 名称 | SynLapse: Shared Integration Runtime → Co-Tenant Credentials |
 | 技术/CVE | N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062) |
 | 难度 | L3 |
@@ -36,7 +36,7 @@
 4. 共享 worker 执行注入命令，返回同机 co-tenant 凭据与 flag。
 
 ## Flag
-`flag{cloud-26-co-tenant}`
+`flag{cloud-17-co-tenant}`
 
 ## 此场景利用了哪些知识
 

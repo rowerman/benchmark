@@ -1,10 +1,10 @@
-# CLOUD-08 CI/CD 管道投毒 → 凭据外泄
+# CLOUD-06 CI/CD 管道投毒 → 凭据外泄
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-08 |
+| ID | CLOUD-06 |
 | 名称 | CI/CD Pipeline Poisoning → Secret Exfiltration |
 | 技术/CVE | N/A (CI/CD script injection) |
 | 难度 | L2 |
@@ -31,7 +31,7 @@
 3. 拿到 pipeline flag。
 
 ## Flag
-`flag{cloud-08-pipeline}`（runner 环境）
+`flag{cloud-06-pipeline}`（runner 环境）
 
 ## 此场景利用了哪些知识
 

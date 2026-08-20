@@ -3,11 +3,11 @@ services:
     build:
       context: ./attacker
       args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-13-default}}
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-10-default}}
     ports:
       - "10613:5000"
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-13-default}}
+      - FLAG=${CVE_FLAG:-flag{cloud-10-default}}
       - IDP_URL=http://saml-idp:5000
       - IAM_URL=http://iam:5000
     healthcheck:
@@ -20,7 +20,7 @@ services:
   saml-idp:
     build: ./saml-idp
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-13-golden-saml}}
+      - FLAG=${CVE_FLAG:-flag{cloud-10-golden-saml}}
 
   # socat proxies — expose internal services to host for nmap detection
   saml-proxy:

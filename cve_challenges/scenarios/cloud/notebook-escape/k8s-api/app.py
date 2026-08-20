@@ -3,7 +3,7 @@ import os
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG", "flag{cloud-09-step2-sa-token}")
+FLAG = os.environ.get("FLAG", "flag{cloud-07-step2-sa-token}")
 SA_TOKEN = os.environ.get("SA_TOKEN", "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06YnJpZGdlIiwiaWF0IjoxNTE2MjM5MDIyfQ.")
 
 @app.route("/health")

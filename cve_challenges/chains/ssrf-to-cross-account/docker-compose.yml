@@ -30,10 +30,22 @@ services:
     environment:
       - S3_ACCESS_KEY=AKIACHAIN32EXAMPLE
       - S3_SECRET_KEY=chain32-imds-secret
-      - FLAG2=flag{c32-step2-imds}
+      - FLAG=flag{c32-step2-imds}
     networks:
       chain32-net:
         ipv4_address: 169.254.0.20
+
+  s3-cross:
+    build:
+      context: ../../scenarios/cloud/cross-account-trust/s3
+    environment:
+      - FLAG=flag{c32-step4-final}
+      - IAM_URL=http://iam:5000
+    depends_on:
+      - iam
+    networks:
+      chain32-net:
+        ipv4_address: 169.254.0.50
 
   iam:
     build:
@@ -54,6 +66,7 @@ services:
     environment:
       - FLAG=flag{c32-step3-cross}
       - IAM_URL=http://iam:5000
+      - S3_URL=http://s3-cross:5000
     networks:
       chain32-net:
         ipv4_address: 169.254.0.40

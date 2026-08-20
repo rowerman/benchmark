@@ -5,7 +5,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 TOKEN = os.environ.get("DEFAULT_SA_TOKEN", "default-compute-sa-token")
-FLAG = os.environ.get("FLAG", "flag{cloud-41-victim-project}")
+FLAG = os.environ.get("FLAG", "flag{cloud-32-victim-project}")
 
 
 @app.route("/api/projects/victim/secrets")

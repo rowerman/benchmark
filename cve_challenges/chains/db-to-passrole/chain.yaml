@@ -5,7 +5,7 @@ domains:
 - cloud
 nodes:
 - step: 1
-  scenario: cloud-25
+  scenario: cloud-16
   description: 引擎补丁 → 宿主 RCE → 拿到 IAM 凭据
   flag: flag{c48-step1-db}
   next_hint: 凭据有 iam:PassRole 权限
@@ -15,7 +15,7 @@ nodes:
   flag: flag{c48-step2-lambda}
   next_hint: 使用凭据跨账号访问
 - step: 3
-  scenario: cloud-12
+  scenario: cloud-09
   description: Cross-Account → 最终 flag
   flag: flag{c48-step3-final}
   next_hint: null

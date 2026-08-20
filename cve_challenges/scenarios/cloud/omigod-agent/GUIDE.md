@@ -1,10 +1,10 @@
-# CLOUD-33 OMIGOD：供应商中间件无鉴权管理通道
+# CLOUD-24 OMIGOD：供应商中间件无鉴权管理通道
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-33 |
+| ID | CLOUD-24 |
 | 名称 | OMIGOD: Cloud Middleware Unauth Management Channel → VM Root |
 | 技术/CVE | N/A (auth bypass in provider agent, CVE-2021-38647 lineage) |
 | 难度 | L2 |
@@ -35,7 +35,7 @@
 3. 以 root 拿到 VM 上的 flag。
 
 ## Flag
-`flag{cloud-33-vm-root}`
+`flag{cloud-24-vm-root}`
 
 ## 此场景利用了哪些知识
 

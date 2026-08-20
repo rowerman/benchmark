@@ -2,12 +2,12 @@ services:
   s3-global:
     build: ./s3-global
     environment:
-      - FLAG=flag{cloud-21-step2-squatting}
+      - FLAG=flag{cloud-13-step2-squatting}
   tenant-a:
     build:
       context: ./tenant-a
       args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-21-default}}
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-13-default}}
     ports:
       - "10621:5000"
     environment:

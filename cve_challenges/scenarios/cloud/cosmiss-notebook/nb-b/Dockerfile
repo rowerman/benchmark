@@ -3,7 +3,7 @@ COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY app.py /app/app.py
 WORKDIR /app
-ARG CVE_FLAG=flag{cloud-23-default}
+ARG CVE_FLAG=flag{cloud-14-default}
 RUN echo "${CVE_FLAG}" > /flag.txt && chmod 644 /flag.txt
 EXPOSE 5000
 CMD ["python", "app.py"]

@@ -1,10 +1,10 @@
-# CLOUD-28 WireServing：宿主代理通道窃取节点引导密钥
+# CLOUD-19 WireServing：宿主代理通道窃取节点引导密钥
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-28 |
+| ID | CLOUD-19 |
 | 名称 | WireServing: Host-Agent Channel → Node Bootstrap Secrets |
 | 技术/CVE | N/A (unvalidated transport cert, case #255/#184) |
 | 难度 | L3 |
@@ -39,8 +39,8 @@ WireServer（168.63.129.16）。goalstate 无鉴权；证书端点不校验调�
 5. 以伪造的 node 身份读取 `/node-secrets`，拿到最终 flag。
 
 ## Flag
-- `flag{cloud-28-bootstrap}`（引导脚本内）
-- `flag{cloud-28-node-secrets}`（节点 Secret）
+- `flag{cloud-19-bootstrap}`（引导脚本内）
+- `flag{cloud-19-node-secrets}`（节点 Secret）
 
 ## 此场景利用了哪些知识
 

@@ -5,17 +5,17 @@ domains:
 - cloud
 nodes:
 - step: 1
-  scenario: cloud-26
+  scenario: cloud-17
   description: 共享集成运行时 → 转储 co-tenant 凭据
   flag: flag{c56-step1-ir}
   next_hint: 凭据可访问托管数据工作流
 - step: 2
-  scenario: cloud-40
+  scenario: cloud-31
   description: Dataform 路径穿越 → 跨租户工作区读写
   flag: flag{c56-step2-workspace}
   next_hint: 工作区发现目标租户托管数据库配置
 - step: 3
-  scenario: cloud-25
+  scenario: cloud-16
   description: 托管 DB 引擎补丁 → 宿主 RCE
   flag: flag{c56-step3-host}
   next_hint: 宿主可访问 IMDS 端点

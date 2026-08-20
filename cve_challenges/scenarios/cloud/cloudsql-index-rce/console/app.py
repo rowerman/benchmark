@@ -28,6 +28,25 @@ def connect(url):
     return psycopg2.connect(url)
 
 
+def run_engine_patch(sql):
+    """Apply the vulnerable provider-only owner transition."""
+    match = re.match(
+        r"^\s*ALTER\s+TABLE\s+([a-zA-Z_][\w.]*)\s+OWNER\s+TO\s+cloudsqladmin\s*;?\s*$",
+        sql,
+        re.I,
+    )
+    if not match:
+        return False
+    conn = connect(SUPER_URL)
+    try:
+        cur = conn.cursor()
+        cur.execute(f"ALTER TABLE {match.group(1)} OWNER TO cloudsqladmin")
+        conn.commit()
+    finally:
+        conn.close()
+    return True
+
+
 def find_index_function(conn):
     """Find a VOLATILE index expression function on a table owned by cloudsqladmin."""
     cur = conn.cursor()
@@ -54,7 +73,15 @@ def find_index_function(conn):
 
 
 def run_sql(sql):
-    conn = connect(DB_URL)
+    if run_engine_patch(sql):
+        return [], [], connect(DB_URL)
+    # The provider's patched engine performs ANALYZE with the table owner's
+    # privileges (cloudsqladmin), which is what re-evaluates the index
+    # expression function in the first place.
+    if re.match(r"^\s*ANALYZE\b", sql, re.I):
+        conn = connect(SUPER_URL)
+    else:
+        conn = connect(DB_URL)
     cur = conn.cursor()
     cur.execute(sql)
     try:

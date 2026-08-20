@@ -8,13 +8,15 @@ services:
     build: ./prod-api
     environment:
       - AUDIT_URL=http://audit-log:5000
+      - API_CREDENTIAL=valid-sigv4
     networks:
       c35-net:
         ipv4_address: 10.35.0.20
   beta-api:
     build: ./beta-api
     environment:
-      - FLAG=flag{cloud-35-invisible-write}
+      - FLAG=flag{cloud-26-invisible-write}
+      - API_CREDENTIAL=valid-sigv4
     networks:
       c35-net:
         ipv4_address: 10.35.0.30

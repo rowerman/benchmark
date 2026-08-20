@@ -11,7 +11,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 TOKEN = os.environ.get("BOOTSTRAP_TOKEN", "token-abcdef")
-FLAG = os.environ.get("FLAG", "flag{cloud-28-node-secrets}")
+FLAG = os.environ.get("FLAG", "flag{cloud-19-node-secrets}")
 
 _ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 _ca_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, u"control-plane-ca")])

@@ -37,33 +37,33 @@ CLOUD_WEB_PORTS=(
   10601   # cloud-01 ssrf-to-imds
   10604   # cloud-04 lambda-passrole
   10605   # cloud-05 cf-injection
-  10608   # cloud-08 ci-poisoning
-  10609   # cloud-09 notebook-escape
-  10611   # cloud-11 oidc-federation
-  10612   # cloud-12 cross-account-trust
-  10613   # cloud-13 golden-saml
-  10615   # cloud-15 scp-bypass
-  10621   # cloud-21 global-s3-squatting
-  10623   # cloud-23 cosmiss-notebook
-  10624   # cloud-24 rds-logfdw
-  10625   # cloud-25 cloudsql-index-rce
-  10626   # cloud-26 synlapse-ir
-  10627   # cloud-27 extrareplica-repl
-  10628   # cloud-28 wireserver-bootstrap
-  10629   # cloud-29 buildfleet-registry
-  10630   # cloud-30 pickle-model
-  10631   # cloud-31 attachme-volume
-  10632   # cloud-32 actor-token
-  10633   # cloud-33 omigod-agent
-  10634   # cloud-34 iam-enum-oracle
-  10635   # cloud-35 beta-endpoint
-  10636   # cloud-36 resource-explorer
-  10637   # cloud-37 composer-depconf
-  10638   # cloud-38 lowcode-secrets
-  10639   # cloud-39 shared-nat
-  10640   # cloud-40 dataform-pt
-  10641   # cloud-41 serverless-sa
-  10642   # cloud-42 persistence-as-a-service
+  10608   # cloud-06 ci-poisoning
+  10609   # cloud-07 notebook-escape
+  10611   # cloud-08 oidc-federation
+  10612   # cloud-09 cross-account-trust
+  10613   # cloud-10 golden-saml
+  10615   # cloud-11 scp-bypass
+  10621   # cloud-13 global-s3-squatting
+  10623   # cloud-14 cosmiss-notebook
+  10624   # cloud-15 rds-logfdw
+  10625   # cloud-16 cloudsql-index-rce
+  10626   # cloud-17 synlapse-ir
+  10627   # cloud-18 extrareplica-repl
+  10628   # cloud-19 wireserver-bootstrap
+  10629   # cloud-20 buildfleet-registry
+  10630   # cloud-21 pickle-model
+  10631   # cloud-22 attachme-volume
+  10632   # cloud-23 actor-token
+  10633   # cloud-24 omigod-agent
+  10634   # cloud-25 iam-enum-oracle
+  10635   # cloud-26 beta-endpoint
+  10636   # cloud-27 resource-explorer
+  10637   # cloud-28 composer-depconf
+  10638   # cloud-29 lowcode-secrets
+  10639   # cloud-30 shared-nat
+  10640   # cloud-31 dataform-pt
+  10641   # cloud-32 serverless-sa
+  10642   # cloud-33 persistence-as-a-service
 )
 
 # ============================================================

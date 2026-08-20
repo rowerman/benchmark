@@ -7,6 +7,7 @@ from flask import Flask, request
 app = Flask(__name__)
 AUDIT = os.environ.get("AUDIT_URL", "http://audit-log:5000")
 _portfolios = []
+API_CREDENTIAL = os.environ.get("API_CREDENTIAL", "valid-sigv4")
 
 
 def audit(caller):
@@ -19,6 +20,8 @@ def audit(caller):
 
 @app.route("/portfolios", methods=["POST"])
 def create():
+    if request.headers.get("X-Api-Key") != API_CREDENTIAL:
+        return {"error": "AccessDenied"}, 403
     body = request.get_json(silent=True) or {}
     pid = f"prod-{len(_portfolios) + 1}"
     _portfolios.append({"id": pid, "name": body.get("name", "")})

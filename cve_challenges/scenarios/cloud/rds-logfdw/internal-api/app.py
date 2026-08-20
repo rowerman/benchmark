@@ -5,7 +5,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 TOKEN = os.environ.get("INTERNAL_TOKEN", "grover-internal-credential-token")
-FLAG2 = os.environ.get("FLAG2", "flag{cloud-24-internal-api}")
+FLAG2 = os.environ.get("FLAG2", "flag{cloud-15-internal-api}")
 
 
 @app.route("/health")

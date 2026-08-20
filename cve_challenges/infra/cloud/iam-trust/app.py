@@ -48,6 +48,7 @@ _config = yaml.safe_load(Path(ROLES_FILE).read_text(encoding="utf-8"))
 _roles_by_arn: dict[str, dict] = {}
 _roles_by_name: dict[str, dict] = {}
 _users_by_ak: dict[str, dict] = {}
+_sessions: dict[str, dict] = {}
 
 for r in _config.get("roles", []):
     _roles_by_arn[r["arn"]] = r
@@ -199,7 +200,7 @@ def _evaluate_trust_policy(role: dict, principal_type: str,
 # ---------------------------------------------------------------------------
 def _generate_credentials(role_name: str, session_name: str) -> dict:
     """Generate temporary STS credentials for an assumed role."""
-    return {
+    creds = {
         "AccessKeyId": f"ASIA{role_name[:8].upper():0>8}ID",
         "SecretAccessKey": f"temp-sk-{role_name}-{uuid.uuid4().hex[:8]}",
         "SessionToken": f"FwoGZXIvYXdzEH4aDE1vY2tTZXNzaW9uVG9rZW4-{uuid.uuid4().hex}",
@@ -207,6 +208,26 @@ def _generate_credentials(role_name: str, session_name: str) -> dict:
             "%Y-%m-%dT%H:%M:%SZ",
             time.gmtime(time.time() + CREDENTIAL_TTL)),
     }
+    role = _roles_by_name.get(role_name, {})
+    _sessions[creds["AccessKeyId"]] = {
+        "secret": creds["SecretAccessKey"],
+        "token": creds["SessionToken"],
+        "role": role_name,
+        "permissions": role.get("permissions", []),
+        "expires_at": time.time() + CREDENTIAL_TTL,
+    }
+    return creds
+
+
+def _session_record(access_key: str, secret: str, token: str) -> dict | None:
+    """Validate an STS session for downstream simulated services."""
+    session = _sessions.get(access_key)
+    if not session or session["secret"] != secret or session["token"] != token:
+        return None
+    if time.time() >= session["expires_at"]:
+        _sessions.pop(access_key, None)
+        return None
+    return session
 
 
 # ---------------------------------------------------------------------------
@@ -243,6 +264,18 @@ def health():
         "roles": len(_roles_by_arn),
         "users": len(_users_by_ak),
     }
+
+
+@app.route("/validate", methods=["POST"])
+def validate_session():
+    """Internal contract used by simulated data services to check STS creds."""
+    body = request.get_json(silent=True) or {}
+    session = _session_record(
+        body.get("access_key", ""), body.get("secret_key", ""), body.get("session_token", ""))
+    if not session:
+        return {"valid": False}, 403
+    return {"valid": True, "role": session["role"],
+            "permissions": session["permissions"]}
 
 
 # ---------------------------------------------------------------------------
@@ -342,7 +375,7 @@ def _redact_value(val: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# SCP evaluation (for CLOUD-15)
+# SCP evaluation (for CLOUD-11)
 # ---------------------------------------------------------------------------
 def _evaluate_scp(user: dict, action: str, resource: str, api_version: str = "") -> tuple[bool, str]:
     """Evaluate Service Control Policy.

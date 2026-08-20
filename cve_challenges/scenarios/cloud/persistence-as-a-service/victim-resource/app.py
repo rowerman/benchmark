@@ -4,7 +4,7 @@ import os
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG", "flag{cloud-42-persistence}")
+FLAG = os.environ.get("FLAG", "flag{cloud-33-persistence}")
 _valid = {"secret-v1"}
 
 

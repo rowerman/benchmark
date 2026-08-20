@@ -2,7 +2,7 @@ services:
   control-api:
     build: ./control-api
     environment:
-      - FLAG=flag{cloud-31-victim-volume}
+      - FLAG=flag{cloud-22-victim-volume}
     networks:
       c31-net:
         ipv4_address: 10.31.0.10

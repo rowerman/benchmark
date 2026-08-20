@@ -6,7 +6,7 @@ import os
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG", "flag{cloud-39-allowlist-bypass}")
+FLAG = os.environ.get("FLAG", "flag{cloud-30-allowlist-bypass}")
 TRUSTED = [ipaddress.ip_network("168.63.0.0/24")]
 
 

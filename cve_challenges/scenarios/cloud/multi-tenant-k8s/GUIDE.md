@@ -1,10 +1,10 @@
-# CLOUD-19 多租户 K8s：容器逃逸 → 跨租户访问
+# CLOUD-12 多租户 K8s：容器逃逸 → 跨租户访问
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-19 |
+| ID | CLOUD-12 |
 | 名称 | Multi-Tenant K8s: Container Escape → Cross-Tenant Access |
 | 技术/CVE | N/A (privileged container + hostPID escape) |
 | 难度 | L3 |
@@ -33,7 +33,7 @@ KIND 节点，再借节点上挂载的 SA token 横向进入 tenant-b 的 pod。
 4. 对 tenant-b 的 target pod 执行 exec，读取环境变量中的 flag。
 
 ## Flag
-`flag{cloud-19-cross-tenant}`（tenant-b target pod 环境）
+`flag{cloud-12-cross-tenant}`（tenant-b target pod 环境）
 
 ## 此场景利用了哪些知识
 

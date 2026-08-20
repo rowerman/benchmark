@@ -1,10 +1,10 @@
-# CLOUD-40 Dataform：托管数据服务跨租户路径穿越
+# CLOUD-31 Dataform：托管数据服务跨租户路径穿越
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-40 |
+| ID | CLOUD-31 |
 | 名称 | Dataform: Cross-Tenant Path Traversal in Managed Data Service |
 | 技术/CVE | N/A (cross-tenant path traversal, case #267) |
 | 难度 | L3 |
@@ -32,7 +32,7 @@ dataset 引用的路径没有做容器化校验。攻击者提交 `../` 引用�
 3. 执行器解析出 `tenant-b/secret.txt`，返回内容与 flag。
 
 ## Flag
-`flag{cloud-40-cross-tenant-workspace}`
+`flag{cloud-31-cross-tenant-workspace}`
 
 ## 此场景利用了哪些知识
 

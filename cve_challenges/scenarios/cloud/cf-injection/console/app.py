@@ -1,5 +1,5 @@
 """CloudFormation Console — accepts YAML templates, shows available exports."""
-import os, urllib.request, json
+import os, urllib.request
 from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
@@ -39,9 +39,14 @@ def create():
     if not template:
         return render_template_string(HTML, exports="", output="Error: template required")
     try:
-        req = urllib.request.Request(f"{PARSER}/parse",
-            data=json.dumps({"template": template}).encode(),
-            headers={"Content-Type": "application/json"})
+        # The parser consumes the submitted CloudFormation document itself.
+        # Sending a JSON wrapper would turn the template into a plain string
+        # and bypass intrinsic evaluation entirely.
+        req = urllib.request.Request(
+            f"{PARSER}/parse",
+            data=template.encode(),
+            headers={"Content-Type": "application/x-yaml"},
+        )
         r = urllib.request.urlopen(req, timeout=10)
         return render_template_string(HTML, exports="", output=f"Stack created:\n{r.read().decode()}")
     except Exception as e:

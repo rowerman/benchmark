@@ -6,7 +6,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 DEFAULT_SA_TOKEN = os.environ.get("DEFAULT_SA_TOKEN", "default-compute-sa-token")
-FLAG = os.environ.get("FLAG", "flag{cloud-41-default-sa}")
+FLAG = os.environ.get("FLAG", "flag{cloud-32-default-sa}")
 
 
 @app.route("/")

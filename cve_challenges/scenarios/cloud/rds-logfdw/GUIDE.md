@@ -1,10 +1,10 @@
-# CLOUD-24 RDS log_fdw：托管数据库宿主文件读取
+# CLOUD-15 RDS log_fdw：托管数据库宿主文件读取
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-24 |
+| ID | CLOUD-15 |
 | 名称 | RDS log_fdw: Managed DB Host File Read → Provider Internal Creds |
 | 技术/CVE | N/A (log_fdw path traversal, case #015) |
 | 难度 | L2 |
@@ -41,8 +41,8 @@ filename 选项没有做路径约束，客户可以把它当任意文件读，�
    获得 flag2。
 
 ## Flag
-- `flag{cloud-24-host-read}`（宿主配置文件）
-- `flag{cloud-24-internal-api}`（内部存储 API）
+- `flag{cloud-15-host-read}`（宿主配置文件）
+- `flag{cloud-15-internal-api}`（内部存储 API）
 
 ## 此场景利用了哪些知识
 

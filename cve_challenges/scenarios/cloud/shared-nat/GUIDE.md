@@ -1,10 +1,10 @@
-# CLOUD-39 共享 NAT 出口：源 IP 白名单绕过
+# CLOUD-30 共享 NAT 出口：源 IP 白名单绕过
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-39 |
+| ID | CLOUD-30 |
 | 名称 | Shared NAT Egress: Source-IP Allowlist Bypass |
 | 技术/CVE | N/A (service-tag source-IP trust, case #259) |
 | 难度 | L2 |
@@ -32,7 +32,7 @@
    落在 168.63.0.0/24 受信段，返回 flag。
 
 ## Flag
-`flag{cloud-39-allowlist-bypass}`
+`flag{cloud-30-allowlist-bypass}`
 
 ## 此场景利用了哪些知识
 

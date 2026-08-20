@@ -1,10 +1,10 @@
-# CLOUD-38 Silent Reaper：低代码连接器密钥控制面外泄
+# CLOUD-29 Silent Reaper：低代码连接器密钥控制面外泄
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-38 |
+| ID | CLOUD-29 |
 | 名称 | Silent Reaper: Low-Code Connector Secrets via Control Plane |
 | 技术/CVE | N/A (connector store tenant-scope missing, case #249/#197) |
 | 难度 | L2 |
@@ -33,7 +33,7 @@
 3. secret 中携带 flag。
 
 ## Flag
-`flag{cloud-38-connector-secret}`
+`flag{cloud-29-connector-secret}`
 
 ## 此场景利用了哪些知识
 

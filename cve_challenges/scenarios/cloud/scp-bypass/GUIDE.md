@@ -1,10 +1,10 @@
-# CLOUD-15 SCP 绕过：旧版 API 版本
+# CLOUD-11 SCP 绕过：旧版 API 版本
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-15 |
+| ID | CLOUD-11 |
 | 名称 | SCP Bypass via Legacy API Version |
 | 技术/CVE | N/A (SCP enforcement gap) |
 | 难度 | L2 |
@@ -31,7 +31,7 @@
 3. 旧版路径未执行 SCP 校验，成功获得 AdminRole 凭据与 flag。
 
 ## Flag
-`flag{cloud-15-...}`（AdminRole 可访问资源）
+`flag{cloud-11-...}`（AdminRole 可访问资源）
 
 ## 此场景利用了哪些知识
 

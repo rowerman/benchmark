@@ -4,6 +4,7 @@ from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
 IAM = os.environ.get("IAM_URL", "http://iam:5000")
+S3 = os.environ.get("S3_URL", "http://s3:5000")
 
 HTML="""<!DOCTYPE html><html><head><title>Cross-Account Attack</title></head><body>
 <h1>Cross-Account Trust Attack Console</h1>
@@ -91,7 +92,7 @@ def step4():
         return render_template_string(HTML, output="Error: all credential fields required")
     try:
         r = urllib.request.urlopen(urllib.request.Request(
-            "http://s3:5000/flag.txt",
+            f"{S3}/flag.txt",
             headers={"X-Access-Key-Id": ak, "X-Secret-Access-Key": sk, "X-Session-Token": token}),
             timeout=5)
         return render_template_string(HTML, output=f"[+] S3 flag.txt:\n{r.read().decode()}")

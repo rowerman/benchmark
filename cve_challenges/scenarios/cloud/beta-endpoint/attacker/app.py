@@ -31,6 +31,11 @@ def run():
                       headers={"X-Caller": "attacker", "X-Api-Key": "valid-sigv4"},
                       timeout=8)
     log.append(f"[2] beta write accepted: {r.json()}")
+    pid = r.json().get("portfolio_id")
+    if pid:
+        read = requests.get(f"{BETA}/portfolios/{pid}",
+                            headers={"X-Api-Key": "valid-sigv4"}, timeout=8)
+        log.append(f"[2b] beta resource read: {read.text}")
     logs = requests.get(f"{AUDIT}/logs", timeout=8).json()
     log.append(f"[3] audit log entries: {logs['count']} -- the write is invisible")
     return HTML.replace("{{out}}", "\n".join(log))

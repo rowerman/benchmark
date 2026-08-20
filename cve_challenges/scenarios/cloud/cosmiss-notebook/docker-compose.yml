@@ -13,7 +13,7 @@ services:
     build:
       context: ./nb-b
       args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-23-nb-b}}
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-14-nb-b}}
     networks:
       c23-net:
         ipv4_address: 10.23.0.30

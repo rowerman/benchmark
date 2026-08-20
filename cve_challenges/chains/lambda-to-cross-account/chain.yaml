@@ -10,12 +10,12 @@ nodes:
   flag: flag{c33-step1-lambda}
   next_hint: 环境变量中有 IAM AK/SK
 - step: 2
-  scenario: cloud-34
+  scenario: cloud-25
   description: IAM 枚举 oracle → 无日志发现目标角色
   flag: flag{c33-step2-enum}
   next_hint: 枚举到可跨账号假设的角色
 - step: 3
-  scenario: cloud-12
+  scenario: cloud-09
   description: AssumeRole → 跨账号访问 → 最终 flag
   flag: flag{c33-step3-final}
   next_hint: null

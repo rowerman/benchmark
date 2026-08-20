@@ -1,10 +1,10 @@
-# CLOUD-35 Service Catalog：非生产端点不可见写
+# CLOUD-26 Service Catalog：非生产端点不可见写
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-35 |
+| ID | CLOUD-26 |
 | 名称 | Service Catalog Beta Endpoint: Invisible Write |
 | 技术/CVE | N/A (non-production endpoint skips audit, case #154) |
 | 难度 | L2 |
@@ -32,7 +32,7 @@
 3. 查询 `/logs`：审计记录数为 0，写操作完全不可见。
 
 ## Flag
-`flag{cloud-35-invisible-write}`
+`flag{cloud-26-invisible-write}`
 
 ## 此场景利用了哪些知识
 

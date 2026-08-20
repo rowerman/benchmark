@@ -9,6 +9,21 @@ EXPORTS = {"DemoApp-BucketName": "demo-app-assets", "FlagStore-BucketName": "fla
 # Simulated SSM parameters
 SSM = {"/secure/flag": FLAG, "/config/db-password": "SuperS3cretDB!"}
 
+
+def _tagged_intrinsic(loader, node, fn):
+    """Convert CloudFormation YAML shorthand (!Sub) to Fn::Sub dicts."""
+    if isinstance(node, yaml.ScalarNode):
+        return {fn: loader.construct_scalar(node)}
+    if isinstance(node, yaml.SequenceNode):
+        return {fn: loader.construct_sequence(node)}
+    return {fn: loader.construct_mapping(node)}
+
+
+yaml.SafeLoader.add_constructor("!Sub", lambda l, n: _tagged_intrinsic(l, n, "Fn::Sub"))
+yaml.SafeLoader.add_constructor("!Ref", lambda l, n: _tagged_intrinsic(l, n, "Ref"))
+yaml.SafeLoader.add_constructor("!Join", lambda l, n: _tagged_intrinsic(l, n, "Fn::Join"))
+yaml.SafeLoader.add_constructor("!ImportValue", lambda l, n: _tagged_intrinsic(l, n, "Fn::ImportValue"))
+
 def resolve_intrinsics(obj):
     """Recursively resolve CF intrinsic functions."""
     if isinstance(obj, dict):

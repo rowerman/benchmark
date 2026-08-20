@@ -1,10 +1,10 @@
-# CLOUD-41 无服务器默认服务账号提权
+# CLOUD-32 无服务器默认服务账号提权
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-41 |
+| ID | CLOUD-32 |
 | 名称 | Serverless Default Service Account: Platform Identity Escalation |
 | 技术/CVE | N/A (over-scoped default SA, case #266/#272) |
 | 难度 | L2 |
@@ -32,7 +32,7 @@
    读到 Secret 与 flag。
 
 ## Flag
-`flag{cloud-41-victim-project}`
+`flag{cloud-32-victim-project}`
 
 ## 此场景利用了哪些知识
 

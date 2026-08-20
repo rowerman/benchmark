@@ -5,7 +5,7 @@ domains:
 - cloud
 nodes:
 - step: 1
-  scenario: cloud-21
+  scenario: cloud-13
   description: 全局命名空间抢占 → 读取影子资源
   flag: flag{c36-step1-s3}
   next_hint: 桶中 config 文件引用了 CloudFormation 模板
@@ -15,7 +15,7 @@ nodes:
   flag: flag{c36-step2-cf}
   next_hint: 泄露的参数包含 IAM 凭据
 - step: 3
-  scenario: cloud-12
+  scenario: cloud-09
   description: AssumeRole AdminRole → 最终 flag
   flag: flag{c36-step3-final}
   next_hint: null

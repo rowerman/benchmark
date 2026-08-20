@@ -5,17 +5,17 @@ domains:
 - cloud
 nodes:
 - step: 1
-  scenario: cloud-30
+  scenario: cloud-21
   description: 恶意 pickle 模型 → 推理 pod RCE → 节点身份
   flag: flag{c51-step1-model}
   next_hint: 节点身份可投递到无服务器平台
 - step: 2
-  scenario: cloud-41
+  scenario: cloud-32
   description: 无服务器默认 SA → 平台身份读取其他项目
   flag: flag{c51-step2-sa}
   next_hint: 平台身份可用于身份服务签发 token
 - step: 3
-  scenario: cloud-32
+  scenario: cloud-23
   description: actor 校验缺陷 → 跨租户全局管理员 → 最终 flag
   flag: flag{c51-step3-final}
   next_hint: null

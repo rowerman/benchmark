@@ -2,8 +2,8 @@ services:
   db:
     build: ./db
     environment:
-      POSTGRES_USER: cloudsqluser
-      POSTGRES_PASSWORD: customer-password
+      POSTGRES_USER: cloudsqladmin
+      POSTGRES_PASSWORD: provider-super
       POSTGRES_DB: clouddb
     networks:
       c25-net:
