@@ -3,3 +3,19 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
   - role: control-plane
     image: kindest/node:v1.27.3
+    extraPortMappings:
+      - containerPort: 2379
+        hostPort: 11379
+        protocol: TCP
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        etcd:
+          local:
+            extraArgs:
+              client-cert-auth: "false"
+              listen-client-urls: "http://0.0.0.0:2379"
+              advertise-client-urls: "http://127.0.0.1:2379"
+        apiServer:
+          extraArgs:
+            etcd-servers: "http://127.0.0.1:2379"

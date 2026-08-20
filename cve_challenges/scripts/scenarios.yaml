@@ -96,6 +96,7 @@ scenarios:
     difficulty: L3
     cve: N/A (misconfiguration)
     path: scenarios/k8s/etcd-unauth
+    port: 11379
   k8s-09:
     id: K8S-09
     name: Private Registry Poisoning
@@ -103,6 +104,7 @@ scenarios:
     difficulty: L2
     cve: N/A (misconfiguration)
     path: scenarios/k8s/registry-poison
+    port: 10500
   k8s-10:
     id: K8S-10
     name: Helm v2 Tiller Unauthenticated
@@ -145,6 +147,7 @@ scenarios:
     difficulty: L2
     cve: N/A (image tag mutation)
     path: scenarios/k8s/mutable-image-tag
+    port: 10501
   web-01:
     id: WEB-01
     name: Apache Tomcat Deserialization RCE
@@ -332,17 +335,17 @@ scenarios:
     path: scenarios/k8s/localhost-bypass
   k8s-25:
     id: K8S-25
-    name: Mutating Webhook Sidecar Injection
+    name: MutatingWebhookConfiguration Overprivileged Registration
     type: k8s
     difficulty: L2
-    cve: N/A (admission control abuse)
+    cve: N/A (admission control abuse via overprivileged RBAC)
     path: scenarios/k8s/webhook-inject
   k8s-26:
     id: K8S-26
-    name: Compromised Node API Server Redirect
+    name: Node-Operator Overprivileged RBAC
     type: k8s
     difficulty: L3
-    cve: CVE-2020-8559
+    cve: N/A (overprivileged node-operator RBAC)
     path: scenarios/k8s/node-redirect
   k8s-27:
     id: K8S-27

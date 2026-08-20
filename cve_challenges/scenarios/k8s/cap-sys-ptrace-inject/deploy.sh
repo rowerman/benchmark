@@ -25,14 +25,6 @@ spec:
             - SYS_PTRACE
             - SYS_ADMIN
         runAsUser: 0
-      volumeMounts:
-        - name: host-flag
-          mountPath: /host-flag
-  volumes:
-    - name: host-flag
-      hostPath:
-        path: /host-flag
-        type: Directory
 YAML
 
 k8s_wait_pod "ptrace-pod"

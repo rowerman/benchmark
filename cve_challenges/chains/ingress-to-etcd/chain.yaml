@@ -48,11 +48,12 @@ steps_detail:
     name: "etcd Unauthorized Access"
     technique: etcd Data Access
     description: >
-      Using cluster-admin level access gained through RBAC escalation,
-      access the etcd endpoint directly or via kubectl proxy. Read
-      Kubernetes Secrets directly from the etcd datastore.
+      From the compromised controller pod (hostNetwork, running on the
+      control-plane node), query the node-local etcd endpoint
+      (127.0.0.1:2379, client-cert-auth disabled) and read the final flag
+      from the custom etcd key /chain23-final.
     flag: flag{chain23-step4-etcd-final}
-    flag_location: "etcd-flag Secret in kube-system, readable via etcdctl"
+    flag_location: "custom etcd key /chain23-final (not a Kubernetes object)"
 
 infrastructure:
   type: kind

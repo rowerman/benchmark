@@ -108,6 +108,60 @@ k8s_wait_job() {
     kubectl wait --for=condition=Complete "job/${job_name}" -n "$namespace" --timeout=180s
 }
 
+# ── NetworkPolicy CNI ────────────────────────────────────────────
+
+k8s_install_calico() {
+    echo "[${K8S_ID}] Installing Calico (NetworkPolicy enforcement)..."
+    local calico_manifest="/tmp/calico-${K8S_ID}.yaml"
+    curl -sL --connect-timeout 10 --max-time 60 \
+        https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml \
+        -o "$calico_manifest"
+    kubectl apply -f "$calico_manifest"
+    # KIND does not support IPIP; switch Calico to VXLAN
+    kubectl -n kube-system set env daemonset/calico-node CALICO_IPV4POOL_IPIP=Never 2>/dev/null || true
+    kubectl -n kube-system set env daemonset/calico-node CALICO_IPV4POOL_VXLAN=Always 2>/dev/null || true
+    kubectl -n kube-system rollout status daemonset/calico-node --timeout=180s 2>/dev/null || \
+        kubectl wait --for=condition=Ready pods -n kube-system -l k8s-app=calico-node --timeout=180s 2>/dev/null || true
+    sleep 5
+}
+
+# ── etcd helpers ─────────────────────────────────────────────────
+
+# Write a value into the cluster's real etcd under a NON-/registry custom key.
+# Such a key is invisible to the Kubernetes API, so it can only be read by
+# directly querying etcd - used for chain final flags to prevent shortcuts.
+k8s_put_etcd_key() {
+    local etcd_key="$1"
+    local etcd_value="$2"
+    echo "[${K8S_ID}] Writing etcd key ${etcd_key} via hostNetwork helper..."
+    docker pull curlimages/curl:latest >/dev/null 2>&1 || true
+    kind load docker-image curlimages/curl:latest --name "$CLUSTER_NAME" 2>/dev/null || true
+    kubectl apply -f - << YAML
+apiVersion: v1
+kind: Pod
+metadata:
+  name: etcd-key-writer
+  namespace: kube-system
+spec:
+  hostNetwork: true
+  restartPolicy: Never
+  containers:
+    - name: w
+      image: curlimages/curl:latest
+      imagePullPolicy: IfNotPresent
+      command: ["sh", "-c"]
+      args:
+        - |
+          KEY_B64=\$(printf '%s' "$etcd_key" | base64 -w0)
+          VAL_B64=\$(printf '%s' "$etcd_value" | base64 -w0)
+          curl -sk -X POST https://127.0.0.1:2379/v3/kv/put \
+            -H 'Content-Type: application/json' \
+            -d "{\"key\":\"\${KEY_B64}\",\"value\":\"\${VAL_B64}\"}"
+YAML
+    kubectl wait --for=condition=Complete pod/etcd-key-writer -n kube-system --timeout=120s 2>/dev/null || true
+    kubectl delete pod etcd-key-writer -n kube-system 2>/dev/null || true
+}
+
 # ── Image Management ──────────────────────────────────────────────
 
 k8s_load_images() {

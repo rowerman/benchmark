@@ -24,17 +24,11 @@ spec:
       volumeMounts:
         - name: host-log
           mountPath: /host-log
-        - name: host-flag
-          mountPath: /host-flag
   volumes:
     - name: host-log
       hostPath:
         path: /var/log
-    - name: host-flag
-      hostPath:
-        path: /host-flag
-        type: Directory
 YAML
 
 k8s_info
-echo "[+] Attack: /host-log symlink → sensitive host file → read /host-flag/flag.txt"
+echo "[+] Attack: ln -sf /host-flag /host-log/flag-link && cat /host-log/flag-link/flag.txt"

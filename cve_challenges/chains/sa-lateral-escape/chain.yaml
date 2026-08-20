@@ -6,5 +6,5 @@ nodes:
     flag: "flag{chain13-step1-crossns}"
   - scenario: k8s-06
     flag: "flag{chain13-step2-rbac}"
-  - scenario: k8s-01
-    flag: "flag{chain13-step3-runc-final}"
+  - scenario: k8s-12
+    flag: "flag{chain13-step3-escape-final}"

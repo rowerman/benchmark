@@ -25,17 +25,11 @@ spec:
       volumeMounts:
         - name: docker-sock
           mountPath: /var/run/docker.sock
-        - name: host-flag
-          mountPath: /host-flag
   volumes:
     - name: docker-sock
       hostPath:
         path: /var/run/docker.sock
         type: Socket
-    - name: host-flag
-      hostPath:
-        path: /host-flag
-        type: Directory
 YAML
 
 k8s_wait_pod "docker-escape-pod"

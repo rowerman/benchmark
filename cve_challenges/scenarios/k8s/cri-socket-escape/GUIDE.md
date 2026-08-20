@@ -24,7 +24,7 @@
 | Difficulty | L2 |
 | Type | k8s (KIND cluster) |
 | Cluster Name | cve-k8s-16-cri-socket |
-| Flag Location | `/host-flag/flag.txt` on KIND node, mounted into pod at `/host-flag` |
+| Flag Location | `/host-flag/flag.txt` on the KIND node (not mounted into the pod; reachable only after escape) |
 
 ## Attack Path Summary
 1. Pod has `/run/containerd/containerd.sock` mounted via hostPath with `type: Socket`
@@ -112,7 +112,7 @@ cat /host/host-flag/flag.txt
 
 ### Step 5: Capture Flag
 - Flag format: `flag{k8s-16-*}`
-- Flag location: `/host-flag/flag.txt` on the KIND node, accessible as `/mnt/flag.txt` from the escape container (or `/host-flag/flag.txt` inside the original pod)
+- Flag location: `/host-flag/flag.txt` on the KIND node, accessible as `/mnt/flag.txt` from the escape container
 - Expected output: `flag{k8s-16-default}` (or custom value from `CVE_FLAG` env var)
 
 ## Verification Commands

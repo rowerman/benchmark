@@ -9,17 +9,16 @@ nodes:
     scenario: k8s-06
     description: "RBAC Secrets Abuse"
     flag: "flag{chain2-step1-rbac}"
-    next_hint: "Use the SA token to list more secrets and find a privileged token"
+    next_hint: "The attacker tenant has a privileged breakout pod it can exec into"
 
   - step: 2
-    scenario: k8s-01
-    description: "runC WORKDIR Escape → host filesystem"
+    scenario: k8s-11
+    description: "Privileged container breakout → host filesystem (nsenter)"
     flag: "flag{chain2-step2-escape}"
-    next_hint: "From the host, find the etcd endpoint"
-    note: "Requires bare metal K8s (KIND container-in-container limits escape)"
+    next_hint: "From the node shell, reach the control-plane etcd"
 
   - step: 3
     scenario: k8s-08
-    description: "etcd Unauthorized Access → full cluster control"
+    description: "etcd Unauthorized Access (node-local 127.0.0.1:2379) → final flag"
     flag: "flag{chain2-step3-etcd-final}"
     next_hint: null

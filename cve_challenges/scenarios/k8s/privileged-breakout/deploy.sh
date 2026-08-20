@@ -15,20 +15,13 @@ kind: Pod
 metadata:
   name: privileged-pod
 spec:
+  hostPID: true
   containers:
     - name: breakout
       image: alpine:latest
       command: ["sleep", "3600"]
       securityContext:
         privileged: true
-      volumeMounts:
-        - name: host-flag
-          mountPath: /host-flag
-  volumes:
-    - name: host-flag
-      hostPath:
-        path: /host-flag
-        type: Directory
 YAML
 
 k8s_info

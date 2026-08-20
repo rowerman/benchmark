@@ -1,27 +1,24 @@
 #!/bin/bash
 set -euo pipefail
+K8S_ID="chain2"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 CLUSTER_NAME="cve-chain-k8s-admin"
+source "$SCRIPT_DIR/../../scripts/k8s-common.sh"
 
-echo "[Chain 2] Container to Cluster Admin — 4 steps, K8s only"
+echo "[Chain 2] Container to Cluster Admin — 3 steps, K8s only"
 
-# Pre-create flag dir (must exist before Docker bind-mount, or Docker creates it as root)
+# Pre-create flag dir (must exist before Docker bind-mount)
 mkdir -p /home/kianabin/cve-flags/chain2-flags
 echo "flag{chain2-step2-escape}" > /home/kianabin/cve-flags/chain2-flags/flag.txt
 
-echo "[*] Creating unified KIND cluster with RBAC + runC escape + etcd exposure..."
-# Single KIND cluster with all vulnerabilities configured
+echo "[*] Creating unified KIND cluster with RBAC + privileged escape + etcd..."
 kind create cluster --name "$CLUSTER_NAME" --config - << 'KINDCFG'
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
   - role: control-plane
     image: kindest/node:v1.27.3
-    extraPortMappings:
-      - containerPort: 2379
-        hostPort: 11379
-        protocol: TCP
     extraMounts:
       - hostPath: /home/kianabin/cve-flags/chain2-flags
         containerPath: /chain-flags
@@ -32,65 +29,101 @@ nodes:
           local:
             extraArgs:
               client-cert-auth: "false"
-
 KINDCFG
 
-# Wait for stability
-echo "[*] Waiting for cluster stabilization..."
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10
 
-# Stage 1 flag: RBAC secret
-kubectl create secret generic chain2-stage1 \
-  --from-literal=flag="flag{chain2-step1-rbac}" \
-  -n kube-system
+docker pull bitnami/kubectl:1.28 2>/dev/null
+kind load docker-image bitnami/kubectl:1.28 --name "$CLUSTER_NAME" 2>/dev/null || true
 
-# RBAC setup (K8S-06)
-kubectl create serviceaccount attacker-sa -n default
+# Step 1: namespace-scoped RBAC - secrets read ONLY in ns-ops (no cluster-wide reader)
 kubectl apply -f - << 'YAML'
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+apiVersion: v1
+kind: Namespace
 metadata:
-  name: chain2-secrets-reader
+  name: ns-ops
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: attacker-sa
+  namespace: ns-ops
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: attacker-ops
+  namespace: ns-ops
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
-  name: chain2-attacker-binding
+  name: attacker-ops
+  namespace: ns-ops
 subjects:
   - kind: ServiceAccount
     name: attacker-sa
-    namespace: default
+    namespace: ns-ops
 roleRef:
-  kind: ClusterRole
-  name: chain2-secrets-reader
+  kind: Role
+  name: attacker-ops
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: v1
 kind: Pod
 metadata:
   name: chain2-pod
-  namespace: default
+  namespace: ns-ops
 spec:
   serviceAccountName: attacker-sa
   containers:
     - name: shell
-      image: nginx:1.24-alpine
+      image: bitnami/kubectl:1.28
+      imagePullPolicy: IfNotPresent
       command: ["sleep", "3600"]
 YAML
 
-# Stage 3 flag: etcd
-FLAG3="flag{chain2-step3-etcd-final}"
-kubectl create secret generic chain2-etcd-final \
-  --from-literal=flag="$FLAG3" \
-  -n kube-system
+kubectl create secret generic chain2-step1 --from-literal=flag="flag{chain2-step1-rbac}" -n ns-ops 2>/dev/null || true
+
+# Step 2: privileged + hostPID escape pod (flag on the node, NOT mounted)
+kubectl apply -f - << 'YAML'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: chain2-step2
+  namespace: ns-ops
+spec:
+  hostPID: true
+  containers:
+    - name: escape
+      image: bitnami/kubectl:1.28
+      imagePullPolicy: IfNotPresent
+      command: ["sleep", "3600"]
+      securityContext:
+        privileged: true
+YAML
+
+# Step 3 final flag: custom etcd key (invisible to the Kubernetes API)
+k8s_put_etcd_key "/chain2-final" "flag{chain2-step3-etcd-final}"
+
+kubectl wait --for=condition=Ready pod/chain2-pod -n ns-ops --timeout=60s 2>/dev/null || true
+kubectl wait --for=condition=Ready pod/chain2-step2 -n ns-ops --timeout=60s 2>/dev/null || true
+sleep 5
 
 echo ""
 echo "[Chain 2] Ready"
-echo "  Step 1: kubectl exec chain2-pod -- cat /run/secrets/kubernetes.io/serviceaccount/token → RBAC → flag{chain2-step1-rbac}"
-echo "  Step 2: Escape container → cat /chain-flags/flag.txt → flag{chain2-step2-escape}"
-echo "  Step 3: etcdctl --endpoints=localhost:11379 get /registry/secrets/kube-system/chain2-etcd-final → FINAL"
+echo "  Step 1: TOKEN=\$(kubectl exec -n ns-ops chain2-pod -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+echo "          kubectl --token=\$TOKEN get secret chain2-step1 -n ns-ops"
+echo "  Step 2: kubectl exec -n ns-ops chain2-step2 -- nsenter --target 1 --mount -- cat /chain-flags/flag.txt"
+echo "  Step 3: from node shell: curl -k https://127.0.0.1:2379/v3/kv/range (key /chain2-final)"

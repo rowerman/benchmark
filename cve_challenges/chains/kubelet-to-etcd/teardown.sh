@@ -1,5 +1,5 @@
 #!/bin/bash
 set -euo pipefail
-kind delete cluster --name cve-chain6-k8s-kubelet-etcd 2>/dev/null || true
-
-echo "[Chain 6] Teardown complete"
+CLUSTER_NAME="cve-chain6-kubelet-pods"
+kind delete cluster --name "$CLUSTER_NAME" 2>/dev/null || echo "  Cluster already removed"
+echo "[+] Chain 6 teardown complete"

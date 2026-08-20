@@ -16,6 +16,8 @@ INFRA_ROOT = ROOT / "infra"
 CHAINS_ROOT = ROOT / "chains"
 SCENARIO_ID = re.compile(r"^(?:web|db|cloud|k8s)-\d+$", re.IGNORECASE)
 TABLE_SPLIT = re.compile(r"(?<!\\)\|")
+PORT_MIN = 10000
+PORT_MAX = 14000
 
 
 def fail(errors: list[str], message: str) -> None:
@@ -26,9 +28,24 @@ def compose_files() -> list[Path]:
     return sorted(
         list(SCENARIOS_ROOT.glob("*/*/docker-compose.yml"))
         + list(SCENARIOS_ROOT.glob("*/*/docker-compose.yaml"))
+        + list(SCENARIOS_ROOT.glob("*/*/registry-compose.yml"))
+        + list(SCENARIOS_ROOT.glob("*/*/registry-compose.yaml"))
         + list(CHAINS_ROOT.glob("*/docker-compose.yml"))
         + list(CHAINS_ROOT.glob("*/docker-compose.yaml"))
     )
+
+
+def kind_config_paths() -> list[Path]:
+    return sorted(SCENARIOS_ROOT.glob("*/k8s-*/kind-config.yaml"))
+
+
+def check_ports_in_range(errors: list[str], ports: set[int], source: str) -> None:
+    for port in sorted(ports):
+        if not PORT_MIN <= port <= PORT_MAX:
+            fail(
+                errors,
+                f"{source}: published/exposed port {port} is outside required range {PORT_MIN}-{PORT_MAX}",
+            )
 
 
 def section_count(text: str, heading: str) -> int:
@@ -165,6 +182,11 @@ def main() -> None:
             fail(errors, f"retired directory still exists: {retired.relative_to(ROOT)}")
 
     for scenario_id, entry in scenarios.items():
+        if entry.get("port") and not PORT_MIN <= int(entry["port"]) <= PORT_MAX:
+            fail(
+                errors,
+                f"{scenario_id}: registered port {entry['port']} is outside required range {PORT_MIN}-{PORT_MAX}",
+            )
         path = Path(str(entry["path"]))
         if path.parts[0] != "scenarios":
             fail(errors, f"{scenario_id}: path must start with scenarios/: {path}")
@@ -195,6 +217,20 @@ def main() -> None:
         if entry["type"] == "k8s" and not (scenario_dir / "deploy.sh").is_file():
             fail(errors, f"{scenario_id}: Kubernetes scenario has no deploy.sh")
 
+    for config_file in kind_config_paths():
+        try:
+            config = yaml.safe_load(config_file.read_text(encoding="utf-8")) or {}
+        except yaml.YAMLError as exc:
+            fail(errors, f"{config_file.relative_to(ROOT)}: invalid YAML: {exc}")
+            continue
+        exposed: set[int] = set()
+        for node in config.get("nodes", []) or []:
+            for mapping in node.get("extraPortMappings", []) or []:
+                host_port = mapping.get("hostPort")
+                if host_port is not None:
+                    exposed.add(int(host_port))
+        check_ports_in_range(errors, exposed, config_file.relative_to(ROOT).as_posix())
+
     for chain_file in sorted(CHAINS_ROOT.glob("*/chain.yaml")):
         chain = yaml.safe_load(chain_file.read_text(encoding="utf-8")) or {}
         nodes = chain.get("nodes") or chain.get("steps_detail") or []
@@ -218,13 +254,17 @@ def main() -> None:
         except yaml.YAMLError as exc:
             fail(errors, f"{compose.relative_to(ROOT)}: invalid YAML: {exc}")
             continue
+        exposed: set[int] = set()
         for service, config in services.items():
+            if isinstance(config, dict):
+                exposed.update(published_ports(config))
             build = config.get("build") if isinstance(config, dict) else None
             context = build.get("context") if isinstance(build, dict) else build
             if isinstance(context, str) and "${" not in context:
                 target = (compose.parent / context).resolve()
                 if not target.is_dir():
                     fail(errors, f"{compose.relative_to(ROOT)}:{service}: missing build context {context}")
+        check_ports_in_range(errors, exposed, compose.relative_to(ROOT).as_posix())
 
     if errors:
         print("Structure validation failed:")

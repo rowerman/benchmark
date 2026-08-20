@@ -19,13 +19,13 @@ steps_detail:
     flag_location: "/host-flag/step1.txt on the host (readable after ctr escape)"
 
   - step: 2
-    scenario: K8S-11
-    name: "Privileged Container Breakout"
+    scenario: K8S-06
+    name: "Secrets via Node Shell (admin.conf)"
     description: >
-      From the host context, access Kubernetes credentials and deploy
-      a privileged pod for further host access.
-    flag: flag{chain21-step2-privileged}
-    flag_location: "Kubernetes Secret in kube-system namespace"
+      From the escaped host context, use the node's admin.conf to read a
+      kube-system Secret.
+    flag: flag{chain21-step2-rbac}
+    flag_location: "Kubernetes Secret chain21-stage2 in kube-system namespace"
 
   - step: 3
     scenario: K8S-08

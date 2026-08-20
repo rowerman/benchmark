@@ -9,7 +9,7 @@
 | 技术/CVE | N/A (misconfiguration) |
 | 难度 | L3 |
 | 交付方式 | KIND / Kubernetes |
-| 入口 | KIND 集群内入口（无固定宿主端口） |
+| 入口 | localhost:11379 |
 
 ## 场景概述
 - 技术：N/A (misconfiguration)
@@ -24,13 +24,13 @@
 | Difficulty | L3 |
 | Type | k8s (KIND cluster) |
 | Cluster Name | cve-k8s-08-etcd |
-| Flag Location | etcd key `/registry/secrets/kube-system/etcd-flag` |
+| Flag Location | etcd key `/registry/secrets/kube-system/etcd-flag` (the cluster's real datastore) |
 
 ## Attack Path Summary
-1. etcd is exposed on port 2379 (mapped to host port 11379) without authentication
+1. The cluster's real etcd is exposed on port 2379 (mapped to host port 11379) without client-certificate authentication
 2. etcdctl can connect directly to the etcd store and enumerate all keys
-3. Kubernetes stores all cluster state (including secrets) in etcd
-4. The flag is stored as a Kubernetes Secret and persisted in etcd
+3. Kubernetes stores all cluster state (including secrets) in this etcd
+4. The flag is stored as a real Kubernetes Secret in `kube-system` and persisted in etcd at `/registry/secrets/kube-system/etcd-flag`
 5. Read the secret value directly from etcd using etcdctl
 
 ## Prerequisites
@@ -117,7 +117,7 @@ ETCDCTL_API=3 etcdctl --endpoints=http://localhost:11379 get /registry/secrets/k
 
 ### Step 7: Capture Flag
 - Flag format: `flag{k8s-08-*}`
-- Flag location: etcd key `/registry/secrets/kube-system/etcd-flag`
+- Flag location: etcd key `/registry/secrets/kube-system/etcd-flag` in the cluster's real etcd
 - Access requirements: network access to etcd port (no auth)
 - Expected output: `flag{k8s-08-default}` (or custom value from `CVE_FLAG`)
 

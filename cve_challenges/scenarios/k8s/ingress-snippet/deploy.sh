@@ -15,7 +15,12 @@ k8s_load_images nginx:1.24-alpine registry.k8s.io/ingress-nginx/controller:v1.10
 
 echo "[*] Deploying ingress-nginx with snippet annotations enabled..."
 # Deploy ingress-nginx with allow-snippet-annotations=true
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.4/deploy/static/provider/kind/deploy.yaml
+curl -sL --connect-timeout 10 --max-time 30 \
+  https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.4/deploy/static/provider/kind/deploy.yaml \
+  -o /tmp/ingress-nginx-snippet-deploy.yaml
+# Remove out-of-range hostPort 80/443 bindings; only NodePort 30080/30443 are exposed (10480/10443)
+sed -i '/hostPort:/d' /tmp/ingress-nginx-snippet-deploy.yaml
+kubectl apply -f /tmp/ingress-nginx-snippet-deploy.yaml
 
 echo "[*] Waiting for ingress-nginx controller and certgen jobs..."
 k8s_wait_pods_label "app.kubernetes.io/component=controller" "ingress-nginx"

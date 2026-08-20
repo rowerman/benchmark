@@ -13,6 +13,15 @@ k8s_wait_ready
 # Start local registry on the kind network (published on host port 10501)
 docker compose -f "$SCRIPT_DIR/registry-compose.yml" up -d 2>/dev/null || true
 
+# Seed the mirror with the benign image (mirror rewrites docker.io/library/nginx)
+for i in $(seq 1 20); do
+  if docker push localhost:10501/library/nginx:1.24-alpine 2>/dev/null; then
+    break
+  fi
+  docker tag nginx:1.24-alpine localhost:10501/library/nginx:1.24-alpine 2>/dev/null || true
+  sleep 2
+done
+
 # Deploy with mutable tag + Always pull
 k8s_apply << YAML
 apiVersion: apps/v1

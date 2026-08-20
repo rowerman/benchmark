@@ -4,7 +4,7 @@ CLUSTER_NAME="chain25-seccomp-to-escape"
 FLAG_DIR="/home/kianabin/cve-flags/chain25"
 mkdir -p "$FLAG_DIR"
 
-echo "[Chain-25] hostPID to CRI Socket Escape"
+echo "[Chain-25] hostPID to Node Control (2 steps)"
 echo "[*] Deploying infrastructure..."
 
 cat > /tmp/chain25-kind-config.yaml << 'YAML'
@@ -38,36 +38,23 @@ spec:
       command: ["sleep", "3600"]
       securityContext:
         privileged: false
-        runAsUser: 1000
+        runAsUser: 0
         allowPrivilegeEscalation: false
         capabilities:
           drop: ["ALL"]
-      volumeMounts:
-        - name: host-flag
-          mountPath: /host-flag
-        - name: cri-sock
-          mountPath: /run/containerd/containerd.sock
-  volumes:
-    - name: host-flag
-      hostPath:
-        path: /host-flag
-    - name: cri-sock
-      hostPath:
-        path: /run/containerd/containerd.sock
 YAML
 
 kubectl wait --for=condition=Ready pod/locked-down-pod --timeout=60s 2>/dev/null || true
 sleep 5
 
-# Store final flag on the node (via Docker exec into the KIND node)
+# Final flag on the node - reachable only through the hostPID /proc view
 NODE_CONTAINER=$(docker ps --filter "name=${CLUSTER_NAME}-control-plane" --format '{{.Names}}' 2>/dev/null || echo "")
 if [ -n "$NODE_CONTAINER" ]; then
-  docker exec "$NODE_CONTAINER" sh -c "echo 'flag{chain25-step3-escape-final}' > /etc/chain25_final_flag" 2>/dev/null || true
+  docker exec "$NODE_CONTAINER" sh -c "echo 'flag{chain25-step2-escape-final}' > /etc/chain25_final_flag" 2>/dev/null || true
 fi
 
 echo ""
 echo "[+] Chain-25 Ready"
 echo "    Cluster: $CLUSTER_NAME"
-echo "    Step 1: /host-flag/flag.txt (via /proc/1/root)"
-echo "    Step 2: CRI socket available at /run/containerd/containerd.sock"
-echo "    Step 3: /etc/chain25_final_flag on node"
+echo "    Step 1: kubectl exec locked-down-pod -- cat /proc/1/root/host-flag/flag.txt"
+echo "    Step 2: kubectl exec locked-down-pod -- cat /proc/1/root/etc/chain25_final_flag"

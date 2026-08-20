@@ -31,21 +31,21 @@ steps_detail:
 
   - step: 3
     scenario: K8S-13
-    name: "SA Token Cross-Namespace Lateral Movement"
-    technique: RBAC Lateral Movement
+    name: "Use Stolen SA Token"
+    technique: Credential Reuse
     description: >
-      Using discovered credentials, access a ServiceAccount token from
-      another namespace (ns-beta) that has broader permissions.
+      Use the captured secret-reader-sa token to read the flag Secret in
+      ns-beta.
     flag: flag{chain24-step3-crossns}
-    flag_location: "Secret flag-secret in ns-beta namespace"
+    flag_location: "Secret flag-secret in ns-beta namespace (readable by secret-reader-sa)"
 
   - step: 4
     scenario: K8S-06
     name: "RBAC Secrets Abuse"
     technique: ATT&CK T1552.007
     description: >
-      With the cross-namespace SA token, access Kubernetes Secrets in
-      kube-system namespace to extract the final flag.
+      With the stolen secret-reader-sa token, read the final flag Secret in
+      kube-system.
     flag: flag{chain24-step4-secrets-final}
     flag_location: "Secret 'flag-secret' in kube-system namespace"
 

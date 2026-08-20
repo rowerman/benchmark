@@ -1,18 +1,18 @@
-# K8S-26: Compromised Node API Server Redirect
+# K8S-26: Node-Operator Overprivileged RBAC
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
 | ID | K8S-26 |
-| 名称 | Compromised Node API Server Redirect |
-| 技术/CVE | CVE-2020-8559 |
+| 名称 | Node-Operator Overprivileged RBAC |
+| 技术/CVE | N/A (overprivileged node-operator RBAC) |
 | 难度 | L3 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
 
 ## 场景概述
-- 技术：CVE-2020-8559
+- 技术：N/A (overprivileged node-operator RBAC)
 - 难度：L3
 - 交付方式：k8s
 ## 攻击路径与利用步骤
@@ -20,20 +20,24 @@
 ## Overview
 | Property | Value |
 |----------|-------|
-| CVE | CVE-2020-8559 (CVSS 6.4) |
+| CVE/Technique | N/A -- overprivileged node-operator RBAC (nodes/proxy + pods/exec) |
 | Difficulty | L3 |
 | Type | k8s |
 | Cluster Name | cve-k8s-26-node-redirect |
-| Attack Vector | Node proxy → API server redirect → cross-pod exec |
+| Attack Vector | Node-operator RBAC → cross-namespace pod exec |
 
 ## Attack Path
 
 ```
-Attacker pod with node-operator RBAC → Node proxy access
-  → Exploit API server redirect behavior (CVE-2020-8559)
-  → Redirect exec request to victim-pod in secure-ns
-  → Execute commands as victim pod → Read flag
+Compromised node pod with node-operator RBAC
+  → nodes/proxy + pods/exec granted cluster-wide
+  → Exec into victim-pod in secure-ns (directly or via node proxy)
+  → Read flag
 ```
+
+> 注：本场景不声称复现 CVE-2020-8559（需要可复现的 API server 重定向 PoC）。
+> 实际的利用点是 node-operator 角色被过度授权：`nodes/proxy` 与 `pods/exec`
+> 均为集群级权限，允许跨命名空间控制任意 pod。
 
 ## Step-by-Step Exploitation
 
@@ -55,7 +59,7 @@ curl -k -H "Authorization: Bearer $TOKEN" \
   "https://kubernetes.default.svc/api/v1/nodes/${NODE_NAME}/proxy/pods"
 ```
 
-### Step 3: Redirect Exec to Victim Pod
+### Step 3: Exec into Victim Pod (overbroad pods/exec)
 
 ```bash
 # Use the node proxy to execute in victim-pod

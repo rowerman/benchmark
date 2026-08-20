@@ -32,17 +32,11 @@ spec:
         - name: cri-sock
           mountPath: /run/containerd/containerd.sock
           readOnly: true
-        - name: host-flag
-          mountPath: /host-flag
   volumes:
     - name: cri-sock
       hostPath:
         path: /run/containerd/containerd.sock
         type: Socket
-    - name: host-flag
-      hostPath:
-        path: /host-flag
-        type: Directory
 YAML
 
 k8s_wait_pod "cri-escape-pod"
