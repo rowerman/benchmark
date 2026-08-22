@@ -137,4 +137,36 @@ kubectl 读不到，杜绝跳步）；未实现/不可复现步骤替换为 KIND
 
 
 修改日期：2026-08-22
-## TODO
+
+## 十一、本次补充修复：CLOUD-02 与攻击链一致性
+
+- 恢复 `CLOUD-02`：目录从 `scenarios/k8s/cap-netraw-metadata/` 移回
+  `scenarios/cloud/cap-netraw-metadata/`，注册表、GUIDE、deploy/teardown 和 flag
+  前缀统一为 Cloud ID；`check-cloud-consistency.py` 恢复为 31 个活动 Cloud 场景。
+- CLOUD-02 部署改为真实可达的模拟 IMDS 流程：新增 metadata Service、victim 周期性
+  请求 credentials endpoint、metadata-victim NetworkPolicy，并将 attacker 与 victim
+  固定到同一 KIND 节点；flag 仅出现在 metadata 响应，不再直接挂载到攻击者或 victim。
+- `docker-to-etcd` 修复 registry seed 顺序：先确认/拉取 `nginx:1.24-alpine`，再 tag/push；
+  seed 失败立即退出，避免目标 Deployment 静默进入 ImagePullBackOff。
+- `externalip-to-secrets` 修正 internal-api Service 的 `targetPort: 80`，并补齐 attacker
+  Pod 的 `app=attacker` selector label，确保 X-Flag/X-Cred 流量实际产生。
+- `ingress-to-etcd` 在部署后强制 ingress controller 使用 `hostNetwork` 与
+  `ClusterFirstWithHostNet`，并增加节点本地 etcd 可达前置检查。
+- `wp-lfi-to-cluster` 的 Docker socket 逃逸容器改为执行最终 etcd 查询后保持运行，替换
+  原先执行 `cat /etc/hostname` 后立即退出的命令。
+- 将 `kubelet-to-etcd` 重命名为 `kubelet-to-pod-access`，将 `seccomp-to-escape` 重命名
+  为 `hostpid-to-node`，同步集群名、flag 和变更说明，删除不成立的 etcd/seccomp 语义。
+
+## 十二、本次验证
+
+- `validate-structure.py`：89 个场景、37 条链、60 个 Compose 文件通过。
+- `check-cloud-consistency.py`：31 个活动 Cloud ID、迁移 ID 排除和链引用校验通过。
+- 全部 `chain.yaml` 解析通过；修改后的 heredoc YAML 解析通过；全部 `.sh` 使用 Git Bash
+  `bash -n` 通过；`git diff --check` 通过。
+- Docker/KIND 运行时验证未执行：当前 Docker daemon 返回 `permission denied`，无法连接
+  Docker API；因此本次结论仍限于静态与脚本级验证。
+
+## 十三、后续未完成事项
+
+- runC、LSM、gitRepo、CNI、Redis 等强运行时场景仍需在具备 Docker/KIND 和镜像网络的环境中
+  逐场景实跑，并验证攻击动作之间的 artifact/flag 状态传递。
