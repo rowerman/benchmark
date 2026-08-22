@@ -49,13 +49,23 @@ docker run -d --name chain22-registry --network kind \
   -e REGISTRY_HTTP_TLS_ENABLED=false \
   registry:2
 
+if ! docker image inspect nginx:1.24-alpine >/dev/null 2>&1; then
+  echo "[*] Pulling benign seed image nginx:1.24-alpine..."
+  docker pull nginx:1.24-alpine
+fi
+docker tag nginx:1.24-alpine localhost:11500/evil:latest
+seeded=false
 for i in $(seq 1 20); do
-  if docker push localhost:11500/evil:latest 2>/dev/null; then
+  if docker push localhost:11500/evil:latest >/dev/null 2>&1; then
+    seeded=true
     break
   fi
-  docker tag nginx:1.24-alpine localhost:11500/evil:latest 2>/dev/null || true
   sleep 2
 done
+if [ "$seeded" != true ]; then
+  echo "[!] Failed to seed localhost:11500/evil:latest; refusing to deploy ImagePullBackOff target" >&2
+  exit 1
+fi
 
 # Step 2 flag secret + workload SA reader
 kubectl create secret generic chain22-stage2 --from-literal=flag="$FLAG2" -n default 2>/dev/null || true

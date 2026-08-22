@@ -49,6 +49,12 @@ sed -i '/hostPort:/d' /tmp/chain23-ingress-deploy.yaml
 kubectl apply -f /tmp/chain23-ingress-deploy.yaml
 sleep 20
 
+# The final step relies on node-local etcd. Make the controller share the
+# control-plane network namespace after the vulnerable manifest is installed.
+kubectl patch deployment ingress-nginx-controller -n ingress-nginx --type='strategic' \
+  -p '{"spec":{"template":{"spec":{"hostNetwork":true,"dnsPolicy":"ClusterFirstWithHostNet"}}}}'
+kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=180s
+
 # Expose webhook NodePort (in-range host port 10443)
 kubectl patch service ingress-nginx-controller-admission -n ingress-nginx \
   -p '{"spec":{"type":"NodePort","ports":[{"name":"https-webhook","port":443,"targetPort":8443,"nodePort":30443}]}}' 2>/dev/null || true
@@ -81,6 +87,10 @@ YAML
 # Place step-1 flag
 kubectl wait --for=condition=Ready pods -l app.kubernetes.io/component=controller -n ingress-nginx --timeout=120s 2>/dev/null || true
 sleep 10
+if [ "$(kubectl get deployment ingress-nginx-controller -n ingress-nginx -o jsonpath='{.spec.template.spec.hostNetwork}')" != "true" ]; then
+  echo "[!] ingress controller is not hostNetwork; node-local etcd step is unavailable" >&2
+  exit 1
+fi
 CONTROLLER_POD=$(kubectl get pods -n ingress-nginx -l app.kubernetes.io/component=controller -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
 if [ -n "$CONTROLLER_POD" ]; then
   kubectl exec -n ingress-nginx "$CONTROLLER_POD" -- sh -c "echo 'flag{chain23-step1-ingress}' > /tmp/flag.txt" 2>/dev/null || true

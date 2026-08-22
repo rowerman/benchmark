@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-CLUSTER_NAME="chain25-seccomp-to-escape"
+CLUSTER_NAME="chain25-hostpid-to-node"
 FLAG_DIR="/home/kianabin/cve-flags/chain25"
 mkdir -p "$FLAG_DIR"
 
@@ -22,7 +22,7 @@ kind create cluster --name "$CLUSTER_NAME" --config /tmp/chain25-kind-config.yam
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10
 
-echo "flag{chain25-step1-seccomp}" > "$FLAG_DIR/flag.txt"
+echo "flag{chain25-step1-hostpid}" > "$FLAG_DIR/flag.txt"
 
 kubectl apply -f - << 'YAML'
 apiVersion: v1

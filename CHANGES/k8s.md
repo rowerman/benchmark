@@ -82,11 +82,12 @@ kubectl 读不到，杜绝跳步）；未实现/不可复现步骤替换为 KIND
 - ingress-to-etcd：保留 CVE-2025-1974 真实步；补 ingress-nginx SA 的 secret-reader
   ClusterRoleBinding；etcd 步改为 controller（hostNetwork）直查
   `127.0.0.1:2379`，移除 32379 宿主映射。
-- kubelet-to-etcd：修 kind-config 重复键；改为“kubelet 匿名枚举/exec → 窃 Role 限定
+- kubelet-to-pod-access：修 kind-config 重复键；改为“kubelet 匿名枚举/exec → 窃 Role 限定
   token 读 secret → kubelet exec 读最终 flag”，不再依赖 etcd，name 更新。
 - privilege-to-etcd / caps-to-cluster：逃逸 → 节点 shell → etcd；删除预置 reader。
 - sa-lateral-escape：k8s-13 → k8s-06（Role 限定）→ k8s-12 hostPath 逃逸（替换 runC）。
-- seccomp-to-escape：改为 2 步（hostPID `/proc/1/root` 读节点 flag → 节点最终 flag）。
+- hostpid-to-node：改为 2 步（hostPID `/proc/1/root` 读节点 flag → 节点最终 flag），不再声称
+  存在 seccomp bypass。
 - externalip-to-secrets：internal-api 以 secret-reader-sa 运行，循环请求头携带真实
   SA token（X-Cred）；劫持 → 抓 token → 直接读 ns-beta/kube-system flag。
 - wp-lfi-to-cluster：WordPress 移入集群（NodePort 10106，SA=chain17-sa），LFI/RCE →
@@ -129,8 +130,11 @@ kubectl 读不到，杜绝跳步）；未实现/不可复现步骤替换为 KIND
 
 ## 十、CLOUD K8s 场景迁移
 
-- `CLOUD-02`、`CLOUD-03`、`CLOUD-12` 已迁移为 `K8S-31`、`K8S-32`、`K8S-33`。
-- 场景目录移至 `scenarios/k8s/`，注册表类型、GUIDE 元数据、KIND 部署脚本和
-  flag 均已同步；迁移后的 K8s 单点总数为 33。
+- `CLOUD-03`、`CLOUD-12` 已迁移为 `K8S-32`、`K8S-33`；`CLOUD-02` 保留在
+  Cloud 注册表并恢复到 `scenarios/cloud/cap-netraw-metadata/`。
+- `CLOUD-02` 的 KIND/IMDS 场景保留 Cloud 定位，注册表、GUIDE、部署脚本和
+  flag 前缀均已同步；K8s 单点总数为 32。
+
 
 修改日期：2026-08-22
+## TODO

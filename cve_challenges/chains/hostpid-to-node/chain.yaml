@@ -15,7 +15,7 @@ steps_detail:
     description: >
       Pod with hostPID:true but no privileged mode. Access /proc/1/root to
       read the host flag at /host-flag/flag.txt.
-    flag: flag{chain25-step1-seccomp}
+    flag: flag{chain25-step1-hostpid}
     flag_location: "/host-flag/flag.txt on the KIND node (via /proc/1/root)"
 
   - step: 2

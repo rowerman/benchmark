@@ -74,7 +74,7 @@
   - CLOUD-26：修正“create 直接返回 flag”的过时描述，改为读取资源后取 flag。
   - CLOUD-27：补充读取详情需调用者上下文。
 - 本次同步 CLOUD-05/06/14/28 的控制面、身份和 flag 位置说明，并更新
-  K8S-31/32/33 的 GUIDE 元数据、路径和部署入口。
+  K8S-32/33 的 GUIDE 元数据、路径和部署入口；CLOUD-02 已恢复到 Cloud 路径。
 
 ## 五、验证情况
 
@@ -88,8 +88,8 @@
 
 ## 一、 修改内容
 
-- `CLOUD-02/03/12` 已迁移为 `K8S-31/32/33`，cloud 注册表保留其余 30 个 ID，
-  以避免现有 CLOUD 引用整体重编号。
+- `CLOUD-03/12` 已迁移为 `K8S-32/33`；`CLOUD-02` 恢复为 Cloud 注册表中的
+  KIND/IMDS 场景，cloud 注册表保留 31 个活动 ID。
 - CLOUD-05 增加 SSM 参数 API、Stack 执行角色和资源解析输出；保留 `Fn::Sub`
   任意参数路径读取，并让未知伪参数维持原文字面行为。
 - CLOUD-06 增加 CI workload token、短期身份材料和受保护云资源 API；CLOUD-14

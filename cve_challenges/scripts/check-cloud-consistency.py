@@ -25,10 +25,10 @@ def main() -> int:
     entries = [(key, value) for key, value in cloud.items()
                if key.startswith("cloud-")]
     ids = [value.get("id") for _, value in entries]
-    retired = {"CLOUD-02", "CLOUD-03", "CLOUD-12"}
+    retired = {"CLOUD-03", "CLOUD-12"}
     expected = [f"CLOUD-{i:02d}" for i in range(1, 34) if f"CLOUD-{i:02d}" not in retired]
     if sorted(ids) != expected:
-        fail(f"cloud registry IDs do not match the 30 active IDs after K8s migration: {sorted(ids)}")
+        fail(f"cloud registry IDs do not match the 31 active IDs after migration: {sorted(ids)}")
     if len(ids) != len(set(ids)):
         fail("duplicate cloud registry ID")
 

