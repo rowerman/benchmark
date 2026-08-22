@@ -1,10 +1,10 @@
-# CLOUD-12 多租户 K8s：容器逃逸 → 跨租户访问
+# K8S-33 多租户 K8s：容器逃逸 → 跨租户访问
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-12 |
+| ID | K8S-33 |
 | 名称 | Multi-Tenant K8s: Container Escape → Cross-Tenant Access |
 | 技术/CVE | N/A (privileged container + hostPID escape) |
 | 难度 | L3 |
@@ -33,7 +33,7 @@ KIND 节点，再借节点上挂载的 SA token 横向进入 tenant-b 的 pod。
 4. 对 tenant-b 的 target pod 执行 exec，读取环境变量中的 flag。
 
 ## Flag
-`flag{cloud-12-cross-tenant}`（tenant-b target pod 环境）
+`flag{k8s-33-cross-tenant}`（tenant-b target pod 环境）
 
 ## 此场景利用了哪些知识
 
@@ -57,7 +57,7 @@ KIND 节点，再借节点上挂载的 SA token 横向进入 tenant-b 的 pod。
 | CVE/Technique | N/A (privileged container + hostPID escape) |
 | Difficulty | L3 |
 | Type | k8s |
-| Path | scenarios/cloud/multi-tenant-k8s |
+| Path | scenarios/k8s/multi-tenant-k8s |
 
 ## Attack Path Summary
 Deploy privileged pod in tenant-a → nsenter to host → discover bridge SA token → kubectl exec into tenant-b pod → read cross-tenant flag

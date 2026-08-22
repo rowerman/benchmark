@@ -21,12 +21,21 @@ services:
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-06-pipeline}}
       - GIT_URL=http://git-server:5000
+      - CLOUD_RESOURCE_URL=http://cloud-resource:5000
+      - WORKLOAD_TOKEN=ci-workload-token
+    depends_on:
+      - cloud-resource
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  cloud-resource:
+    build: ./cloud-resource
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-06-pipeline}}
 
   git-server:
     build: ./git-server

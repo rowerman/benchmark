@@ -37,8 +37,8 @@ cve_challenges/
   scenarios/
     web/      # 18 scenarios
     db/       # 9 scenarios
-    cloud/    # 33 scenarios: Docker Compose and KIND
-    k8s/      # 29 KIND scenarios
+    cloud/    # 30 public-cloud scenarios: Docker Compose
+    k8s/      # 33 Kubernetes/KIND scenarios
   infra/
     cloud/    # shared provider simulators; not deployable scenarios
   chains/     # 37 multi-scenario attack paths

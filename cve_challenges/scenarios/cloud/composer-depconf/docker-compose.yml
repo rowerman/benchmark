@@ -11,9 +11,18 @@ services:
         CVE_FLAG: flag{cloud-28-platform-worker}
     environment:
       - REGISTRY_URL=http://pkg-registry:5000
+      - WORKER_TOKEN=composer-worker-token
+      - RESOURCE_URL=http://victim-resource:5000
     networks:
       c37-net:
         ipv4_address: 10.37.0.20
+  victim-resource:
+    build: ./victim-resource
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-28-platform-worker}}
+    networks:
+      c37-net:
+        ipv4_address: 10.37.0.40
   attacker:
     build: ./attacker
     ports:

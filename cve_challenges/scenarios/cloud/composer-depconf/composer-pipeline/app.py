@@ -11,6 +11,8 @@ from flask import Flask, request
 
 app = Flask(__name__)
 REGISTRY = os.environ.get("REGISTRY_URL", "http://pkg-registry:5000")
+WORKER_TOKEN = os.environ.get("WORKER_TOKEN", "composer-worker-token")
+RESOURCE_URL = os.environ.get("RESOURCE_URL", "http://victim-resource:5000")
 
 
 @app.route("/")
@@ -35,7 +37,11 @@ def resolve():
     setup_code = r.text
     # "pip install" simulation: run the package setup on the platform worker
     try:
-        out = subprocess.check_output(["sh", "-c", setup_code], timeout=10, stderr=subprocess.STDOUT)
+        env = os.environ.copy()
+        env["WORKER_TOKEN"] = WORKER_TOKEN
+        env["RESOURCE_URL"] = RESOURCE_URL
+        out = subprocess.check_output(["sh", "-c", setup_code], timeout=10,
+                                       stderr=subprocess.STDOUT, env=env)
         return {"installed": f"{name}=={version}", "output": out.decode(errors="replace")}
     except subprocess.CalledProcessError as e:
         return {"installed": f"{name}=={version}", "output": e.output.decode(errors="replace")}

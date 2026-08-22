@@ -402,27 +402,27 @@ scenarios:
     cve: Stored XSS
     path: scenarios/web/xss-stored
     port: 10118
-  cloud-02:
-    id: CLOUD-02
+  k8s-31:
+    id: K8S-31
     name: Container Escape via CAP_NET_RAW → Metadata MITM
     type: k8s
     difficulty: L3
     cve: N/A (CAP_NET_RAW + ARP spoofing)
-    path: scenarios/cloud/cap-netraw-metadata
-  cloud-03:
-    id: CLOUD-03
+    path: scenarios/k8s/cap-netraw-metadata
+  k8s-32:
+    id: K8S-32
     name: K8s SA Token → Cross-Namespace Access
     type: k8s
     difficulty: L3
     cve: N/A (overly permissive RBAC)
-    path: scenarios/cloud/sa-cross-namespace
-  cloud-12:
-    id: CLOUD-12
+    path: scenarios/k8s/sa-cross-namespace
+  k8s-33:
+    id: K8S-33
     name: "Multi-Tenant K8s: Container Escape → Cross-Tenant Access"
     type: k8s
     difficulty: L3
     cve: N/A (privileged container + hostPID escape)
-    path: scenarios/cloud/multi-tenant-k8s
+    path: scenarios/k8s/multi-tenant-k8s
   cloud-01:
     id: CLOUD-01
     name: SSRF to IMDS Credential Theft

@@ -27,8 +27,8 @@
 
 ## 利用步骤
 1. 向 git-server 提交恶意 workflow/脚本，触发 ci-runner 执行。
-2. 在注入的 shell 命令中读取 CI 环境变量/Secret。
-3. 拿到 pipeline flag。
+2. 在注入的 shell 命令中读取 CI 环境变量/Secret 以及短期工作负载身份材料。
+3. 携带 `X-Workload-Token` 请求受保护的云 artifact API，读取跨租户构建产物与 flag。
 
 ## Flag
 `flag{cloud-06-pipeline}`（runner 环境）

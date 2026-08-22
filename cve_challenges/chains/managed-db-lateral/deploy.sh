@@ -1,9 +1,4 @@
 #!/bin/bash
 set -euo pipefail
-CHAIN="managed-db-lateral"
-echo "[managed-db-lateral] Deploying chain..."
 cd "$(dirname "$0")"
-CVE_FLAG="flag{chain-test}" docker compose -f ../../scenarios/cloud/cloudsql-index-rce/docker-compose.yml up -d --build 2>&1 | tail -2
-CVE_FLAG="flag{chain-test}" docker compose -f ../../scenarios/cloud/rds-logfdw/docker-compose.yml up -d --build 2>&1 | tail -2
-CVE_FLAG="flag{chain-test}" docker compose -f ../../scenarios/cloud/extrareplica-repl/docker-compose.yml up -d --build 2>&1 | tail -2
-echo "[+] managed-db-lateral chain deployed (Chain-49)"
+python3 ../_runtime/deploy_chain.py "$(pwd)" 49

@@ -1,6 +1,8 @@
 services:
   front-end:
     build: ./front-end
+    environment:
+      - SIGNING_SECRET=cosmiss-front-secret-2026-shared-key
     networks:
       c23-net:
         ipv4_address: 10.23.0.10

@@ -12,8 +12,9 @@
 | 入口 | localhost:10623 |
 
 ## 场景概述
-供应商的多租户 notebook 前端路由层不做身份校验，仅凭一个非机密的
-forwardingId 就把请求路由到任意租户的 notebook，并允许执行代码。
+供应商的多租户 notebook 前端会验证签名的租户 token，但路由层没有把
+token 中的 tenant 与 forwardingId 对应 notebook 的属主绑定。攻击者只需
+持有任一租户的有效 token，就能把请求路由到其他租户的 notebook 并执行代码。
 
 ## 教材锚点
 - 案例：Azure Cosmos DB Notebook forwardingId 授权绕过（CosMiss，#073）
@@ -26,9 +27,9 @@ forwardingId 就把请求路由到任意租户的 notebook，并允许执行代�
 - "非机密标识符被当作访问凭据"（security by obscurity）
 
 ## 利用步骤
-1. 访问入口页 `/`，发现"Shared notebook"链接，提取其中的 forwardingId：
+1. 从 `/auth/token` 获取 tenant-a 会话 token，再访问入口页 `/`，发现"Shared notebook"链接，提取其中的 forwardingId：
    `fwd-8c1d4e5f-6a2b-4c3d-8e9f-000000000002`
-2. 用该 ID 调用执行端点（无任何认证）：
+2. 携带 tenant-a token 用该 ID 调用执行端点（服务端只验签、不校验 token tenant 与 notebook 属主）：
    `GET /notebook/<fwd>/exec?code=print(open('/flag.txt').read())`
 3. 返回 victim 租户 notebook 中的 flag。
 

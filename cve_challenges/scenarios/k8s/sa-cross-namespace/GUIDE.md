@@ -1,10 +1,10 @@
-# CLOUD-03 K8s SA Token → 跨命名空间访问
+# K8S-32 K8s SA Token → 跨命名空间访问
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-03 |
+| ID | K8S-32 |
 | 名称 | K8s SA Token → Cross-Namespace Access |
 | 技术/CVE | N/A (overly permissive RBAC) |
 | 难度 | L3 |
@@ -31,7 +31,7 @@ tenant-a 的 ServiceAccount 被绑定了过宽的 ClusterRole
 3. `kubectl get secret -n tenant-b target-flag` 解码得到 flag。
 
 ## Flag
-`flag{cloud-03-step2-cross-ns}`
+`flag{k8s-32-step2-cross-ns}`
 
 ## 此场景利用了哪些知识
 
@@ -55,7 +55,7 @@ RBAC 遵循最小权限与命名空间内绑定（Role/RoleBinding）；
 | CVE/Technique | N/A (overly permissive RBAC) |
 | Difficulty | L3 |
 | Type | k8s |
-| Path | scenarios/cloud/sa-cross-namespace |
+| Path | scenarios/k8s/sa-cross-namespace |
 
 ## Attack Path Summary
 Compromise pod in tenant-a → extract broad ServiceAccount token → use k8s API to access tenant-b resources → read cross-namespace flag
@@ -72,7 +72,7 @@ Compromise pod in tenant-a → extract broad ServiceAccount token → use k8s AP
 
 ## Step-by-Step Exploitation
 ### Step 1: Extract SA Token from Attacker Pod
-**Flag:** `flag{cloud-03-step1-sa}`
+**Flag:** `flag{k8s-32-step1-sa}`
 
 ```bash
 kubectl exec -it -n tenant-a attacker -- cat /var/run/secrets/kubernetes.io/serviceaccount/token

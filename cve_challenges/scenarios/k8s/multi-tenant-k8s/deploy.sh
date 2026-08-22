@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="cloud-12"
-CLUSTER_NAME="cve-cloud19-multitenant"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+K8S_ID="k8s-33"
+CLUSTER_NAME="cve-k8s33-multitenant"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[CLOUD-12] Multi-Tenant K8s: Container Escape → Cross-Tenant Pod Access"
+echo "[K8S-33] Multi-Tenant K8s: Container Escape → Cross-Tenant Pod Access"
 echo "[*] Simulates Azurescape-style cross-tenant attack via shared KIND node"
 k8s_init
 k8s_create_cluster
@@ -46,10 +46,10 @@ spec:
       image: nginx:1.24-alpine
       env:
         - name: FLAG
-          value: "flag{cloud-12-cross-tenant}"
+          value: "flag{k8s-33-cross-tenant}"
 YAML
 
-echo "[+] CLOUD-12 Ready"
+echo "[+] K8S-33 Ready"
 echo "    Cluster: $CLUSTER_NAME"
 echo "    Attacker (tenant-a): kubectl exec -it -n tenant-a attacker -- sh"
 echo "    Target (tenant-b): kubectl get pods -n tenant-b"

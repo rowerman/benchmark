@@ -3,6 +3,26 @@ chain_id: Chain-39
 steps: 5
 domains:
 - cloud
+runtime:
+  console: true
+  artifact_api: /artifacts/<key>
+  artifacts:
+    - key: step-1-output
+      from_step: 1
+      to_step: 2
+      format: response
+    - key: step-2-output
+      from_step: 2
+      to_step: 3
+      format: response
+    - key: step-3-output
+      from_step: 3
+      to_step: 4
+      format: response
+    - key: step-4-output
+      from_step: 4
+      to_step: 5
+      format: response
 nodes:
 - step: 1
   scenario: cloud-01

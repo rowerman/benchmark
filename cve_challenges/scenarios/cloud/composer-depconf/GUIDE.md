@@ -27,10 +27,8 @@
 
 ## 利用步骤
 1. 读取平台文档，找到被解析的私有包 `data-platform-utils==1.0.0`。
-2. 在全局包注册表 PUT 同名同版本包，内容为恶意命令
-   （`cat /app/flag.txt`）。
-3. 触发平台 `/resolve`——平台 worker 执行恶意 setup 代码，
-   输出平台 worker 上的 flag。
+2. 在全局包注册表 PUT 同名同版本包，内容为恶意命令，读取托管 worker 的 service-account token。
+3. 触发平台 `/resolve`——恶意 setup 代码携带 worker 身份访问 tenant-b 资源 API，输出跨租户 Secret 与 flag。
 
 ## Flag
 `flag{cloud-28-platform-worker}`

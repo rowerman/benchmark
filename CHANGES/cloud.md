@@ -4,8 +4,11 @@
 
 ## 一、编号调整
 
-- 公有云场景由不连续编号 `CLOUD-01..42` 统一重编号为连续 `CLOUD-01..33`。
-- 目录名保持不变（仅逻辑 ID 迁移），映射关系：
+- 2026-08-20 阶段曾将公有云场景由不连续编号 `CLOUD-01..42` 统一重编号为
+  `CLOUD-01..33`；2026-08-22 将其中 02/03/12 迁移到 K8s 后，cloud 保留其余
+  30 个 active ID，不再强制连续。
+- 既有 cloud 场景沿用重编号后的目录；本次迁移的三个目录已从
+  `scenarios/cloud/` 移至 `scenarios/k8s/`，映射关系：
 
 | 旧编号 | 新编号 | 旧编号 | 新编号 | 旧编号 | 新编号 |
 |---|---|---|---|---|---|
@@ -23,7 +26,7 @@
 | 39 | 30 | 42 | 33 | — | — |
 
 - 同步更新：`scripts/scenarios.yaml`、全部 `chain.yaml`、`deploy.sh`/`teardown.sh`、各场景 GUIDE、默认 flag 中的云场景 ID。
-- 新增一致性检查脚本 `scripts/check-cloud-consistency.py`，校验编号唯一且覆盖 01–33、链引用存在、GUIDE 与注册表一致、无 34–42 残留。
+- 新增一致性检查脚本 `scripts/check-cloud-consistency.py`，校验 30 个 active ID、链引用存在、GUIDE 与注册表一致，并拒绝已迁移的 02/03/12 引用。
 
 ## 二、单点场景修复
 
@@ -70,6 +73,8 @@
   - CLOUD-16：新增“客户角色非超级用户、直接命令执行被拒”边界说明。
   - CLOUD-26：修正“create 直接返回 flag”的过时描述，改为读取资源后取 flag。
   - CLOUD-27：补充读取详情需调用者上下文。
+- 本次同步 CLOUD-05/06/14/28 的控制面、身份和 flag 位置说明，并更新
+  K8S-31/32/33 的 GUIDE 元数据、路径和部署入口。
 
 ## 五、验证情况
 
@@ -78,10 +83,37 @@
 - 构建与冒烟：CLOUD-05/09/16/26/27 五个修改场景全部构建成功并端到端冒烟通过；`ssrf-to-cross-account` 链端到端验证通过。
 - 清理：冒烟容器与卷已 `down -v`；`compileall` 生成的 `__pycache__` 已删除。
 
-## 六、未完成事项
 
-- 未对全部 33 个云场景逐一执行 build/up/down（仅修改过的 5 个场景完整验证；未修改场景只做 Compose 配置与 ID 一致性校验）。
-- 其余 5 条重点链（managed-db-lateral、managed-data-lateral、ci-to-oidc、detection-blindspot、supply-chain-persistence）未做端到端漏洞验收；多数链由独立 Compose 项目组成，缺少共享网络与凭据传递通道，链间状态传递仍依赖手工/脚本。
-- CLOUD-02/03/12（KIND/K8s 部署）未做运行时验证。
-- CLOUD-27 的调用者上下文仍是模拟 header，未实现真实 SigV4 签名链路。
-- IAM `/validate` 按角色名返回权限列表，未实现资源 ARN 级权限判断；会话为容器内存态，重启后失效。
+修改日期：2026-08-22
+
+## 一、 修改内容
+
+- `CLOUD-02/03/12` 已迁移为 `K8S-31/32/33`，cloud 注册表保留其余 30 个 ID，
+  以避免现有 CLOUD 引用整体重编号。
+- CLOUD-05 增加 SSM 参数 API、Stack 执行角色和资源解析输出；保留 `Fn::Sub`
+  任意参数路径读取，并让未知伪参数维持原文字面行为。
+- CLOUD-06 增加 CI workload token、短期身份材料和受保护云资源 API；CLOUD-14
+  增加签名租户 token 与 notebook 控制面，保留 tenant/forwardingId 未绑定漏洞；
+  CLOUD-28 增加托管 worker token 与跨租户资源 API。
+- 移除多个 IAM proxy 的重复宿主端口 `10702`，避免云链组合启动冲突。
+- 新增 `chains/_runtime` 公共编排器与 chain-console；20 条普通云链改为共享链网络、
+  单一入口端口和 artifact API，Chain-32 保留专用 Compose 作为参考实现。
+- 所有普通云链的 `chain.yaml` 增加 artifact 输入/输出格式和 runtime 合约，
+  `deploy.sh`/`teardown.sh` 统一使用链级 project、共享网络和 `down -v`。
+
+## 二、实施验证
+
+- `validate-structure.py`：89 个场景、37 条链、60 个 Compose 文件通过；新增链运行时
+  console/artifact 合约校验。
+- `check-cloud-consistency.py`：30 个 active cloud 场景、迁移 ID 排除和链引用校验通过。
+- 全部 20 条普通云链通过 runtime dry-run，确认每一步场景均有 Compose 部署且生成唯一
+  `11600 + chain number` 入口；全部场景 Compose 配置解析通过。
+- chain-console artifact PUT/GET smoke 通过；修改后的 Python 文件编译通过。
+- 当前环境 Docker daemon 无权限，未执行实际镜像构建、容器启动或 K8s KIND 运行验收。
+
+## 三、未完成事项
+
+- 未对全部 Docker 场景逐一执行 build/up/down；当前完成的是 Compose 配置解析和重点场景的静态/局部 smoke。
+- 未完成 21 条云链的容器级端到端 exploit-to-flag 验收。
+- runtime 已提供 artifact API，但各攻击器尚未全部自动消费 `CHAIN_BUS_URL`，部分链仍需控制台交接。
+- CLOUD-27 仍使用模拟调用者 header，未实现真实 SigV4；IAM `/validate` 仍是内存态且未做资源 ARN 级授权。

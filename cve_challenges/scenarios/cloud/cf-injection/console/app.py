@@ -45,7 +45,10 @@ def create():
         req = urllib.request.Request(
             f"{PARSER}/parse",
             data=template.encode(),
-            headers={"Content-Type": "application/x-yaml"},
+            headers={
+                "Content-Type": "application/x-yaml",
+                "X-Stack-Name": "demo-stack",
+            },
         )
         r = urllib.request.urlopen(req, timeout=10)
         return render_template_string(HTML, exports="", output=f"Stack created:\n{r.read().decode()}")

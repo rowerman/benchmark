@@ -25,6 +25,8 @@ def run():
 @app.route("/secrets")
 def secrets():
     # Internal endpoint — contains flag
-    return {"FLAG": FLAG, "DB_PASSWORD": "ci-db-password"}
+    return {"FLAG": FLAG, "DB_PASSWORD": "ci-db-password",
+            "WORKLOAD_TOKEN": os.environ.get("WORKLOAD_TOKEN", ""),
+            "CLOUD_RESOURCE_URL": os.environ.get("CLOUD_RESOURCE_URL", "")}
 
 if __name__ == "__main__": app.run(host="0.0.0.0", port=5000)

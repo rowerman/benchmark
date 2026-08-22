@@ -248,6 +248,25 @@ def main() -> None:
             ):
                 fail(errors, f"{chain_file.parent.name}: unknown scenario {scenario_id}")
 
+        domains = chain.get("domains", [])
+        if isinstance(domains, str):
+            domains = [domains]
+        if "cloud" in domains and chain.get("chain_id") != "Chain-32":
+            runtime = chain.get("runtime") or {}
+            if runtime.get("console") is not True:
+                fail(errors, f"{chain_file.parent.name}: cloud chain must enable runtime console")
+            if runtime.get("artifact_api") != "/artifacts/<key>":
+                fail(errors, f"{chain_file.parent.name}: cloud chain artifact API contract missing")
+            artifacts = runtime.get("artifacts") or []
+            if isinstance(steps, int) and len(artifacts) != max(0, steps - 1):
+                fail(errors, f"{chain_file.parent.name}: artifact count must equal steps - 1")
+            for artifact in artifacts:
+                if not isinstance(artifact, dict) or not all(key in artifact for key in ("key", "from_step", "to_step", "format")):
+                    fail(errors, f"{chain_file.parent.name}: artifact must declare key/from_step/to_step/format")
+            deploy = (chain_file.parent / "deploy.sh").read_text(encoding="utf-8") if (chain_file.parent / "deploy.sh").is_file() else ""
+            if "_runtime/deploy_chain.py" not in deploy:
+                fail(errors, f"{chain_file.parent.name}: cloud chain must use shared runtime deployer")
+
     for compose in compose_files():
         try:
             services = (yaml.safe_load(compose.read_text(encoding="utf-8")) or {}).get("services", {})

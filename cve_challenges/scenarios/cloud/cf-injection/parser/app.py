@@ -1,5 +1,11 @@
 """CloudFormation Template Parser — supports Fn::Sub, Fn::ImportValue, Ref."""
-import os, re, yaml
+import json
+import os
+import re
+import urllib.error
+import urllib.request
+
+import yaml
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -8,6 +14,24 @@ FLAG = os.environ.get("FLAG", "flag{cloud-05-step2-cf-inject}")
 EXPORTS = {"DemoApp-BucketName": "demo-app-assets", "FlagStore-BucketName": "flag-bucket-000000"}
 # Simulated SSM parameters
 SSM = {"/secure/flag": FLAG, "/config/db-password": "SuperS3cretDB!"}
+SSM_URL = os.environ.get("SSM_URL", "")
+EXECUTION_ROLE_TOKEN = os.environ.get("EXECUTION_ROLE_TOKEN", "stack-execution-role")
+
+
+def read_parameter(name: str) -> str:
+    if not SSM_URL:
+        return SSM.get(name, "")
+    req = urllib.request.Request(
+        f"{SSM_URL}/parameters/{name.lstrip('/')}",
+        headers={"X-Execution-Role": EXECUTION_ROLE_TOKEN},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as response:
+            return json.loads(response.read().decode())["value"]
+    except (urllib.error.HTTPError, urllib.error.URLError):
+        # Unknown pseudo-parameters keep the pre-existing literal substitution
+        # behavior instead of making otherwise valid templates fail parsing.
+        return ""
 
 
 def _tagged_intrinsic(loader, node, fn):
@@ -34,7 +58,9 @@ def resolve_intrinsics(obj):
         if "Fn::Sub" in obj:
             val = obj["Fn::Sub"]
             if isinstance(val, str):
-                return re.sub(r'\$\{([^}]+)\}', lambda m: SSM.get(m.group(1), m.group(0)), val)
+                # Deliberate flaw: the stack role can resolve arbitrary SSM paths,
+                # not only the documented export namespace.
+                return re.sub(r'\$\{([^}]+)\}', lambda m: read_parameter(m.group(1)) or m.group(0), val)
             return str(val)
         if "Fn::Join" in obj:
             sep, parts = obj["Fn::Join"][0], obj["Fn::Join"][1]

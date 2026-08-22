@@ -3,6 +3,18 @@ chain_id: Chain-47
 steps: 3
 domains:
 - cloud
+runtime:
+  console: true
+  artifact_api: /artifacts/<key>
+  artifacts:
+    - key: step-1-output
+      from_step: 1
+      to_step: 2
+      format: response
+    - key: step-2-output
+      from_step: 2
+      to_step: 3
+      format: response
 nodes:
 - step: 1
   scenario: cloud-30

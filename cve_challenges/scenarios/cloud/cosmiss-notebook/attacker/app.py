@@ -31,7 +31,9 @@ def run():
     fwd = request.form.get("fwd", "")
     code = request.form.get("code", "")
     try:
-        r = requests.get(f"{FRONT}/notebook/{fwd}/exec", params={"code": code}, timeout=10)
+        token = requests.get(f"{FRONT}/auth/token", timeout=10).json()["token"]
+        r = requests.get(f"{FRONT}/notebook/{fwd}/exec", params={"code": code},
+                         headers={"Authorization": f"Bearer {token}"}, timeout=10)
         return HTML.replace("{{out}}", f"HTTP {r.status_code}\n{r.text}")
     except Exception as e:
         return HTML.replace("{{out}}", f"error: {e}")

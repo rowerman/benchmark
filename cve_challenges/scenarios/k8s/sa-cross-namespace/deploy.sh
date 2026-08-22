@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="cloud-03"
-CLUSTER_NAME="cve-cloud03-sa-cross-ns"
+K8S_ID="k8s-32"
+CLUSTER_NAME="cve-k8s32-sa-cross-ns"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[CLOUD-03] K8s SA Token → Cross-Namespace Access"
+echo "[K8S-32] K8s SA Token → Cross-Namespace Access"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
@@ -60,7 +60,7 @@ spec:
       command: ["sleep", "infinity"]
       env:
         - name: STEP1_FLAG
-          value: "flag{cloud-03-step1-sa}"
+          value: "flag{k8s-32-step1-sa}"
 YAML
 
 # Deploy target pod in tenant-b with flag secret
@@ -71,7 +71,7 @@ metadata:
   name: target-flag
   namespace: tenant-b
 stringData:
-  flag: "flag{cloud-03-step2-cross-ns}"
+  flag: "flag{k8s-32-step2-cross-ns}"
 ---
 apiVersion: v1
 kind: Pod
@@ -84,10 +84,10 @@ spec:
       image: nginx:1.24-alpine
       env:
         - name: FLAG
-          value: "flag{cloud-03-step2-cross-ns}"
+          value: "flag{k8s-32-step2-cross-ns}"
 YAML
 
-echo "[+] CLOUD-03 Ready"
+echo "[+] K8S-32 Ready"
 echo "    Attacker pod (tenant-a): kubectl exec -it -n tenant-a attacker -- sh"
 echo "    Target flag: kubectl get secret -n tenant-b target-flag -o jsonpath='{.data.flag}' | base64 -d"
 echo "    Exploit: Use broad SA token to access tenant-b resources"

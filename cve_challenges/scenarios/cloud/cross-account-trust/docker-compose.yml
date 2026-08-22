@@ -29,8 +29,6 @@ services:
   # socat proxies — expose internal services to host for nmap detection
   iam-proxy:
     image: alpine/socat:latest
-    ports:
-      - "10702:10702"
     command: "TCP-LISTEN:10702,fork,reuseaddr TCP:iam:5000"
     depends_on:
       iam:

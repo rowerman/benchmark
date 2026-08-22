@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="cloud-02"
-CLUSTER_NAME="cve-cloud02-cap-netraw"
+K8S_ID="k8s-31"
+CLUSTER_NAME="cve-k8s31-cap-netraw"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[CLOUD-02] Container Escape via CAP_NET_RAW → Metadata MITM"
+echo "[K8S-31] Container Escape via CAP_NET_RAW → Metadata MITM"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
@@ -58,7 +58,7 @@ spec:
         - |
           from http.server import HTTPServer, BaseHTTPRequestHandler
           import os
-          flag = os.environ.get('FLAG','flag{cloud-02-step1-netraw}')
+          flag = os.environ.get('FLAG','flag{k8s-31-step1-netraw}')
           class H(BaseHTTPRequestHandler):
               def do_GET(self):
                   self.send_response(200); self.end_headers()
@@ -66,7 +66,7 @@ spec:
           HTTPServer(('0.0.0.0',8080),H).serve_forever()
       env:
         - name: FLAG
-          value: "flag{cloud-02-step1-netraw}"
+          value: "flag{k8s-31-step1-netraw}"
 YAML
 
 # Deploy attacker pod with CAP_NET_RAW + network tools
@@ -89,7 +89,7 @@ spec:
           add: ["NET_RAW"]
 YAML
 
-echo "[+] CLOUD-02 Ready"
+echo "[+] K8S-31 Ready"
 echo "    Attacker pod: kubectl exec -it attacker -- sh"
 echo "    Victim pod: kubectl exec -it victim -- sh"
 echo "    Metadata server: kubectl exec -it metadata-server -- sh"

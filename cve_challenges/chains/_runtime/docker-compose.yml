@@ -1,0 +1,15 @@
+services:
+  chain-console:
+    build: ./chain-console
+    environment:
+      STEP_URLS: ${STEP_URLS}
+      CHAIN_KEY: ${CHAIN_KEY}
+    ports:
+      - "${CHAIN_PORT}:5000"
+    networks:
+      chain-net: {}
+
+networks:
+  chain-net:
+    external: true
+    name: ${CHAIN_NETWORK}

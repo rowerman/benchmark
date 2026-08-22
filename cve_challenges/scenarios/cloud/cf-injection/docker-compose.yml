@@ -23,9 +23,18 @@ services:
         CVE_FLAG: ${CVE_FLAG:-flag{cloud-05-default}}
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-05-default}}
+      - SSM_URL=http://ssm:5000
+      - EXECUTION_ROLE_TOKEN=stack-execution-role
+    depends_on:
+      - ssm
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  ssm:
+    build: ./ssm
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-05-default}}
