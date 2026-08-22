@@ -68,6 +68,7 @@ def main() -> int:
 
     projects: list[dict[str, str]] = []
     step_urls: dict[str, str] = {}
+    deployed_scenarios: dict[str, tuple[str, str, str, str, int]] = {}
     nodes = chain.get("nodes") or chain.get("steps_detail") or []
     for index, node in enumerate(nodes, 1):
         scenario = str(node.get("scenario", "")).lower()
@@ -78,6 +79,23 @@ def main() -> int:
         compose = compose_file(scenario_dir)
         if compose is None:
             raise RuntimeError(f"{scenario}: no Docker Compose deployment")
+        existing = deployed_scenarios.get(scenario)
+        if existing:
+            project, _, _, selected_id, first_index = existing
+            # Reuse fixed-IP scenarios that appear more than once in a chain.
+            # Reconnect the selected container with both step aliases because
+            # Docker rejects a second network connect for the same endpoint.
+            run("docker", "network", "disconnect", network, selected_id)
+            run(
+                "docker", "network", "connect",
+                "--alias", f"{project}-{selected_id[:12]}",
+                "--alias", f"step-{first_index}",
+                "--alias", f"step-{index}",
+                network,
+                selected_id,
+            )
+            step_urls[str(index)] = f"http://step-{index}:5000"
+            continue
         project = f"chain-{chain_number}-step-{index}-{scenario}"
         override = state_dir / f"{index}-override.yml"
         override.write_text(
@@ -88,12 +106,15 @@ def main() -> int:
         service_names = services(compose)
         selected = next((name for name in ("attacker", "attacker-ui", "console", "web", "notebook") if name in service_names), service_names[0])
         container_ids = run("docker", "compose", "-p", project, "-f", str(compose), "-f", str(override), "ps", "-q").splitlines()
-        for container in container_ids:
-            run("docker", "network", "connect", "--alias", f"{project}-{container[:12]}", network, container)
         selected_id = run("docker", "compose", "-p", project, "-f", str(compose), "-f", str(override), "ps", "-q", selected)
-        run("docker", "network", "connect", "--alias", f"step-{index}", network, selected_id)
+        for container in container_ids:
+            aliases = ["--alias", f"{project}-{container[:12]}"]
+            if container == selected_id:
+                aliases.extend(["--alias", f"step-{index}"])
+            run("docker", "network", "connect", *aliases, network, container)
         step_urls[str(index)] = f"http://step-{index}:5000"
         projects.append({"project": project, "compose": str(compose), "override": str(override)})
+        deployed_scenarios[scenario] = (project, str(compose), str(override), selected_id, index)
 
     env = os.environ.copy()
     env.update({
