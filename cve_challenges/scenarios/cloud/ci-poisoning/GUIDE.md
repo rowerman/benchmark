@@ -1,10 +1,10 @@
-# CLOUD-06 CI/CD 管道投毒 → 凭据外泄
+# CLOUD-05 CI/CD 管道投毒 → 凭据外泄
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-06 |
+| ID | CLOUD-05 |
 | 名称 | CI/CD Pipeline Poisoning → Secret Exfiltration |
 | 技术/CVE | N/A (CI/CD script injection) |
 | 难度 | L2 |
@@ -31,7 +31,7 @@
 3. 携带 `X-Workload-Token` 请求受保护的云 artifact API，读取跨租户构建产物与 flag。
 
 ## Flag
-`flag{cloud-06-pipeline}`（runner 环境）
+`flag{cloud-05-pipeline}`（runner 环境）
 
 ## 此场景利用了哪些知识
 

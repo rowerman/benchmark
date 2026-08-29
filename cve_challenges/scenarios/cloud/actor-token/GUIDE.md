@@ -1,10 +1,10 @@
-# CLOUD-23 Entra Actor Token：身份 actor 校验缺陷
+# CLOUD-21 Entra Actor Token：身份 actor 校验缺陷
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-23 |
+| ID | CLOUD-21 |
 | 名称 | Entra Actor Token: Tenant-A Token Accepted by Tenant-B Directory |
 | 技术/CVE | N/A (actor/tenant validation bug, case #246) |
 | 难度 | L2 |
@@ -31,7 +31,7 @@
 3. 服务端仅验签、不比对 token 租户，返回 tenant-b 的用户列表与 flag。
 
 ## Flag
-`flag{cloud-23-tenant-b-admin}`
+`flag{cloud-21-tenant-b-admin}`
 
 ## 此场景利用了哪些知识
 

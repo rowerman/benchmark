@@ -3,11 +3,11 @@ services:
     build:
       context: ./attacker
       args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-09-default}}
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-08-default}}
     ports:
       - "10612:5000"
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-09-default}}
+      - FLAG=${CVE_FLAG:-flag{cloud-08-default}}
       - IAM_URL=http://iam:5000
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
@@ -45,7 +45,7 @@ services:
   s3:
     build: ./s3
     environment:
-      - FLAG=flag{cloud-09-step2-cross-account}
+      - FLAG=flag{cloud-08-step2-cross-account}
       - IAM_URL=http://iam:5000
     depends_on:
       - iam

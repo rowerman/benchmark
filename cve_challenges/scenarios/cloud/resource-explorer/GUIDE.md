@@ -1,10 +1,10 @@
-# CLOUD-27 Resource Explorer：静默枚举
+# CLOUD-25 Resource Explorer：静默枚举
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-27 |
+| ID | CLOUD-25 |
 | 名称 | Resource Explorer: Feature-Inherent Quiet Enumeration |
 | 技术/CVE | N/A (unlogged search API, case #148) |
 | 难度 | L2 |
@@ -33,7 +33,7 @@
 3. 检查 `/logs`：审计为 0，枚举不可见。
 
 ## Flag
-`flag{cloud-27-flag-store}`
+`flag{cloud-25-flag-store}`
 
 ## 此场景利用了哪些知识
 

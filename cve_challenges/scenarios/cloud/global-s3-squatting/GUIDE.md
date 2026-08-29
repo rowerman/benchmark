@@ -1,10 +1,10 @@
-# CLOUD-13 全局 S3 命名空间抢占 → 跨租户数据窃取
+# CLOUD-11 全局 S3 命名空间抢占 → 跨租户数据窃取
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-13 |
+| ID | CLOUD-11 |
 | 名称 | Global S3 Namespace Squatting → Cross-Tenant Data Theft |
 | 技术/CVE | N/A (global namespace resource squatting) |
 | 难度 | L3 |
@@ -33,7 +33,7 @@
    拿到 flag。
 
 ## Flag
-`flag{cloud-13-step2-squatting}`（victim 桶对象）
+`flag{cloud-11-step2-squatting}`（victim 桶对象）
 
 ## 此场景利用了哪些知识
 

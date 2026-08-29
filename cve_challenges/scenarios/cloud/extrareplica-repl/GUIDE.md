@@ -1,10 +1,10 @@
-# CLOUD-18 ExtraReplica：内部子网绕过防火墙 + 证书 CN 校验缺陷
+# CLOUD-16 ExtraReplica：内部子网绕过防火墙 + 证书 CN 校验缺陷
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-18 |
+| ID | CLOUD-16 |
 | 名称 | ExtraReplica: Internal Subnet + CN Regex → Cross-Tenant DB Replication |
 | 技术/CVE | N/A (internal subnet + mis-anchored cert regex, case #061) |
 | 难度 | L3 |
@@ -37,7 +37,7 @@
    以复制用户身份拉取受害者整库，flag 在备份文件中。
 
 ## Flag
-`flag{cloud-18-cross-tenant-db}`
+`flag{cloud-16-cross-tenant-db}`
 
 ## 此场景利用了哪些知识
 

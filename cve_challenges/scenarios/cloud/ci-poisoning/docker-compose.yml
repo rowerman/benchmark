@@ -3,7 +3,7 @@ services:
     build:
       context: ./attacker
       args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-06-default}}
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-05-default}}
     ports:
       - "10608:5000"
     environment:
@@ -19,7 +19,7 @@ services:
   ci-runner:
     build: ./ci-runner
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-06-pipeline}}
+      - FLAG=${CVE_FLAG:-flag{cloud-05-pipeline}}
       - GIT_URL=http://git-server:5000
       - CLOUD_RESOURCE_URL=http://cloud-resource:5000
       - WORKLOAD_TOKEN=ci-workload-token
@@ -35,7 +35,7 @@ services:
   cloud-resource:
     build: ./cloud-resource
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-06-pipeline}}
+      - FLAG=${CVE_FLAG:-flag{cloud-05-pipeline}}
 
   git-server:
     build: ./git-server

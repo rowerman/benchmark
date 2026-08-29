@@ -3,11 +3,11 @@ services:
     build:
       context: ./gateway
       args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-04-default}}
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-03-default}}
     ports:
       - "10604:5000"
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-04-default}}
+      - FLAG=${CVE_FLAG:-flag{cloud-03-default}}
       - LAMBDA_URL=http://lambda:5000/run
     networks:
       - cloud-net
@@ -25,7 +25,7 @@ services:
     build:
       context: ./lambda
     environment:
-      - FLAG=flag{cloud-04-step2-lambda}
+      - FLAG=flag{cloud-03-step2-lambda}
       - IAM_ACCESS_KEY_ID=AKIALAMBDAEXAMPLE
       - IAM_SECRET_KEY=lambda-iam-secret-key
     networks:

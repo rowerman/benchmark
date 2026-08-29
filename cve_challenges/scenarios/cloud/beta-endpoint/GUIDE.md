@@ -1,10 +1,10 @@
-# CLOUD-26 Service Catalog：非生产端点不可见写
+# CLOUD-24 Service Catalog：非生产端点不可见写
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-26 |
+| ID | CLOUD-24 |
 | 名称 | Service Catalog Beta Endpoint: Invisible Write |
 | 技术/CVE | N/A (non-production endpoint skips audit, case #154) |
 | 难度 | L2 |
@@ -36,7 +36,7 @@
 > “未鉴权接口”，因此调用者校验与生产端点保持一致。
 
 ## Flag
-`flag{cloud-26-invisible-write}`
+`flag{cloud-24-invisible-write}`
 
 ## 此场景利用了哪些知识
 

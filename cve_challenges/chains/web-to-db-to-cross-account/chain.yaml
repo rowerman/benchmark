@@ -36,7 +36,7 @@ nodes:
     flag: "flag{c42-step2-db}"
     next_hint: "数据库是托管引擎且带供应商补丁缺陷"
   - step: 3
-    scenario: cloud-16
+    scenario: cloud-14
     description: "引擎补丁 → 索引函数以供应商角色执行 → 宿主 RCE"
     flag: "flag{c42-step3-escape}"
     next_hint: "从宿主可访问 IMDS 端点"
@@ -46,6 +46,6 @@ nodes:
     flag: "flag{c42-step4-imds}"
     next_hint: "凭据可调用 STS AssumeRole 跨账号"
   - step: 5
-    scenario: cloud-09
+    scenario: cloud-08
     description: "跨账号 AssumeRole → 获取最终 flag"
     flag: "flag{c42-step5-final}"

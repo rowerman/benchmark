@@ -375,7 +375,7 @@ def _redact_value(val: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# SCP evaluation (for CLOUD-11)
+# SCP evaluation (for CLOUD-10)
 # ---------------------------------------------------------------------------
 def _evaluate_scp(user: dict, action: str, resource: str, api_version: str = "") -> tuple[bool, str]:
     """Evaluate Service Control Policy.

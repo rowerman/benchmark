@@ -1,10 +1,10 @@
-# CLOUD-14 CosMiss：托管笔记本前端跨租户访问
+# CLOUD-12 CosMiss：托管笔记本前端跨租户访问
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-14 |
+| ID | CLOUD-12 |
 | 名称 | CosMiss: Managed Notebook Front-End → Cross-Tenant RCE |
 | 技术/CVE | N/A (forwardingId authz bypass, case #073) |
 | 难度 | L2 |
@@ -34,7 +34,7 @@ token 中的 tenant 与 forwardingId 对应 notebook 的属主绑定。攻击者
 3. 返回 victim 租户 notebook 中的 flag。
 
 ## Flag
-`flag{cloud-14-nb-b}`（位于 nb-b 容器的 `/flag.txt`）
+`flag{cloud-12-nb-b}`（位于 nb-b 容器的 `/flag.txt`）
 
 ## 此场景利用了哪些知识
 

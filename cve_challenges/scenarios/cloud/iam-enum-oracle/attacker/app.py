@@ -8,7 +8,7 @@ app = Flask(__name__)
 API = os.environ.get("API_URL", "http://control-api:5000")
 STS = os.environ.get("STS_URL", "http://sts:5000")
 AUDIT = os.environ.get("AUDIT_URL", "http://audit-log:5000")
-FLAG = os.environ.get("FLAG", "flag{cloud-25-zero-audit-enum}")
+FLAG = os.environ.get("FLAG", "flag{cloud-23-zero-audit-enum}")
 
 HTML = """<h1>IAM Enumeration 2.0</h1>
 <form method="post" action="/run"><button>Run invisible recon</button></form>

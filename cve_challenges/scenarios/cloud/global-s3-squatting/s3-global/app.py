@@ -3,7 +3,7 @@ import os, json
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG", "flag{cloud-13-step2-squatting}")
+FLAG = os.environ.get("FLAG", "flag{cloud-11-step2-squatting}")
 _buckets = {}  # Global namespace — all tenants share this
 
 # Victim tenant's data (pre-created, simulating CF auto-creation that references a bucket)

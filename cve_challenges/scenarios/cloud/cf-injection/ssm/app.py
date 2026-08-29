@@ -3,7 +3,7 @@ import os
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG", "flag{cloud-05-default}")
+FLAG = os.environ.get("FLAG", "flag{cloud-04-default}")
 ROLE_TOKEN = "stack-execution-role"
 PARAMETERS = {
     "/secure/flag": FLAG,

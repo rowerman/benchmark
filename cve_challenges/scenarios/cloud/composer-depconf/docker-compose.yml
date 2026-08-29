@@ -8,7 +8,7 @@ services:
     build:
       context: ./composer-pipeline
       args:
-        CVE_FLAG: flag{cloud-28-platform-worker}
+        CVE_FLAG: flag{cloud-26-platform-worker}
     environment:
       - REGISTRY_URL=http://pkg-registry:5000
       - WORKER_TOKEN=composer-worker-token
@@ -19,7 +19,7 @@ services:
   victim-resource:
     build: ./victim-resource
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-28-platform-worker}}
+      - FLAG=${CVE_FLAG:-flag{cloud-26-platform-worker}}
     networks:
       c37-net:
         ipv4_address: 10.37.0.40

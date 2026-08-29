@@ -5,7 +5,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 TOKEN = os.environ.get("NODE_TOKEN", "node-session-token")
-FLAG = os.environ.get("FLAG", "flag{cloud-21-cluster-secrets}")
+FLAG = os.environ.get("FLAG", "flag{cloud-19-cluster-secrets}")
 
 
 @app.route("/secrets")

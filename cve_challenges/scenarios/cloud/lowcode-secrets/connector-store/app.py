@@ -9,7 +9,7 @@ import os
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG", "flag{cloud-29-connector-secret}")
+FLAG = os.environ.get("FLAG", "flag{cloud-27-connector-secret}")
 
 _connectors = {
     "conn-1001": {"tenant": "tenant-a", "name": "attacker-salesforce", "secret": "sf-secret-a"},

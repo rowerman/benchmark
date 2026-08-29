@@ -3,7 +3,7 @@ services:
     build: ../../../infra/cloud/host-agent
     environment:
       - BOOTSTRAP_SCRIPT=TLS_BOOTSTRAP_TOKEN=token-abcdef
-      - FLAG=flag{cloud-19-bootstrap}
+      - FLAG=flag{cloud-17-bootstrap}
     networks:
       c28-net:
         ipv4_address: 168.63.129.16
@@ -11,7 +11,7 @@ services:
     build: ./control-plane
     environment:
       - BOOTSTRAP_TOKEN=token-abcdef
-      - FLAG=flag{cloud-19-node-secrets}
+      - FLAG=flag{cloud-17-node-secrets}
     networks:
       c28-net:
         ipv4_address: 168.63.129.20

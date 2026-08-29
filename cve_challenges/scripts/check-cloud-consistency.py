@@ -25,10 +25,9 @@ def main() -> int:
     entries = [(key, value) for key, value in cloud.items()
                if key.startswith("cloud-")]
     ids = [value.get("id") for _, value in entries]
-    retired = {"CLOUD-03", "CLOUD-12"}
-    expected = [f"CLOUD-{i:02d}" for i in range(1, 34) if f"CLOUD-{i:02d}" not in retired]
+    expected = [f"CLOUD-{i:02d}" for i in range(1, len(entries) + 1)]
     if sorted(ids) != expected:
-        fail(f"cloud registry IDs do not match the 31 active IDs after migration: {sorted(ids)}")
+        fail(f"cloud registry IDs must be contiguous CLOUD-01..CLOUD-{len(entries):02d}: {sorted(ids)}")
     if len(ids) != len(set(ids)):
         fail("duplicate cloud registry ID")
 
@@ -42,9 +41,6 @@ def main() -> int:
         for ref in re.findall(r"scenario:\s*(cloud-\d+)", text, re.I):
             if ref.lower() not in {key.lower() for key, _ in entries}:
                 fail(f"{chain_file}: unknown scenario reference {ref}")
-        for ref in re.findall(r"scenario:\s*(cloud-(?:02|03|12))\b", text, re.I):
-            fail(f"{chain_file}: migrated K8s scenario still referenced as {ref}")
-
     # Each GUIDE must agree with the registry entry for its directory.  This
     # catches stale IDs without confusing a valid new ID (for example CLOUD-09)
     # with the old number that occupied the same token before migration.
@@ -57,7 +53,7 @@ def main() -> int:
         if expected_id and (not match or match.group(1) != expected_id):
             fail(f"{guide}: GUIDE ID does not match registry ({expected_id})")
 
-    print(f"OK: {len(entries)} active cloud scenarios, migrated IDs excluded, valid chain references")
+    print(f"OK: {len(entries)} active cloud scenarios with contiguous IDs, valid chain references")
     return 0
 
 

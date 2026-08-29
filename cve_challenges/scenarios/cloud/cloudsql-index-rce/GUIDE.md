@@ -1,10 +1,10 @@
-# CLOUD-16 Cloud SQL 引擎补丁：索引函数以供应商角色执行
+# CLOUD-14 Cloud SQL 引擎补丁：索引函数以供应商角色执行
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-16 |
+| ID | CLOUD-14 |
 | 名称 | Cloud SQL Engine Patch: Index Function Runs as Provider Role → Host RCE |
 | 技术/CVE | N/A (ATExecChangeOwner patch + ANALYZE, case #052) |
 | 难度 | L3 |
@@ -55,7 +55,7 @@
 5. `SELECT * FROM shell_commands_results;` 得到宿主 flag。
 
 ## Flag
-`flag{cloud-16-host-rce}`
+`flag{cloud-14-host-rce}`
 
 ## 此场景利用了哪些知识
 

@@ -5,7 +5,7 @@ import os
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG", "flag{cloud-22-victim-volume}")
+FLAG = os.environ.get("FLAG", "flag{cloud-20-victim-volume}")
 
 _volumes = {
     "ocid.vol.1001": {"owner": "victim-tenant", "size": 8, "attached_to": None,

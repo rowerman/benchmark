@@ -17,7 +17,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-FLAG = os.environ.get("FLAG", "flag{cloud-04-step2-lambda}")
+FLAG = os.environ.get("FLAG", "flag{cloud-03-step2-lambda}")
 IAM_AK = os.environ.get("IAM_ACCESS_KEY_ID", "AKIALAMBDAEXAMPLE")
 IAM_SK = os.environ.get("IAM_SECRET_KEY", "lambda-iam-secret-key")
 

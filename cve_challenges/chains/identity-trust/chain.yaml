@@ -21,22 +21,22 @@ runtime:
       format: response
 nodes:
 - step: 1
-  scenario: cloud-25
+  scenario: cloud-23
   description: IAM 枚举 oracle → 无日志发现目标角色与账号
   flag: flag{c54-step1-enum}
   next_hint: 目标账号使用 SAML 联合身份
 - step: 2
-  scenario: cloud-10
+  scenario: cloud-09
   description: Golden SAML → 伪造信任根签发身份
   flag: flag{c54-step2-saml}
   next_hint: 伪造身份可借 actor 校验缺陷跨租户
 - step: 3
-  scenario: cloud-23
+  scenario: cloud-21
   description: actor 校验缺陷 → 跨租户全局管理员
   flag: flag{c54-step3-admin}
   next_hint: 管理员身份可访问连接器存储
 - step: 4
-  scenario: cloud-29
+  scenario: cloud-27
   description: 连接器密钥外泄 → 最终 flag
   flag: flag{c54-step4-final}
   next_hint: null

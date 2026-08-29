@@ -2,7 +2,7 @@ services:
   victim-api:
     build: ./victim-api
     environment:
-      - FLAG=flag{cloud-30-allowlist-bypass}
+      - FLAG=flag{cloud-28-allowlist-bypass}
     networks:
       c39-trust:
         ipv4_address: 168.63.0.20

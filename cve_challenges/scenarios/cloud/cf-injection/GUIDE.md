@@ -1,10 +1,10 @@
-# CLOUD-05 CloudFormation 模板注入 → SSM 参数泄露
+# CLOUD-04 CloudFormation 模板注入 → SSM 参数泄露
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-05 |
+| ID | CLOUD-04 |
 | 名称 | CloudFormation Template Injection → SSM |
 | 技术/CVE | N/A (CF Fn::Sub injection) |
 | 难度 | L2 |
@@ -37,7 +37,7 @@ CloudFormation 控制台接受 YAML 模板，解析器对 `Fn::Sub` 的处理存
 > 普通字符串而不被求值。
 
 ## Flag
-`flag{cloud-05-default}`（解析器输出）
+`flag{cloud-04-default}`（解析器输出）
 
 ## 此场景利用了哪些知识
 

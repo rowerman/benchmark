@@ -29,7 +29,7 @@ services:
     build: ./internal-api
     environment:
       - INTERNAL_TOKEN=grover-internal-credential-token
-      - FLAG2=flag{cloud-15-internal-api}
+      - FLAG2=flag{cloud-13-internal-api}
     networks:
       c24-net:
         ipv4_address: 10.24.0.30

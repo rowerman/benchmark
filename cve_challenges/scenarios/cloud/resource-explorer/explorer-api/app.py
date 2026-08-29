@@ -8,7 +8,7 @@ import os
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG", "flag{cloud-27-flag-store}")
+FLAG = os.environ.get("FLAG", "flag{cloud-25-flag-store}")
 RESOURCE_READER_ARN = os.environ.get(
     "RESOURCE_READER_ARN", "arn:aws:iam::111122223333:user/attacker")
 

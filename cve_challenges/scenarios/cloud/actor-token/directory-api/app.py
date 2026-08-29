@@ -11,7 +11,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 SECRET = os.environ.get("SIGNING_SECRET", "shared-signing-secret")
-FLAG = os.environ.get("FLAG", "flag{cloud-23-tenant-b-admin}")
+FLAG = os.environ.get("FLAG", "flag{cloud-21-tenant-b-admin}")
 
 _users = {
     "tenant-a": [{"name": "alice", "role": "user"}],

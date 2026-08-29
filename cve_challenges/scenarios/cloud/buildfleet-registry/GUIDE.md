@@ -1,10 +1,10 @@
-# CLOUD-20 构建舰队 + 内部镜像仓库供应链
+# CLOUD-18 构建舰队 + 内部镜像仓库供应链
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-20 |
+| ID | CLOUD-18 |
 | 名称 | Build Fleet + Internal Registry: Image Supply-Chain Overwrite |
 | 技术/CVE | N/A (unauth internal registry, case #260 lineage) |
 | 难度 | L2 |
@@ -36,7 +36,7 @@
    外发的 flag。
 
 ## Flag
-`flag{cloud-20-victim-image}`
+`flag{cloud-18-victim-image}`
 
 ## 此场景利用了哪些知识
 

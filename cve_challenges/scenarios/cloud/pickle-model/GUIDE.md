@@ -1,10 +1,10 @@
-# CLOUD-21 模型即代码：恶意 pickle → 推理 Pod → 节点 IMDS
+# CLOUD-19 模型即代码：恶意 pickle → 推理 Pod → 节点 IMDS
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-21 |
+| ID | CLOUD-19 |
 | 名称 | Model-as-Code: Malicious Pickle → Inference Pod → Node IMDS |
 | 技术/CVE | N/A (pickle deserialization, case #091) |
 | 难度 | L2 |
@@ -36,7 +36,7 @@
 5. 用节点 Token 调集群 `/secrets`，读到 Secret 与 flag。
 
 ## Flag
-`flag{cloud-21-cluster-secrets}`
+`flag{cloud-19-cluster-secrets}`
 
 ## 此场景利用了哪些知识
 

@@ -1,10 +1,10 @@
-# CLOUD-10 Golden SAML：信任根伪造
+# CLOUD-09 Golden SAML：信任根伪造
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-10 |
+| ID | CLOUD-09 |
 | 名称 | Golden SAML → Federation Trust Root Compromise |
 | 技术/CVE | N/A (SAML signing key exposure) |
 | 难度 | L3 |
@@ -31,7 +31,7 @@ SAML IdP 的签名私钥泄露（藏在 IdP 容器中）。攻击者拿到私钥
 3. 提交断言换取控制面会话，读取 flag。
 
 ## Flag
-`flag{cloud-10-...}`（伪造身份可访问的资源）
+`flag{cloud-09-...}`（伪造身份可访问的资源）
 
 ## 此场景利用了哪些知识
 

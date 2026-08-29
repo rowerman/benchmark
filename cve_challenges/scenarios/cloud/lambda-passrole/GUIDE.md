@@ -1,10 +1,10 @@
-# CLOUD-04 Lambda 代码注入 → IAM PassRole
+# CLOUD-03 Lambda 代码注入 → IAM PassRole
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-04 |
+| ID | CLOUD-03 |
 | 名称 | Lambda Code Injection → IAM PassRole |
 | 技术/CVE | N/A (command injection + IAM privesc) |
 | 难度 | L2 |
@@ -32,7 +32,7 @@ Lambda 执行环境携带 IAM 临时凭据；攻击者利用凭据进一步 Assu
 3. 用角色凭据读取受保护资源得到 flag。
 
 ## Flag
-`flag{cloud-04-step2-lambda}`（Lambda 环境）及跨账号 flag
+`flag{cloud-03-step2-lambda}`（Lambda 环境）及跨账号 flag
 
 ## 此场景利用了哪些知识
 

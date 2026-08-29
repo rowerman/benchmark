@@ -35,35 +35,35 @@ ORACLE_PORTS=(
 # ============================================================
 CLOUD_WEB_PORTS=(
   10601   # cloud-01 ssrf-to-imds
-  10604   # cloud-04 lambda-passrole
-  10605   # cloud-05 cf-injection
-  10608   # cloud-06 ci-poisoning
-  10609   # cloud-07 notebook-escape
-  10611   # cloud-08 oidc-federation
-  10612   # cloud-09 cross-account-trust
-  10613   # cloud-10 golden-saml
-  10615   # cloud-11 scp-bypass
-  10621   # cloud-13 global-s3-squatting
-  10623   # cloud-14 cosmiss-notebook
-  10624   # cloud-15 rds-logfdw
-  10625   # cloud-16 cloudsql-index-rce
-  10626   # cloud-17 synlapse-ir
-  10627   # cloud-18 extrareplica-repl
-  10628   # cloud-19 wireserver-bootstrap
-  10629   # cloud-20 buildfleet-registry
-  10630   # cloud-21 pickle-model
-  10631   # cloud-22 attachme-volume
-  10632   # cloud-23 actor-token
-  10633   # cloud-24 omigod-agent
-  10634   # cloud-25 iam-enum-oracle
-  10635   # cloud-26 beta-endpoint
-  10636   # cloud-27 resource-explorer
-  10637   # cloud-28 composer-depconf
-  10638   # cloud-29 lowcode-secrets
-  10639   # cloud-30 shared-nat
-  10640   # cloud-31 dataform-pt
-  10641   # cloud-32 serverless-sa
-  10642   # cloud-33 persistence-as-a-service
+  10604   # cloud-03 lambda-passrole
+  10605   # cloud-04 cf-injection
+  10608   # cloud-05 ci-poisoning
+  10609   # cloud-06 notebook-escape
+  10611   # cloud-07 oidc-federation
+  10612   # cloud-08 cross-account-trust
+  10613   # cloud-09 golden-saml
+  10615   # cloud-10 scp-bypass
+  10621   # cloud-11 global-s3-squatting
+  10623   # cloud-12 cosmiss-notebook
+  10624   # cloud-13 rds-logfdw
+  10625   # cloud-14 cloudsql-index-rce
+  10626   # cloud-15 synlapse-ir
+  10627   # cloud-16 extrareplica-repl
+  10628   # cloud-17 wireserver-bootstrap
+  10629   # cloud-18 buildfleet-registry
+  10630   # cloud-19 pickle-model
+  10631   # cloud-20 attachme-volume
+  10632   # cloud-21 actor-token
+  10633   # cloud-22 omigod-agent
+  10634   # cloud-23 iam-enum-oracle
+  10635   # cloud-24 beta-endpoint
+  10636   # cloud-25 resource-explorer
+  10637   # cloud-26 composer-depconf
+  10638   # cloud-27 lowcode-secrets
+  10639   # cloud-28 shared-nat
+  10640   # cloud-29 dataform-pt
+  10641   # cloud-30 serverless-sa
+  10642   # cloud-31 persistence-as-a-service
 )
 
 # ============================================================

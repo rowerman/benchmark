@@ -25,7 +25,7 @@ services:
     build: ./cluster-api
     environment:
       - NODE_TOKEN=node-session-token
-      - FLAG=flag{cloud-21-cluster-secrets}
+      - FLAG=flag{cloud-19-cluster-secrets}
     networks:
       c30-net:
         ipv4_address: 169.254.0.40

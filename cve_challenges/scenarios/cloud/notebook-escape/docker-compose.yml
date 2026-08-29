@@ -3,19 +3,19 @@ services:
     build:
       context: ./notebook
       args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-07-default}}
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-06-default}}
     ports:
       - "10609:5000"
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-07-default}}
+      - FLAG=${CVE_FLAG:-flag{cloud-06-default}}
       - K8S_API_URL=http://k8s-api:5000
     # Mount docker socket to simulate container escape path
-    # Flag is on host at /tmp/cloud-07-flag/flag.txt — requires Docker escape to read
+    # Flag is on host at /tmp/cloud-06-flag/flag.txt — requires Docker escape to read
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp/cloud-07-flag:/tmp/cloud-07-flag
+      - /tmp/cloud-06-flag:/tmp/cloud-06-flag
     # Write flag to host-accessible location for Docker escape attack path
-    entrypoint: ["sh", "-c", "mkdir -p /tmp/cloud-07-flag && echo \"${CVE_FLAG:-flag{cloud-07-default}}\" > /tmp/cloud-07-flag/flag.txt && exec python /app/app.py"]
+    entrypoint: ["sh", "-c", "mkdir -p /tmp/cloud-06-flag && echo \"${CVE_FLAG:-flag{cloud-06-default}}\" > /tmp/cloud-06-flag/flag.txt && exec python /app/app.py"]
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
       interval: 15s
@@ -26,5 +26,5 @@ services:
   k8s-api:
     build: ./k8s-api
     environment:
-      - FLAG=flag{cloud-07-step2-sa-token}
+      - FLAG=flag{cloud-06-step2-sa-token}
       - SA_TOKEN=eyJhbGciOiJub25lIn0.eyJzdWIiOiJicmlkZ2UifQ.

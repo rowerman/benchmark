@@ -1,10 +1,10 @@
-# CLOUD-28 CloudImposer：托管数据平台依赖混淆
+# CLOUD-26 CloudImposer：托管数据平台依赖混淆
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-28 |
+| ID | CLOUD-26 |
 | 名称 | CloudImposer: Dependency Confusion in Managed Data Platform |
 | 技术/CVE | N/A (global namespace dependency confusion, case #270) |
 | 难度 | L3 |
@@ -31,7 +31,7 @@
 3. 触发平台 `/resolve`——恶意 setup 代码携带 worker 身份访问 tenant-b 资源 API，输出跨租户 Secret 与 flag。
 
 ## Flag
-`flag{cloud-28-platform-worker}`
+`flag{cloud-26-platform-worker}`
 
 ## 此场景利用了哪些知识
 

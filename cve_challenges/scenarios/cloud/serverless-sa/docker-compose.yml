@@ -3,7 +3,7 @@ services:
     build: ./serverless-api
     environment:
       - DEFAULT_SA_TOKEN=default-compute-sa-token
-      - FLAG=flag{cloud-32-default-sa}
+      - FLAG=flag{cloud-30-default-sa}
     networks:
       c41-net:
         ipv4_address: 10.41.0.10
@@ -11,7 +11,7 @@ services:
     build: ./victim-project
     environment:
       - DEFAULT_SA_TOKEN=default-compute-sa-token
-      - FLAG=flag{cloud-32-victim-project}
+      - FLAG=flag{cloud-30-victim-project}
     networks:
       c41-net:
         ipv4_address: 10.41.0.20

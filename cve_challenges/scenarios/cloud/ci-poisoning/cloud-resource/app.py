@@ -3,7 +3,7 @@ import os
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG", "flag{cloud-06-pipeline}")
+FLAG = os.environ.get("FLAG", "flag{cloud-05-pipeline}")
 
 
 @app.get("/health")

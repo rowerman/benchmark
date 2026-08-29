@@ -6,7 +6,7 @@
         "clientId": "victim-corp-client-id",
         "token": "victim-corp-managed-identity-token",
         "workspace": "victim-synapse-workspace",
-        "flag": "flag{cloud-17-co-tenant}"
+        "flag": "flag{cloud-15-co-tenant}"
       }
     }
   }

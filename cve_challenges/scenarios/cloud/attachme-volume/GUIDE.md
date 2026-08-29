@@ -1,10 +1,10 @@
-# CLOUD-22 AttachMe：可预测资源 ID + 属主校验缺失
+# CLOUD-20 AttachMe：可预测资源 ID + 属主校验缺失
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-22 |
+| ID | CLOUD-20 |
 | 名称 | AttachMe: Predictable Volume ID + Missing Ownership Check |
 | 技术/CVE | N/A (control-plane ownership check missing) |
 | 难度 | L2 |
@@ -34,7 +34,7 @@
 4. 从实例读取卷数据，得到 flag。
 
 ## Flag
-`flag{cloud-22-victim-volume}`
+`flag{cloud-20-victim-volume}`
 
 ## 此场景利用了哪些知识
 

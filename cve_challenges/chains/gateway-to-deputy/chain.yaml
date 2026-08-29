@@ -17,17 +17,17 @@ runtime:
       format: response
 nodes:
 - step: 1
-  scenario: cloud-30
+  scenario: cloud-28
   description: 共享 NAT 出口 → 绕过源 IP 白名单 → 进入内部网络
   flag: flag{c47-step1-egress}
   next_hint: 内部控制面暴露连接器存储 API
 - step: 2
-  scenario: cloud-29
+  scenario: cloud-27
   description: 连接器存储 → 跨租户密钥外泄
   flag: flag{c47-step2-secrets}
   next_hint: 密钥可用于跨账号访问
 - step: 3
-  scenario: cloud-09
+  scenario: cloud-08
   description: 跨账号 AssumeRole → 最终 flag
   flag: flag{c47-step3-final}
   next_hint: null

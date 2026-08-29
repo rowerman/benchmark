@@ -3,11 +3,11 @@ services:
     build:
       context: ./console
       args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-05-default}}
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-04-default}}
     ports:
       - "10605:5000"
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-05-default}}
+      - FLAG=${CVE_FLAG:-flag{cloud-04-default}}
       - PARSER_URL=http://parser:5000
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
@@ -20,9 +20,9 @@ services:
     build:
       context: ./parser
       args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-05-default}}
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-04-default}}
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-05-default}}
+      - FLAG=${CVE_FLAG:-flag{cloud-04-default}}
       - SSM_URL=http://ssm:5000
       - EXECUTION_ROLE_TOKEN=stack-execution-role
     depends_on:
@@ -37,4 +37,4 @@ services:
   ssm:
     build: ./ssm
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-05-default}}
+      - FLAG=${CVE_FLAG:-flag{cloud-04-default}}

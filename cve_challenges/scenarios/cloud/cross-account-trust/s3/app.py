@@ -4,7 +4,7 @@ import json
 import urllib.request
 from flask import Flask, request
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG", "flag{cloud-09-step2-cross-account}")
+FLAG = os.environ.get("FLAG", "flag{cloud-08-step2-cross-account}")
 IAM_URL = os.environ.get("IAM_URL", "http://iam:5000")
 @app.route("/health")
 def health(): return {"status":"ok"}

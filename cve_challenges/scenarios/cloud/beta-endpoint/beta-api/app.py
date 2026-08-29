@@ -8,7 +8,7 @@ import os
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG", "flag{cloud-26-invisible-write}")
+FLAG = os.environ.get("FLAG", "flag{cloud-24-invisible-write}")
 API_CREDENTIAL = os.environ.get("API_CREDENTIAL", "valid-sigv4")
 _portfolios = []
 

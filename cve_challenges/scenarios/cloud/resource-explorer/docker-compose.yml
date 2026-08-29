@@ -2,7 +2,7 @@ services:
   explorer-api:
     build: ./explorer-api
     environment:
-      - FLAG=flag{cloud-27-flag-store}
+      - FLAG=flag{cloud-25-flag-store}
       - RESOURCE_READER_ARN=arn:aws:iam::111122223333:user/attacker
     networks:
       c36-net:
