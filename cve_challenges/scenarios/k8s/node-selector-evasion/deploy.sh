@@ -2,7 +2,7 @@
 set -euo pipefail
 K8S_ID="k8s-28"
 CLUSTER_NAME="cve-k8s-28-node-evasion"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-28] Node Selector Evasion"
 k8s_init

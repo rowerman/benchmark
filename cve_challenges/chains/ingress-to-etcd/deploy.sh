@@ -41,11 +41,20 @@ kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/d
 sleep 10
 
 echo "[*] Deploying ingress-nginx (vulnerable) + backend..."
-curl -sL --connect-timeout 10 --max-time 30 \
-  https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.0/deploy/static/provider/kind/deploy.yaml \
-  -o /tmp/chain23-ingress-deploy.yaml
+kubectl label node "${CLUSTER_NAME}-control-plane" ingress-ready=true --overwrite 2>/dev/null || true
+kind load docker-image registry.k8s.io/ingress-nginx/controller:v1.11.0 \
+  registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1 \
+  registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.3 \
+  nginx:1.24-alpine --name "$CLUSTER_NAME" 2>/dev/null || true
+for i in 1 2 3 4 5; do
+  curl -sL --connect-timeout 10 --max-time 60 \
+    https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.0/deploy/static/provider/kind/deploy.yaml \
+    -o /tmp/chain23-ingress-deploy.yaml && [ -s /tmp/chain23-ingress-deploy.yaml ] && break
+  sleep 5
+done
+[ -s /tmp/chain23-ingress-deploy.yaml ] || { echo "failed to download ingress manifest"; exit 1; }
 # Remove out-of-range hostPort 80/443 bindings; keep NodePort/webhook access only
-sed -i '/hostPort:/d' /tmp/chain23-ingress-deploy.yaml
+sed -i '/hostPort:/d; s#@sha256:[0-9a-f]\{64\}##' /tmp/chain23-ingress-deploy.yaml
 kubectl apply -f /tmp/chain23-ingress-deploy.yaml
 sleep 20
 

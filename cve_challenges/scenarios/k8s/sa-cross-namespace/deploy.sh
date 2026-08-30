@@ -8,6 +8,7 @@ echo "[K8S-32] K8s SA Token → Cross-Namespace Access"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
+k8s_load_images python:3.11-slim nginx:1.24-alpine
 k8s_create_host_flag
 
 # Create namespaces

@@ -22,6 +22,7 @@ KINDCFG
 
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10
+kind load docker-image nginx:1.24-alpine alpine:latest --name "$CLUSTER_NAME" 2>/dev/null || true
 
 # Step 1 flag: literal env on a pod, visible through the anonymous kubelet /pods API
 kubectl apply -f - << 'YAML'

@@ -2,7 +2,7 @@
 set -euo pipefail
 K8S_ID="k8s-24"
 CLUSTER_NAME="cve-k8s-24-localhost-bypass"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-24] CVE-2020-8558 kube-proxy Localhost Boundary Bypass"
 k8s_init

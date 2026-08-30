@@ -2,7 +2,7 @@
 set -euo pipefail
 K8S_ID="k8s-23"
 CLUSTER_NAME="cve-k8s-23-seccomp-bypass"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-23] hostPID Process Information Disclosure"
 k8s_init

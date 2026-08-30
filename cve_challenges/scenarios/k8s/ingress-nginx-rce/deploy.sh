@@ -2,7 +2,7 @@
 set -euo pipefail
 K8S_ID="k8s-20"
 CLUSTER_NAME="cve-k8s-20-ingress-rce"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-20] CVE-2025-1974 ingress-nginx Admission Controller RCE"
 k8s_init

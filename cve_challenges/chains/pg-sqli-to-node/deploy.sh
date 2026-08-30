@@ -42,9 +42,9 @@ nodes:
             authorization-mode: "AlwaysAllow"
 KINDCFG
 
-docker pull python:3.11-slim 2>/dev/null
-docker pull postgres:16.6 2>/dev/null
-docker pull alpine:latest 2>/dev/null
+docker pull python:3.11-slim 2>/dev/null || true
+docker pull postgres:16.6 2>/dev/null || true
+docker pull alpine:latest 2>/dev/null || true
 kind load docker-image python:3.11-slim --name "$CLUSTER_NAME" 2>/dev/null || true
 kind load docker-image postgres:16.6 --name "$CLUSTER_NAME" 2>/dev/null || true
 kind load docker-image alpine:latest --name "$CLUSTER_NAME" 2>/dev/null || true

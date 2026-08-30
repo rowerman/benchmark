@@ -1,0 +1,58 @@
+# CVE Benchmark 镜像拉取清单（2026-08-29）
+# 覆盖：剩余 31 个 K8s 单点场景 + 37 条攻击链（含复用场景 compose 的基础镜像）
+# 用法：复制下面 docker pull 行在宿主机执行（建议按顺序，可并行）。
+# 说明：
+#   - kindest/node 是 KIND 节点镜像；cloud-02 无 kind-config，kind v0.31 默认拉 v1.35.0。
+#   - calico 镜像由 k8s_install_calico 的 manifest 在集群内拉取，可先 pull + kind load 加速。
+#   - 内存受限跳过的场景（db-03 oracle / db-04 mssql / web-09 mssql）不在此清单内。
+
+# ---- K8s 节点镜像（必拉） ----
+docker pull kindest/node:v1.27.3
+docker pull kindest/node:v1.28.12
+docker pull kindest/node:v1.35.0
+
+# ---- K8s 场景常用镜像 ----
+docker pull python:3.11-slim
+docker pull alpine:latest
+docker pull curlimages/curl:latest
+docker pull nicolaka/netshoot:latest
+docker pull bitnami/kubectl:1.27
+docker pull bitnami/kubectl:1.28
+docker pull registry:2
+
+# ---- Ingress-NGINX（k8s-20 / k8s-21） ----
+docker pull nginx:1.24-alpine
+docker pull registry.k8s.io/ingress-nginx/controller:v1.11.0
+docker pull registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1
+docker pull registry.k8s.io/ingress-nginx/controller:v1.10.4
+docker pull registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.3
+
+# ---- Helm Tiller（k8s-10） ----
+docker pull ghcr.io/helm/tiller:v2.17.0
+
+# ---- Calico NetworkPolicy（k8s-27 / k8s-30，集群内 manifest 拉取，可预拉加速） ----
+docker pull docker.io/calico/cni:v3.27.0
+docker pull docker.io/calico/node:v3.27.0
+docker pull docker.io/calico/kube-controllers:v3.27.0
+
+# ---- 攻击链/场景 compose 基础镜像（含 Docker 场景与链复用） ----
+docker pull alpine/curl:8.9.1
+docker pull alpine/socat:latest
+docker pull couchdb:3.3.3
+docker pull docker:cli
+docker pull elasticsearch:8.11.0
+docker pull mcr.microsoft.com/dotnet/aspnet:6.0
+docker pull mcr.microsoft.com/dotnet/sdk:6.0
+docker pull mongo:7.0
+docker pull mysql:8.0.35
+docker pull nginx:1.25
+docker pull nginx:alpine
+docker pull php:8.2-apache
+docker pull postgres:16.6
+docker pull python:3.10-slim
+docker pull redis:6.2.6
+docker pull redis:7-alpine
+docker pull tomcat:9.0.97-jdk11
+docker pull tomcat:9.0.98-jdk11
+docker pull ubuntu:22.04
+docker pull wordpress:6.7-php8.2-apache

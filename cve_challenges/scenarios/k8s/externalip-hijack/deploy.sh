@@ -2,7 +2,7 @@
 set -euo pipefail
 K8S_ID="k8s-22"
 CLUSTER_NAME="cve-k8s-22-externalip"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-22] CVE-2020-8554 Service ExternalIP Traffic Interception"
 k8s_init

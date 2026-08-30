@@ -2,7 +2,7 @@
 set -euo pipefail
 K8S_ID="k8s-27"
 CLUSTER_NAME="cve-k8s-27-netpol-bypass"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-27] NetworkPolicy Bypass via Label Spoofing"
 k8s_init

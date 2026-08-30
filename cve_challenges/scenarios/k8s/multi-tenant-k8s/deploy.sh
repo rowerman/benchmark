@@ -9,6 +9,7 @@ echo "[*] Simulates Azurescape-style cross-tenant attack via shared KIND node"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
+k8s_load_images python:3.11-slim nginx:1.24-alpine
 k8s_create_host_flag
 
 # Create tenant namespaces

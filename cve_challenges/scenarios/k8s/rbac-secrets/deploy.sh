@@ -2,11 +2,12 @@
 set -euo pipefail
 K8S_ID="k8s-06"
 CLUSTER_NAME="cve-k8s-06-rbac"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
+k8s_load_images bitnami/kubectl:1.27
 
 # Flag in kube-system as a secret
 k8s_create_k8s_secret "flag-secret" "kube-system"

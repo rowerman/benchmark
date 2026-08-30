@@ -34,7 +34,7 @@ KINDCFG
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10
 
-docker pull bitnami/kubectl:1.28 2>/dev/null
+docker pull bitnami/kubectl:1.28 2>/dev/null || true
 kind load docker-image bitnami/kubectl:1.28 --name "$CLUSTER_NAME" 2>/dev/null || true
 
 # Step 1: namespace-scoped RBAC - secrets read ONLY in ns-ops (no cluster-wide reader)

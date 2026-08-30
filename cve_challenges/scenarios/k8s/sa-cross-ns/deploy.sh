@@ -3,12 +3,12 @@
 set -euo pipefail
 K8S_ID="k8s-13"
 CLUSTER_NAME="cve-k8s-13-sa-cross"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init
 k8s_create_cluster
-k8s_load_images alpine:latest
 k8s_wait_ready
+k8s_load_images alpine:latest
 
 # Create two namespaces
 kubectl create ns ns-alpha --dry-run=client -o yaml | kubectl apply -f -

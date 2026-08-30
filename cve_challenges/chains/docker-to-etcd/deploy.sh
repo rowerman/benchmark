@@ -35,11 +35,18 @@ nodes:
           local:
             extraArgs:
               client-cert-auth: "false"
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."chain22-registry:5000"]
+          endpoint = ["http://chain22-registry:5000"]
 KINDCFG
 
 echo "[*] Waiting for cluster stabilization..."
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10
+kind load docker-image docker:cli --name "$CLUSTER_NAME" 2>/dev/null || true
 
 # Registry on the kind network, published on host port 11500 (in range)
 echo "[*] Starting private registry on port 11500..."
@@ -51,7 +58,7 @@ docker run -d --name chain22-registry --network kind \
 
 if ! docker image inspect nginx:1.24-alpine >/dev/null 2>&1; then
   echo "[*] Pulling benign seed image nginx:1.24-alpine..."
-  docker pull nginx:1.24-alpine
+  docker pull nginx:1.24-alpine || true
 fi
 docker tag nginx:1.24-alpine localhost:11500/evil:latest
 seeded=false

@@ -2,19 +2,21 @@
 set -euo pipefail
 K8S_ID="k8s-17"
 CLUSTER_NAME="cve-k8s-17-docker-sock"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init
 k8s_create_cluster
 k8s_create_host_flag
-k8s_load_images docker:cli
 k8s_wait_ready
-k8s_apply << 'YAML'
+k8s_load_images docker:cli
+NODE_NAME=$(kubectl get nodes -l node-role.kubernetes.io/control-plane -o jsonpath='{.items[0].metadata.name}')
+k8s_apply << YAML
 apiVersion: v1
 kind: Pod
 metadata:
   name: docker-escape-pod
 spec:
+  nodeName: ${NODE_NAME}
   containers:
     - name: attacker
       image: docker:cli

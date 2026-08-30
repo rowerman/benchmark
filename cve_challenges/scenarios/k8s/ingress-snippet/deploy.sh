@@ -2,13 +2,14 @@
 set -euo pipefail
 K8S_ID="k8s-21"
 CLUSTER_NAME="cve-k8s-21-ingress-snippet"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-21] CVE-2021-25742 ingress-nginx Lua Snippet Secret Extraction"
 k8s_init
 k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+kubectl label node "${CLUSTER_NAME}-control-plane" ingress-ready=true --overwrite
 
 echo "[*] Pre-loading container images into KIND..."
 k8s_load_images nginx:1.24-alpine registry.k8s.io/ingress-nginx/controller:v1.10.4 registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.3
@@ -19,7 +20,7 @@ curl -sL --connect-timeout 10 --max-time 30 \
   https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.4/deploy/static/provider/kind/deploy.yaml \
   -o /tmp/ingress-nginx-snippet-deploy.yaml
 # Remove out-of-range hostPort 80/443 bindings; only NodePort 30080/30443 are exposed (10480/10443)
-sed -i '/hostPort:/d' /tmp/ingress-nginx-snippet-deploy.yaml
+sed -i '/hostPort:/d; s#@sha256:[0-9a-f]\{64\}##' /tmp/ingress-nginx-snippet-deploy.yaml
 kubectl apply -f /tmp/ingress-nginx-snippet-deploy.yaml
 
 echo "[*] Waiting for ingress-nginx controller and certgen jobs..."

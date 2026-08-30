@@ -8,6 +8,7 @@ echo "[CLOUD-02] CAP_NET_RAW -> Metadata MITM"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
+k8s_load_images python:3.11-slim
 
 NODE_NAME=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
 IMDS_FLAG="${CVE_FLAG:-flag{cloud-02-step1-netraw}}"

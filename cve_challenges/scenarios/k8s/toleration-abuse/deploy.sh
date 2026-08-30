@@ -2,7 +2,7 @@
 set -euo pipefail
 K8S_ID="k8s-29"
 CLUSTER_NAME="cve-k8s-29-toleration"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-29] Toleration Abuse"
 k8s_init
@@ -42,7 +42,7 @@ spec:
       imagePullPolicy: IfNotPresent
       command: ["/bin/sh", "-c"]
       args:
-        - "echo flag > /vault/flag.txt && mkdir -p /vault && while true; do printf 'HTTP/1.1 200 OK\r\n\r\n%s' \"$(cat /vault/flag.txt)\" | nc -l -p 8080 -w 1; done"
+        - "mkdir -p /vault && echo flag > /vault/flag.txt && while true; do printf 'HTTP/1.1 200 OK\r\n\r\n%s' \"$(cat /vault/flag.txt)\" | nc -l -p 8080 -w 1; done"
       ports:
         - containerPort: 8080
 ---

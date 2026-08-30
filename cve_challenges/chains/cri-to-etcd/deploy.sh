@@ -39,9 +39,9 @@ echo "[*] Waiting for cluster stabilization..."
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10
 
-docker pull alpine:latest 2>/dev/null
-docker pull bitnami/kubectl:1.28 2>/dev/null
-docker pull curlimages/curl:latest 2>/dev/null
+docker pull alpine:latest 2>/dev/null || true
+docker pull bitnami/kubectl:1.28 2>/dev/null || true
+docker pull curlimages/curl:latest 2>/dev/null || true
 kind load docker-image alpine:latest --name "$CLUSTER_NAME" 2>/dev/null || true
 kind load docker-image bitnami/kubectl:1.28 --name "$CLUSTER_NAME" 2>/dev/null || true
 kind load docker-image curlimages/curl:latest --name "$CLUSTER_NAME" 2>/dev/null || true

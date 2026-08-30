@@ -31,7 +31,7 @@ nodes:
               client-cert-auth: "false"
 KINDCFG
 
-docker pull bitnami/kubectl:1.28 2>/dev/null
+docker pull bitnami/kubectl:1.28 2>/dev/null || true
 kind load docker-image bitnami/kubectl:1.28 --name "$CLUSTER_NAME" 2>/dev/null || true
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10

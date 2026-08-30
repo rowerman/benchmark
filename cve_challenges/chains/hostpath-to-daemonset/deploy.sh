@@ -29,10 +29,11 @@ nodes:
             authorization-mode: "AlwaysAllow"
 KINDCFG
 
-docker pull alpine:latest 2>/dev/null
+docker pull alpine:latest 2>/dev/null || true
 kind load docker-image alpine:latest --name "$CLUSTER_NAME" 2>/dev/null || true
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10
+kind load docker-image nginx:1.24-alpine --name "$CLUSTER_NAME" 2>/dev/null || true
 
 # Step 1: writable hostPath pod (flag on the node, NOT mounted into the pod)
 kubectl apply -f - << YAML

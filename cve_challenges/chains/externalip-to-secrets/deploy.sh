@@ -15,6 +15,7 @@ YAML
 
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10
+kind load docker-image nginx:1.24-alpine alpine:latest --name "$CLUSTER_NAME" 2>/dev/null || true
 
 # Namespaces
 kubectl create ns secure-ns 2>/dev/null || true

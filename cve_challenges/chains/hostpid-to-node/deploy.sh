@@ -21,6 +21,7 @@ YAML
 kind create cluster --name "$CLUSTER_NAME" --config /tmp/chain25-kind-config.yaml
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10
+kind load docker-image alpine:latest --name "$CLUSTER_NAME" 2>/dev/null || true
 
 echo "flag{chain25-step1-hostpid}" > "$FLAG_DIR/flag.txt"
 

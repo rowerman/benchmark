@@ -32,7 +32,7 @@ nodes:
               client-cert-auth: "false"
 KINDCFG
 
-docker pull redis:6.2.6 2>/dev/null
+docker pull redis:6.2.6 2>/dev/null || true
 kind load docker-image redis:6.2.6 --name "$CLUSTER_NAME" 2>/dev/null || true
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10

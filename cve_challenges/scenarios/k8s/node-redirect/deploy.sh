@@ -2,7 +2,7 @@
 set -euo pipefail
 K8S_ID="k8s-26"
 CLUSTER_NAME="cve-k8s-26-node-redirect"
-source "$(dirname "$0")/../../scripts/k8s-common.sh"
+source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-26] CVE-2020-8559 Compromised Node API Server Redirect"
 k8s_init

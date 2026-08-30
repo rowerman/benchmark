@@ -22,10 +22,11 @@ nodes:
         containerPath: /host-flag
 KINDCFG
 
-docker pull bitnami/kubectl:1.28 2>/dev/null
+docker pull bitnami/kubectl:1.28 2>/dev/null || true
 kind load docker-image bitnami/kubectl:1.28 --name "$CLUSTER_NAME" 2>/dev/null || true
 kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/dev/null || true
 sleep 10
+kind load docker-image alpine:latest --name "$CLUSTER_NAME" 2>/dev/null || true
 
 # Namespaces
 kubectl create ns ns-alpha --dry-run=client -o yaml | kubectl apply -f -

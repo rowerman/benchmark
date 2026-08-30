@@ -43,8 +43,8 @@ nodes:
               client-cert-auth: "false"
 KINDCFG
 
-docker pull mysql:8.0.35 2>/dev/null
-docker pull alpine:latest 2>/dev/null
+docker pull mysql:8.0.35 2>/dev/null || true
+docker pull alpine:latest 2>/dev/null || true
 kind load docker-image chain17-wp:local --name "$CLUSTER_NAME" 2>/dev/null || true
 kind load docker-image mysql:8.0.35 --name "$CLUSTER_NAME" 2>/dev/null || true
 kind load docker-image alpine:latest --name "$CLUSTER_NAME" 2>/dev/null || true
@@ -177,11 +177,11 @@ spec:
           volumeMounts:
             - name: docker-sock
               mountPath: /var/run/docker.sock
-  volumes:
-    - name: docker-sock
-      hostPath:
-        path: /var/run/docker.sock
-        type: Socket
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
 YAML
 
 kubectl wait --for=condition=Ready pods -l app=chain17-mysql --timeout=180s 2>/dev/null || true
