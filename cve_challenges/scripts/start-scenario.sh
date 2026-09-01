@@ -6,12 +6,39 @@ SCENARIO_ID="${1:?Usage: $0 <scenario-id>}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
-# Generate a random flag for this run
-FLAG=$(python3 "$SCRIPT_DIR/flag_manager.py" "$SCENARIO_ID")
-export CVE_FLAG="$FLAG"
+# Generate the flags declared by this scenario for this run.
+FLAG_NAMES=()
+FLAG_SUFFIXES=()
+case "$SCENARIO_ID" in
+  cloud-13)
+    FLAG_NAMES=(HOST_READ INTERNAL_API)
+    FLAG_SUFFIXES=(host-read internal-api)
+    ;;
+  cloud-17)
+    FLAG_NAMES=(BOOTSTRAP NODE_SECRETS)
+    FLAG_SUFFIXES=(bootstrap node-secrets)
+    ;;
+esac
+
+if [ "${#FLAG_NAMES[@]}" -eq 0 ]; then
+  FLAG=$(python3 "$SCRIPT_DIR/flag_manager.py" "$SCENARIO_ID")
+  export CVE_FLAG="$FLAG"
+else
+  for i in "${!FLAG_NAMES[@]}"; do
+    flag=$(python3 "$SCRIPT_DIR/flag_manager.py" "${SCENARIO_ID}-${FLAG_SUFFIXES[$i]}")
+    export "CVE_FLAG_${FLAG_NAMES[$i]}=$flag"
+  done
+fi
 
 echo "[*] Starting scenario: $SCENARIO_ID"
-echo "[+] Flag: $FLAG"
+if [ "${#FLAG_NAMES[@]}" -eq 0 ]; then
+  echo "[+] Flag: $FLAG"
+else
+  for name in "${FLAG_NAMES[@]}"; do
+    env_name="CVE_FLAG_${name}"
+    printf '[+] Flag (%s): %s\n' "$(echo "$name" | tr '_' '-' | tr '[:upper:]' '[:lower:]')" "${!env_name}"
+  done
+fi
 
 # Determine scenario type from registry
 SCENARIO_PATH="$ROOT_DIR/$(python3 -c "
@@ -33,7 +60,15 @@ case "$TYPE" in
     cd "$SCENARIO_PATH"
     echo "[+] Starting Docker Compose..."
     # Write the dynamic flag to .env for docker compose variable substitution
-    echo "CVE_FLAG=$FLAG" > .env
+    if [ "${#FLAG_NAMES[@]}" -eq 0 ]; then
+      echo "CVE_FLAG=$FLAG" > .env
+    else
+      : > .env
+      for name in "${FLAG_NAMES[@]}"; do
+        env_name="CVE_FLAG_${name}"
+        printf '%s=%s\n' "$env_name" "${!env_name}" >> .env
+      done
+    fi
     # Write the dynamic flag to any host flag.txt file (used by volume-mount scenarios)
     if [ -f flag.txt ]; then
       echo "$FLAG" > flag.txt
@@ -51,7 +86,14 @@ case "$TYPE" in
       docker compose up -d --build
     fi
     echo "[+] Scenario $SCENARIO_ID started (Docker)"
-    echo "[+] Flag: $FLAG"
+    if [ "${#FLAG_NAMES[@]}" -eq 0 ]; then
+      echo "[+] Flag: $FLAG"
+    else
+      for name in "${FLAG_NAMES[@]}"; do
+        env_name="CVE_FLAG_${name}"
+        printf '[+] Flag (%s): %s\n' "$(echo "$name" | tr '_' '-' | tr '[:upper:]' '[:lower:]')" "${!env_name}"
+      done
+    fi
     ;;
 
   k8s)

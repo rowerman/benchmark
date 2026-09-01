@@ -20,7 +20,7 @@ cve_challenges/
 │   └── _runtime/              # 云攻击链的共享部署运行时与 Chain Console
 ├── scripts/
 │   ├── scenarios.yaml         # 场景注册表：稳定 ID、类型、路径、端口、难度、CVE/技术
-│   ├── start-scenario.sh      # 按注册表启动单场景并生成 CVE_FLAG
+│   ├── start-scenario.sh      # 按注册表启动单场景并生成单个或多个 Flag
 │   ├── stop-scenario.sh       # 按注册表停止并清理单场景
 │   ├── k8s-common.sh          # KIND 场景共享的集群、镜像、Flag、等待辅助函数
 │   ├── validate-structure.py  # 注册表、GUIDE、端口和攻击链引用校验
@@ -49,7 +49,7 @@ cve_challenges/
 ./scripts/stop-scenario.sh web-03
 ```
 
-Docker 场景由脚本写入场景目录的 `.env`/`flag.txt`（如存在），然后执行 `docker compose up -d --build`；注册表中的 `port` 是宿主访问端口。Kubernetes 场景由对应目录的 `deploy.sh` 创建独立 KIND 集群，集群名称和资源定义在该脚本中；无固定宿主端口的场景应按 GUIDE 使用 `kubectl` 访问。直接运行某个 `deploy.sh` 时可自行设置 `CVE_FLAG`，否则共享脚本会使用默认 Flag；使用 `start-scenario.sh` 可确保每次运行生成新的 Flag。
+Docker 场景只能通过 `start-scenario.sh` 启动。脚本为单 Flag 场景生成 `CVE_FLAG`，为多 Flag 场景按 `scripts/start-scenario.sh` 中的场景映射生成对应的 `CVE_FLAG_<NAME>` 变量，并写入场景目录的 `.env`/`flag.txt`（如存在），然后执行 `docker compose up -d --build`。Compose 文件及 Dockerfile 必须引用这些变量；其中写在 compose、Dockerfile 或 GUIDE 中的固定 Flag 只能作为直接配置缺失时的回退示例，不得成为脚本启动时实际使用的值。多 Flag 场景的每一枚 Flag 都必须在 GUIDE 中说明位置，并在启动输出中单独打印。注册表中的 `port` 是宿主访问端口。Kubernetes 场景由对应目录的 `deploy.sh` 创建独立 KIND 集群，集群名称和资源定义在该脚本中；无固定宿主端口的场景应按 GUIDE 使用 `kubectl` 访问。直接运行某个 `deploy.sh` 时可自行设置 `CVE_FLAG`，否则共享脚本会使用默认 Flag；使用 `start-scenario.sh` 可确保每次运行生成新的 Flag。
 
 ### 运行攻击链
 

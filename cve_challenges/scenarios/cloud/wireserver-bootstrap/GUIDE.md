@@ -39,8 +39,11 @@ WireServer（168.63.129.16）。goalstate 无鉴权；证书端点不校验调�
 5. 以伪造的 node 身份读取 `/node-secrets`，拿到最终 flag。
 
 ## Flag
-- `flag{cloud-17-bootstrap}`（引导脚本内）
-- `flag{cloud-17-node-secrets}`（节点 Secret）
+- 直接运行 `docker compose` 时的默认值：
+  - `flag{cloud-17-bootstrap}`（引导脚本内）
+  - `flag{cloud-17-node-secrets}`（节点 Secret）
+- 通过 `./scripts/start-scenario.sh cloud-17` 启动时，终端会输出本次运行生成的
+  两枚 Flag；测试时应以该输出对应的值为准。
 
 ## 此场景利用了哪些知识
 

@@ -41,8 +41,11 @@ filename 选项没有做路径约束，客户可以把它当任意文件读，�
    获得 flag2。
 
 ## Flag
-- `flag{cloud-13-host-read}`（宿主配置文件）
-- `flag{cloud-13-internal-api}`（内部存储 API）
+- 直接配置时的默认值：
+  - `flag{cloud-13-host-read}`（宿主配置文件）
+  - `flag{cloud-13-internal-api}`（内部存储 API）
+- 通过 `./scripts/start-scenario.sh cloud-13` 启动时，终端会分别输出本次运行生成的
+  两枚 Flag；测试时应以该输出对应的值为准。
 
 ## 此场景利用了哪些知识
 

@@ -1,6 +1,9 @@
 services:
   db:
-    build: ./db
+    build:
+      context: ./db
+      args:
+        CVE_FLAG_HOST_READ: ${CVE_FLAG_HOST_READ:-flag{cloud-13-host-read}}
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -29,7 +32,7 @@ services:
     build: ./internal-api
     environment:
       - INTERNAL_TOKEN=grover-internal-credential-token
-      - FLAG2=flag{cloud-13-internal-api}
+      - FLAG2=${CVE_FLAG_INTERNAL_API:-flag{cloud-13-internal-api}}
     networks:
       c24-net:
         ipv4_address: 10.24.0.30
