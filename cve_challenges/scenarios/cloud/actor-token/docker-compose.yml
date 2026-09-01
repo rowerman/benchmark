@@ -10,7 +10,7 @@ services:
     build: ./directory-api
     environment:
       - SIGNING_SECRET=shared-signing-secret
-      - FLAG=flag{cloud-21-tenant-b-admin}
+      - FLAG=${CVE_FLAG:-flag{cloud-21-tenant-b-admin}}
     networks:
       c32-net:
         ipv4_address: 10.32.0.20

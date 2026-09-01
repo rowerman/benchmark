@@ -6,6 +6,7 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "Password123!"
+      CVE_FLAG: ${CVE_FLAG:-flag{db-04-default}}
     healthcheck:
       test: ["CMD-SHELL", "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' || exit 1"]
       interval: 15s
@@ -21,6 +22,7 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "Password123!"
+      CVE_FLAG: ${CVE_FLAG:-flag{db-04-default}}
     volumes:
       - ./flag.txt:/flag.txt:ro
     healthcheck:

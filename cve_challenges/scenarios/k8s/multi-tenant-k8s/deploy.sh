@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+FLAG="${CVE_FLAG:-flag{k8s-33-cross-tenant}}"
 K8S_ID="k8s-33"
 CLUSTER_NAME="cve-k8s33-multitenant"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
@@ -47,7 +48,7 @@ spec:
       image: nginx:1.24-alpine
       env:
         - name: FLAG
-          value: "flag{k8s-33-cross-tenant}"
+          value: "$FLAG"
 YAML
 
 echo "[+] K8S-33 Ready"

@@ -6,6 +6,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password123
+      CVE_FLAG: ${CVE_FLAG:-flag{db-01-default}}
     volumes:
       - ./flag.txt:/flag.txt:ro
     healthcheck:

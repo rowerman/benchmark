@@ -24,7 +24,9 @@ nodes:
 - step: 2
   scenario: cloud-17
   description: WireServer 通道 → 引导密钥 → 伪造 node 身份
-  flag: flag{c50-step2-node}
+  flags:
+    - flag{c50-step2-bootstrap}
+    - flag{c50-step2-node}
   next_hint: node 身份可调控制面块存储 API
 - step: 3
   scenario: cloud-20

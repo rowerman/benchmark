@@ -6,37 +6,29 @@ SCENARIO_ID="${1:?Usage: $0 <scenario-id>}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
-# Generate the flags declared by this scenario for this run.
-FLAG_NAMES=()
-FLAG_SUFFIXES=()
-case "$SCENARIO_ID" in
-  cloud-13)
-    FLAG_NAMES=(HOST_READ INTERNAL_API)
-    FLAG_SUFFIXES=(host-read internal-api)
-    ;;
-  cloud-17)
-    FLAG_NAMES=(BOOTSTRAP NODE_SECRETS)
-    FLAG_SUFFIXES=(bootstrap node-secrets)
-    ;;
-esac
-
-if [ "${#FLAG_NAMES[@]}" -eq 0 ]; then
-  FLAG=$(python3 "$SCRIPT_DIR/flag_manager.py" "$SCENARIO_ID")
+FLAG_COUNT=$(python3 "$SCRIPT_DIR/flag_contract.py" scenario "$SCENARIO_ID")
+if [ "$FLAG_COUNT" -eq 1 ]; then
+  FLAG="${CVE_FLAG:-$(python3 "$SCRIPT_DIR/flag_manager.py" "$SCENARIO_ID")}"
   export CVE_FLAG="$FLAG"
 else
-  for i in "${!FLAG_NAMES[@]}"; do
-    flag=$(python3 "$SCRIPT_DIR/flag_manager.py" "${SCENARIO_ID}-${FLAG_SUFFIXES[$i]}")
-    export "CVE_FLAG_${FLAG_NAMES[$i]}=$flag"
+  for i in $(seq 1 "$FLAG_COUNT"); do
+    name="CVE_FLAG$i"
+    if [ -z "${!name:-}" ]; then
+      value=$(python3 "$SCRIPT_DIR/flag_manager.py" "$SCENARIO_ID-step$i")
+      export "$name=$value"
+    fi
   done
+  CVE_FLAG="${CVE_FLAG:-$CVE_FLAG1}"
+  export CVE_FLAG
 fi
 
 echo "[*] Starting scenario: $SCENARIO_ID"
-if [ "${#FLAG_NAMES[@]}" -eq 0 ]; then
+if [ "$FLAG_COUNT" -eq 1 ]; then
   echo "[+] Flag: $FLAG"
 else
-  for name in "${FLAG_NAMES[@]}"; do
-    env_name="CVE_FLAG_${name}"
-    printf '[+] Flag (%s): %s\n' "$(echo "$name" | tr '_' '-' | tr '[:upper:]' '[:lower:]')" "${!env_name}"
+  for i in $(seq 1 "$FLAG_COUNT"); do
+    name="CVE_FLAG$i"
+    printf '[+] Flag %s: %s\n' "$i" "${!name}"
   done
 fi
 
@@ -60,13 +52,13 @@ case "$TYPE" in
     cd "$SCENARIO_PATH"
     echo "[+] Starting Docker Compose..."
     # Write the dynamic flag to .env for docker compose variable substitution
-    if [ "${#FLAG_NAMES[@]}" -eq 0 ]; then
+    if [ "$FLAG_COUNT" -eq 1 ]; then
       echo "CVE_FLAG=$FLAG" > .env
     else
       : > .env
-      for name in "${FLAG_NAMES[@]}"; do
-        env_name="CVE_FLAG_${name}"
-        printf '%s=%s\n' "$env_name" "${!env_name}" >> .env
+      for i in $(seq 1 "$FLAG_COUNT"); do
+        name="CVE_FLAG$i"
+        printf '%s=%s\n' "$name" "${!name}" >> .env
       done
     fi
     # Write the dynamic flag to any host flag.txt file (used by volume-mount scenarios)
@@ -86,12 +78,12 @@ case "$TYPE" in
       docker compose up -d --build
     fi
     echo "[+] Scenario $SCENARIO_ID started (Docker)"
-    if [ "${#FLAG_NAMES[@]}" -eq 0 ]; then
+    if [ "$FLAG_COUNT" -eq 1 ]; then
       echo "[+] Flag: $FLAG"
     else
-      for name in "${FLAG_NAMES[@]}"; do
-        env_name="CVE_FLAG_${name}"
-        printf '[+] Flag (%s): %s\n' "$(echo "$name" | tr '_' '-' | tr '[:upper:]' '[:lower:]')" "${!env_name}"
+      for i in $(seq 1 "$FLAG_COUNT"); do
+        name="CVE_FLAG$i"
+        printf '[+] Flag %s: %s\n' "$i" "${!name}"
       done
     fi
     ;;
@@ -106,7 +98,14 @@ case "$TYPE" in
       exit 1
     fi
     echo "[+] Scenario $SCENARIO_ID started (K8s)"
-    echo "[+] Flag: $FLAG"
+    if [ "$FLAG_COUNT" -eq 1 ]; then
+      echo "[+] Flag: $FLAG"
+    else
+      for i in $(seq 1 "$FLAG_COUNT"); do
+        name="CVE_FLAG$i"
+        printf '[+] Flag %s: %s\n' "$i" "${!name}"
+      done
+    fi
     ;;
 
   *)

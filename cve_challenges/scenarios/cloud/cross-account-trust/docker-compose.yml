@@ -45,7 +45,7 @@ services:
   s3:
     build: ./s3
     environment:
-      - FLAG=flag{cloud-08-step2-cross-account}
+      - FLAG=${CVE_FLAG:-flag{cloud-08-step2-cross-account}}
       - IAM_URL=http://iam:5000
     depends_on:
       - iam

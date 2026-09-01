@@ -2,7 +2,7 @@ services:
   control-api:
     build: ./control-api
     environment:
-      - FLAG=flag{cloud-20-victim-volume}
+      - FLAG=${CVE_FLAG:-flag{cloud-20-victim-volume}}
     networks:
       c31-net:
         ipv4_address: 10.31.0.10

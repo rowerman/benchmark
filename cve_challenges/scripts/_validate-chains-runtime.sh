@@ -19,7 +19,7 @@ while read -r dir num; do
   fi
   start_ts=$(date +%s)
   echo "[TEST] $dir (Chain-$num) start=$(date +%T)" | tee -a "$LOG"
-  if timeout 2400 bash "chains/$dir/deploy.sh" >> "$LOG" 2>&1; then
+  if timeout 2400 bash scripts/start-chain.sh "$dir" >> "$LOG" 2>&1; then
     port=$((11600 + num))
     ok=0
     for i in $(seq 1 24); do
@@ -54,7 +54,7 @@ while read -r dir num; do
     FAIL=$((FAIL+1))
   fi
   echo "[CLEANUP] $dir teardown ..." | tee -a "$LOG"
-  timeout 600 bash "chains/$dir/teardown.sh" >> "$LOG" 2>&1
+  timeout 600 bash scripts/stop-chain.sh "$dir" >> "$LOG" 2>&1
   docker image prune -af --filter "label=com.docker.compose.project=chain-${num}-runtime" >/dev/null 2>&1 || true
   docker image prune -af --filter "label=com.docker.compose.project=chain-${num}-step" >/dev/null 2>&1 || true
   docker image prune -f >/dev/null 2>&1 || true

@@ -7,12 +7,17 @@ services:
       c26-net:
         ipv4_address: 10.26.0.10
   ir-worker:
-    build: ./ir-worker
+    build:
+      context: ./ir-worker
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-15-co-tenant}}
     networks:
       c26-net:
         ipv4_address: 10.26.0.20
   tenant-b:
     build: ./tenant-b
+    environment:
+      - CVE_FLAG=${CVE_FLAG:-flag{cloud-15-co-tenant}}
     networks:
       c26-net:
         ipv4_address: 10.26.0.30

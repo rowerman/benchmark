@@ -2,6 +2,8 @@
 set -euo pipefail
 CLUSTER_NAME="chain25-hostpid-to-node"
 FLAG_DIR="/home/kianabin/cve-flags/chain25"
+FLAG1="${CVE_FLAG1:-flag{chain25-step1-hostpid}}"
+FLAG2="${CVE_FLAG2:-flag{chain25-step2-escape-final}}"
 mkdir -p "$FLAG_DIR"
 
 echo "[Chain-25] hostPID to Node Control (2 steps)"
@@ -23,7 +25,7 @@ kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=120s 2>/d
 sleep 10
 kind load docker-image alpine:latest --name "$CLUSTER_NAME" 2>/dev/null || true
 
-echo "flag{chain25-step1-hostpid}" > "$FLAG_DIR/flag.txt"
+echo "$FLAG1" > "$FLAG_DIR/flag.txt"
 
 kubectl apply -f - << 'YAML'
 apiVersion: v1
@@ -51,7 +53,7 @@ sleep 5
 # Final flag on the node - reachable only through the hostPID /proc view
 NODE_CONTAINER=$(docker ps --filter "name=${CLUSTER_NAME}-control-plane" --format '{{.Names}}' 2>/dev/null || echo "")
 if [ -n "$NODE_CONTAINER" ]; then
-  docker exec "$NODE_CONTAINER" sh -c "echo 'flag{chain25-step2-escape-final}' > /etc/chain25_final_flag" 2>/dev/null || true
+  docker exec "$NODE_CONTAINER" sh -c "echo '$FLAG2' > /etc/chain25_final_flag" 2>/dev/null || true
 fi
 
 echo ""

@@ -17,7 +17,7 @@ services:
     build:
       context: ./tenant-puller
       args:
-        CVE_FLAG: flag{cloud-18-victim-image}
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-18-victim-image}}
     environment:
       - REGISTRY_URL=http://internal-registry:5000
       - IMAGE_NAME=victim-app:latest

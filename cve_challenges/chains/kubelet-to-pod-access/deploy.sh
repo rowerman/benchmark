@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 CLUSTER_NAME="cve-chain6-kubelet-pods"
+FLAG1="${CVE_FLAG1:-flag{chain6-step1-kubelet}}"
+FLAG2="${CVE_FLAG2:-flag{chain6-step2-rbac}}"
+FLAG3="${CVE_FLAG3:-flag{chain6-step3-pod-final}}"
 
 echo "[Chain 6] Kubelet Anonymous to Cluster Pod Access — 3 steps, K8s"
 echo "[*] Creating KIND cluster with anonymous kubelet..."
@@ -25,7 +28,7 @@ sleep 10
 kind load docker-image nginx:1.24-alpine alpine:latest --name "$CLUSTER_NAME" 2>/dev/null || true
 
 # Step 1 flag: literal env on a pod, visible through the anonymous kubelet /pods API
-kubectl apply -f - << 'YAML'
+kubectl apply -f - << YAML
 apiVersion: v1
 kind: Pod
 metadata:
@@ -38,12 +41,12 @@ spec:
       imagePullPolicy: IfNotPresent
       env:
         - name: FLAG
-          value: "flag{chain6-step1-kubelet}"
+          value: "$FLAG1"
 YAML
 
 # Step 2: namespace-scoped secrets reader SA (only kube-system secrets)
 kubectl create sa chain6-sa -n default 2>/dev/null || true
-kubectl apply -f - << 'YAML'
+kubectl apply -f - << YAML
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -83,10 +86,10 @@ spec:
 YAML
 
 # Step 2 flag (readable only with the chain6-sa token)
-kubectl create secret generic chain6-step2 --from-literal=flag="flag{chain6-step2-rbac}" -n kube-system 2>/dev/null || true
+kubectl create secret generic chain6-step2 --from-literal=flag="$FLAG2" -n kube-system 2>/dev/null || true
 
 # Step 3 final flag pod (kubelet exec target)
-kubectl apply -f - << 'YAML'
+kubectl apply -f - << YAML
 apiVersion: v1
 kind: Pod
 metadata:
@@ -99,7 +102,7 @@ spec:
       imagePullPolicy: IfNotPresent
       command: ["sh", "-c"]
       args:
-        - "echo 'flag{chain6-step3-pod-final}' > /flag.txt; sleep 3600"
+        - "echo '$FLAG3' > /flag.txt; sleep 3600"
 YAML
 
 kubectl wait --for=condition=Ready pod/chain6-holder --timeout=60s 2>/dev/null || true

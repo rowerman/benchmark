@@ -34,7 +34,7 @@ while IFS='|' read -r dir ctype ports cluster; do
   fi
   start_ts=$(date +%s)
   echo "[TEST] $dir ($ctype) start=$(date +%T)" | tee -a "$LOG"
-  if timeout 2400 bash "chains/$dir/deploy.sh" >> "$LOG" 2>&1; then
+  if timeout 2400 bash scripts/start-chain.sh "$dir" >> "$LOG" 2>&1; then
     if [ "$ctype" = "docker" ]; then
       allok=1
       for p in ${ports//,/ }; do
@@ -82,7 +82,7 @@ while IFS='|' read -r dir ctype ports cluster; do
     echo "$dir" >> "$DONE"; FAIL=$((FAIL+1))
   fi
   echo "[CLEANUP] $dir teardown ..." | tee -a "$LOG"
-  timeout 600 bash "chains/$dir/teardown.sh" >> "$LOG" 2>&1 || true
+  timeout 600 bash scripts/stop-chain.sh "$dir" >> "$LOG" 2>&1 || true
   cleanup_chain_images
   elapsed=$(( $(date +%s) - start_ts ))
   echo "[CLEANUP] $dir done (elapsed ${elapsed}s, clusters: $(kind get clusters 2>/dev/null | tr '\n' ' '))" | tee -a "$LOG"

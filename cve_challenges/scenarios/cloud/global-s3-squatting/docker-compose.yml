@@ -2,7 +2,7 @@ services:
   s3-global:
     build: ./s3-global
     environment:
-      - FLAG=flag{cloud-11-step2-squatting}
+      - FLAG=${CVE_FLAG:-flag{cloud-11-step2-squatting}}
   tenant-a:
     build:
       context: ./tenant-a

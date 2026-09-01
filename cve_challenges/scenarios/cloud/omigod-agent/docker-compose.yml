@@ -13,7 +13,7 @@ services:
     build:
       context: ./omi-agent
       args:
-        CVE_FLAG: flag{cloud-22-vm-root}
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-22-vm-root}}
     networks:
       c33-net:
         ipv4_address: 10.33.0.30

@@ -1,6 +1,9 @@
 services:
   shared-executor:
-    build: ./shared-executor
+    build:
+      context: ./shared-executor
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-29-cross-tenant-workspace}}
     networks:
       c40-net:
         ipv4_address: 10.40.0.10

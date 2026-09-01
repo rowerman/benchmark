@@ -1,6 +1,9 @@
 services:
   victim-pg:
-    build: ./victim-pg
+    build:
+      context: ./victim-pg
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-16-cross-tenant-db}}
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

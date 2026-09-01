@@ -5,6 +5,7 @@ services:
       - "10202:3306"
     environment:
       MYSQL_ROOT_PASSWORD: password123
+      CVE_FLAG: ${CVE_FLAG:-flag{db-02-default}}
     command: --secure-file-priv=""
     volumes:
       - ./flag.txt:/flag.txt:ro

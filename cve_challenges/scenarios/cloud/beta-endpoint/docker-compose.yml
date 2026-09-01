@@ -15,7 +15,7 @@ services:
   beta-api:
     build: ./beta-api
     environment:
-      - FLAG=flag{cloud-24-invisible-write}
+      - FLAG=${CVE_FLAG:-flag{cloud-24-invisible-write}}
       - API_CREDENTIAL=valid-sigv4
     networks:
       c35-net:

@@ -5,10 +5,10 @@ K8S_ID="chain15"
 ROOT="$(dirname "$(dirname "$(dirname "$0")")")"
 CLUSTER_NAME="cve-chain15-pg-node"
 source "$(dirname "$0")/../../scripts/k8s-common.sh"
-FLAG1="flag{chain15-step1-sqli}"
-FLAG2="flag{chain15-step2-db-rce}"
-FLAG3="flag{chain15-step3-hostpath}"
-FLAG4="flag{chain15-step4-kubelet-final}"
+FLAG1="${CVE_FLAG1:-flag{chain15-step1-sqli}}"
+FLAG2="${CVE_FLAG2:-flag{chain15-step2-db-rce}}"
+FLAG3="${CVE_FLAG3:-flag{chain15-step3-hostpath}}"
+FLAG4="${CVE_FLAG4:-flag{chain15-step4-kubelet-final}}"
 
 echo "[Chain 15] PostgreSQL SQLi to Node Compromise — 4 steps (all in one cluster)"
 
@@ -61,7 +61,7 @@ metadata:
 data:
   init.sql: |
     CREATE TABLE IF NOT EXISTS products (name TEXT);
-    INSERT INTO products (name) VALUES ('flag{chain15-step1-sqli}');
+    INSERT INTO products (name) VALUES ('$FLAG1');
 ---
 apiVersion: v1
 kind: ConfigMap

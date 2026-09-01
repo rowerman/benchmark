@@ -26,5 +26,5 @@ services:
   k8s-api:
     build: ./k8s-api
     environment:
-      - FLAG=flag{cloud-06-step2-sa-token}
+      - FLAG=${CVE_FLAG:-flag{cloud-06-step2-sa-token}}
       - SA_TOKEN=eyJhbGciOiJub25lIn0.eyJzdWIiOiJicmlkZ2UifQ.

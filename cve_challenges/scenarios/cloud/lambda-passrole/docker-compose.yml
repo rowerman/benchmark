@@ -25,7 +25,7 @@ services:
     build:
       context: ./lambda
     environment:
-      - FLAG=flag{cloud-03-step2-lambda}
+      - FLAG=${CVE_FLAG:-flag{cloud-03-step2-lambda}}
       - IAM_ACCESS_KEY_ID=AKIALAMBDAEXAMPLE
       - IAM_SECRET_KEY=lambda-iam-secret-key
     networks:

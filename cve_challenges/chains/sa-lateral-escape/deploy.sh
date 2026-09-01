@@ -2,9 +2,9 @@
 # Chain 13: SA Cross-NS → RBAC → hostPath Escape (3 steps)
 set -euo pipefail
 CLUSTER_NAME="cve-chain13-sa-escape"
-FLAG1="flag{chain13-step1-crossns}"
-FLAG2="flag{chain13-step2-rbac}"
-FLAG3="flag{chain13-step3-escape-final}"
+FLAG1="${CVE_FLAG1:-flag{chain13-step1-crossns}}"
+FLAG2="${CVE_FLAG2:-flag{chain13-step2-rbac}}"
+FLAG3="${CVE_FLAG3:-flag{chain13-step3-escape-final}}"
 
 echo "[Chain 13] SA Token Lateral to Host Escape — 3 steps"
 

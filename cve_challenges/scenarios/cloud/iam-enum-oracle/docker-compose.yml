@@ -24,7 +24,7 @@ services:
       - API_URL=http://control-api:5000
       - STS_URL=http://sts:5000
       - AUDIT_URL=http://audit-log:5000
-      - FLAG=flag{cloud-23-zero-audit-enum}
+      - FLAG=${CVE_FLAG:-flag{cloud-23-zero-audit-enum}}
     networks:
       c34-net:
         ipv4_address: 10.34.0.40

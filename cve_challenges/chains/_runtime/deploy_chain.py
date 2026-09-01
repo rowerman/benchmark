@@ -11,11 +11,14 @@ import sys
 import tempfile
 from pathlib import Path
 
-import yaml
-
 ROOT = Path(__file__).resolve().parents[2]
 RUNTIME = Path(__file__).resolve().parent
 STATE_ROOT = Path(tempfile.gettempdir()) / "cve-cloud-chains"
+
+import yaml
+
+sys.path.insert(0, str(ROOT / "scripts"))
+from flag_contract import scenario_flag_count
 
 
 def run(*args: str, env: dict[str, str] | None = None) -> str:
@@ -68,8 +71,8 @@ def main() -> int:
 
     projects: list[dict[str, str]] = []
     step_urls: dict[str, str] = {}
-    deployed_scenarios: dict[str, tuple[str, str, str, str, int]] = {}
     nodes = chain.get("nodes") or chain.get("steps_detail") or []
+    flag_index = 1
     for index, node in enumerate(nodes, 1):
         scenario = str(node.get("scenario", "")).lower()
         entry = registry.get(scenario)
@@ -79,30 +82,25 @@ def main() -> int:
         compose = compose_file(scenario_dir)
         if compose is None:
             raise RuntimeError(f"{scenario}: no Docker Compose deployment")
-        existing = deployed_scenarios.get(scenario)
-        if existing:
-            project, _, _, selected_id, first_index = existing
-            # Reuse fixed-IP scenarios that appear more than once in a chain.
-            # Reconnect the selected container with both step aliases because
-            # Docker rejects a second network connect for the same endpoint.
-            run("docker", "network", "disconnect", network, selected_id)
-            run(
-                "docker", "network", "connect",
-                "--alias", f"{project}-{selected_id[:12]}",
-                "--alias", f"step-{first_index}",
-                "--alias", f"step-{index}",
-                network,
-                selected_id,
-            )
-            step_urls[str(index)] = f"http://step-{index}:5000"
-            continue
+        local_flag_count = scenario_flag_count(scenario)
+        compose_env = os.environ.copy()
+        for local_index in range(1, local_flag_count + 1):
+            global_name = f"CVE_FLAG{flag_index + local_index - 1}"
+            local_name = f"CVE_FLAG{local_index}"
+            value = compose_env.get(global_name)
+            if not value:
+                raise RuntimeError(f"missing {global_name} for chain step {index}")
+            compose_env[local_name] = value
+            if local_index == 1:
+                compose_env["CVE_FLAG"] = value
+        flag_index += local_flag_count
         project = f"chain-{chain_number}-step-{index}-{scenario}"
         override = state_dir / f"{index}-override.yml"
         override.write_text(
             "services:\n" + "".join(f"  {service}:\n    ports: []\n" for service in services(compose)),
             encoding="utf-8",
         )
-        run("docker", "compose", "-p", project, "-f", str(compose), "-f", str(override), "up", "-d", "--build")
+        run("docker", "compose", "-p", project, "-f", str(compose), "-f", str(override), "up", "-d", "--build", env=compose_env)
         service_names = services(compose)
         selected = next((name for name in ("attacker", "attacker-ui", "console", "web", "notebook") if name in service_names), service_names[0])
         container_ids = run("docker", "compose", "-p", project, "-f", str(compose), "-f", str(override), "ps", "-q").splitlines()
@@ -114,7 +112,6 @@ def main() -> int:
             run("docker", "network", "connect", *aliases, network, container)
         step_urls[str(index)] = f"http://step-{index}:5000"
         projects.append({"project": project, "compose": str(compose), "override": str(override)})
-        deployed_scenarios[scenario] = (project, str(compose), str(override), selected_id, index)
 
     env = os.environ.copy()
     env.update({

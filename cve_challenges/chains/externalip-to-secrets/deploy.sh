@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 CLUSTER_NAME="chain24-externalip-to-secrets"
+FLAG1="${CVE_FLAG1:-flag{chain24-step1-hijack}}"
+FLAG2="${CVE_FLAG2:-flag{chain24-step2-capture}}"
+FLAG3="${CVE_FLAG3:-flag{chain24-step3-crossns}}"
+FLAG4="${CVE_FLAG4:-flag{chain24-step4-secrets-final}}"
 
 echo "[Chain-24] ExternalIP Hijack to Secret Theft"
 echo "[*] Deploying infrastructure..."
@@ -23,7 +27,7 @@ kubectl create ns ns-beta 2>/dev/null || true
 kubectl create ns attack-ns 2>/dev/null || true
 
 # Victim SA whose token is worth stealing: cluster-wide secrets read
-kubectl apply -f - << 'YAML'
+kubectl apply -f - << YAML
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -91,12 +95,12 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
-              echo 'flag{chain24-step1-hijack}' > /tmp/step1_flag.txt
+              echo '${FLAG1}' > /tmp/step1_flag.txt
               while true; do
-                TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+                TOKEN=\$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
                 wget -qO- --timeout=2 \
-                  --header="X-Flag: flag{chain24-step1-hijack}" \
-                  --header="X-Cred: $TOKEN" \
+                  --header="X-Flag: ${FLAG1}" \
+                  --header="X-Cred: \$TOKEN" \
                   http://internal-api.secure-ns.svc.cluster.local:8080/data 2>/dev/null || true
                 sleep 5
               done &
@@ -107,9 +111,9 @@ YAML
 
 # Step 3/4 flags (readable with the stolen secret-reader-sa token)
 kubectl create secret generic flag-secret -n ns-beta \
-  --from-literal=flag='flag{chain24-step3-crossns}' 2>/dev/null || true
+  --from-literal=flag="$FLAG3" 2>/dev/null || true
 kubectl create secret generic flag-secret -n kube-system \
-  --from-literal=flag='flag{chain24-step4-secrets-final}' 2>/dev/null || true
+  --from-literal=flag="$FLAG4" 2>/dev/null || true
 
 # Attacker tenant: can only create Services in attack-ns
 kubectl apply -f - << 'YAML'

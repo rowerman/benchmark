@@ -7,6 +7,7 @@ services:
       ORACLE_PASSWORD: password123
       APP_USER: app
       APP_USER_PASSWORD: apppass
+      CVE_FLAG: ${CVE_FLAG:-flag{db-03-default}}
     volumes:
       - ./flag.txt:/flag.txt:ro
     healthcheck:

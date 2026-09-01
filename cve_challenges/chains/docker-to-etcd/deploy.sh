@@ -11,9 +11,9 @@ echo "  K8S-17 (Docker Socket) -> K8S-09 (Registry Poison) -> K8S-08 (etcd)"
 # Prepare flags
 FLAG_DIR="/home/kianabin/cve-flags/chain22"
 mkdir -p "$FLAG_DIR"
-FLAG1="${CVE_FLAG_1:-flag{chain22-step1-docker}}"
-FLAG2="${CVE_FLAG_2:-flag{chain22-step2-registry}}"
-FLAG3="${CVE_FLAG_3:-flag{chain22-step3-etcd}}"
+FLAG1="${CVE_FLAG1:-flag{chain22-step1-docker}}"
+FLAG2="${CVE_FLAG2:-flag{chain22-step2-registry}}"
+FLAG3="${CVE_FLAG3:-flag{chain22-step3-etcd}}"
 echo "$FLAG1" > "$FLAG_DIR/step1.txt"
 
 echo "[*] Creating unified KIND cluster with Docker socket + etcd..."

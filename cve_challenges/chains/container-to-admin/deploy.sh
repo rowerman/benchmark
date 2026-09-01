@@ -5,12 +5,15 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 CLUSTER_NAME="cve-chain-k8s-admin"
 source "$SCRIPT_DIR/../../scripts/k8s-common.sh"
+FLAG1="${CVE_FLAG1:-flag{chain2-step1-rbac}}"
+FLAG2="${CVE_FLAG2:-flag{chain2-step2-escape}}"
+FLAG3="${CVE_FLAG3:-flag{chain2-step3-etcd-final}}"
 
 echo "[Chain 2] Container to Cluster Admin — 3 steps, K8s only"
 
 # Pre-create flag dir (must exist before Docker bind-mount)
 mkdir -p /home/kianabin/cve-flags/chain2-flags
-echo "flag{chain2-step2-escape}" > /home/kianabin/cve-flags/chain2-flags/flag.txt
+echo "$FLAG2" > /home/kianabin/cve-flags/chain2-flags/flag.txt
 
 echo "[*] Creating unified KIND cluster with RBAC + privileged escape + etcd..."
 kind create cluster --name "$CLUSTER_NAME" --config - << 'KINDCFG'
@@ -94,7 +97,7 @@ spec:
       command: ["sleep", "3600"]
 YAML
 
-kubectl create secret generic chain2-step1 --from-literal=flag="flag{chain2-step1-rbac}" -n ns-ops 2>/dev/null || true
+kubectl create secret generic chain2-step1 --from-literal=flag="$FLAG1" -n ns-ops 2>/dev/null || true
 
 # Step 2: privileged + hostPID escape pod (flag on the node, NOT mounted)
 kubectl apply -f - << 'YAML'
@@ -115,7 +118,7 @@ spec:
 YAML
 
 # Step 3 final flag: custom etcd key (invisible to the Kubernetes API)
-k8s_put_etcd_key "/chain2-final" "flag{chain2-step3-etcd-final}"
+k8s_put_etcd_key "/chain2-final" "$FLAG3"
 
 kubectl wait --for=condition=Ready pod/chain2-pod -n ns-ops --timeout=60s 2>/dev/null || true
 kubectl wait --for=condition=Ready pod/chain2-step2 -n ns-ops --timeout=60s 2>/dev/null || true

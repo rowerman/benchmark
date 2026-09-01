@@ -24,7 +24,9 @@ nodes:
 - step: 2
   scenario: cloud-13
   description: log_fdw 宿主文件读取 → 供应商内部凭据
-  flag: flag{c49-step2-creds}
+  flags:
+    - flag{c49-step2-host-read}
+    - flag{c49-step2-internal-api}
   next_hint: 内部网络可达受害者数据库（防火墙只管公网）
 - step: 3
   scenario: cloud-16

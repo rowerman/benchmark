@@ -3,9 +3,9 @@ services:
     build:
       context: ../../scenarios/cloud/ssrf-to-imds/web
       args:
-        CVE_FLAG: flag{c32-step1-ssrf}
+        CVE_FLAG: ${CVE_FLAG1:-flag{c32-step1-ssrf}}
     environment:
-      - FLAG=flag{c32-step1-ssrf}
+      - FLAG=${CVE_FLAG1:-flag{c32-step1-ssrf}}
     ports:
       - "11633:5000"
     networks:
@@ -30,7 +30,7 @@ services:
     environment:
       - S3_ACCESS_KEY=AKIACHAIN32EXAMPLE
       - S3_SECRET_KEY=chain32-imds-secret
-      - FLAG=flag{c32-step2-imds}
+      - FLAG=${CVE_FLAG2:-flag{c32-step2-imds}}
     networks:
       chain32-net:
         ipv4_address: 169.254.0.20
@@ -39,7 +39,7 @@ services:
     build:
       context: ../../scenarios/cloud/cross-account-trust/s3
     environment:
-      - FLAG=flag{c32-step4-final}
+      - FLAG=${CVE_FLAG4:-flag{c32-step4-final}}
       - IAM_URL=http://iam:5000
     depends_on:
       - iam
@@ -60,11 +60,11 @@ services:
     build:
       context: ../../scenarios/cloud/cross-account-trust/attacker
       args:
-        CVE_FLAG: flag{c32-step3-cross}
+        CVE_FLAG: ${CVE_FLAG3:-flag{c32-step3-cross}}
     ports:
       - "11632:5000"
     environment:
-      - FLAG=flag{c32-step3-cross}
+      - FLAG=${CVE_FLAG3:-flag{c32-step3-cross}}
       - IAM_URL=http://iam:5000
       - S3_URL=http://s3-cross:5000
     networks:

@@ -1,5 +1,7 @@
 #!/bin/bash
 set -euo pipefail
+FLAG1="${CVE_FLAG1:-flag{k8s-32-step1-sa}}"
+FLAG2="${CVE_FLAG2:-flag{k8s-32-step2-cross-ns}}"
 K8S_ID="k8s-32"
 CLUSTER_NAME="cve-k8s32-sa-cross-ns"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
@@ -61,7 +63,7 @@ spec:
       command: ["sleep", "infinity"]
       env:
         - name: STEP1_FLAG
-          value: "flag{k8s-32-step1-sa}"
+          value: "$FLAG1"
 YAML
 
 # Deploy target pod in tenant-b with flag secret
@@ -72,7 +74,7 @@ metadata:
   name: target-flag
   namespace: tenant-b
 stringData:
-  flag: "flag{k8s-32-step2-cross-ns}"
+  flag: "$FLAG2"
 ---
 apiVersion: v1
 kind: Pod
@@ -85,7 +87,7 @@ spec:
       image: nginx:1.24-alpine
       env:
         - name: FLAG
-          value: "flag{k8s-32-step2-cross-ns}"
+          value: "$FLAG2"
 YAML
 
 echo "[+] K8S-32 Ready"

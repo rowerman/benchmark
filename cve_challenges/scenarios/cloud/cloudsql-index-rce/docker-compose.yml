@@ -1,6 +1,9 @@
 services:
   db:
-    build: ./db
+    build:
+      context: ./db
+      args:
+        CVE_FLAG: ${CVE_FLAG:-flag{cloud-14-host-rce}}
     environment:
       POSTGRES_USER: cloudsqladmin
       POSTGRES_PASSWORD: provider-super

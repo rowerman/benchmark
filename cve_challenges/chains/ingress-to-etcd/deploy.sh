@@ -32,6 +32,10 @@ nodes:
 YAML
 
 FLAG_DIR="/home/kianabin/cve-flags/chain23"
+FLAG1="${CVE_FLAG1:-flag{chain23-step1-ingress}}"
+FLAG2="${CVE_FLAG2:-flag{chain23-step2-token}}"
+FLAG3="${CVE_FLAG3:-flag{chain23-step3-rbac}}"
+FLAG4="${CVE_FLAG4:-flag{chain23-step4-etcd-final}}"
 mkdir -p "$FLAG_DIR"
 
 kind create cluster --name "$CLUSTER_NAME" --config /tmp/chain23-kind-config.yaml
@@ -102,14 +106,14 @@ if [ "$(kubectl get deployment ingress-nginx-controller -n ingress-nginx -o json
 fi
 CONTROLLER_POD=$(kubectl get pods -n ingress-nginx -l app.kubernetes.io/component=controller -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
 if [ -n "$CONTROLLER_POD" ]; then
-  kubectl exec -n ingress-nginx "$CONTROLLER_POD" -- sh -c "echo 'flag{chain23-step1-ingress}' > /tmp/flag.txt" 2>/dev/null || true
+  kubectl exec -n ingress-nginx "$CONTROLLER_POD" -- sh -c "echo '$FLAG1' > /tmp/flag.txt" 2>/dev/null || true
 fi
 
 # Step 3 flag as Secret
-kubectl create secret generic rbac-flag -n kube-system --from-literal=flag='flag{chain23-step3-rbac}' 2>/dev/null || true
+kubectl create secret generic rbac-flag -n kube-system --from-literal=flag="$FLAG3" 2>/dev/null || true
 
 # Step 4 final flag: custom etcd key (invisible to the Kubernetes API)
-k8s_put_etcd_key "/chain23-final" "flag{chain23-step4-etcd-final}"
+k8s_put_etcd_key "/chain23-final" "$FLAG4"
 
 echo ""
 echo "[+] Chain-23 Ready"

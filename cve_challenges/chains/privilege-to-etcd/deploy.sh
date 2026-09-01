@@ -4,9 +4,9 @@ set -euo pipefail
 K8S_ID="chain10"
 CLUSTER_NAME="cve-chain10-priv-etcd"
 source "$(dirname "$0")/../../scripts/k8s-common.sh"
-FLAG1="flag{chain10-step1-priv}"
-FLAG2="flag{chain10-step2-rbac}"
-FLAG3="flag{chain10-step3-etcd-final}"
+FLAG1="${CVE_FLAG1:-flag{chain10-step1-priv}}"
+FLAG2="${CVE_FLAG2:-flag{chain10-step2-rbac}}"
+FLAG3="${CVE_FLAG3:-flag{chain10-step3-etcd-final}}"
 
 echo "[Chain 10] Privilege to etcd — 3 steps"
 

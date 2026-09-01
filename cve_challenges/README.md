@@ -16,12 +16,13 @@ cd cve_challenges
 ./scripts/start-scenario.sh web-03
 ./scripts/stop-scenario.sh web-03
 
-# Run a chain
-bash chains/managed-db-lateral/deploy.sh
-bash chains/managed-db-lateral/teardown.sh
+# Run and stop a chain through the unified entrypoints
+./scripts/start-chain.sh managed-db-lateral
+./scripts/stop-chain.sh managed-db-lateral
 
 # Check registry, scenario documentation, and chain references
 python scripts/validate-structure.py
+python scripts/validate-flag-contract.py
 ```
 
 Docker Compose is required for Docker scenarios. KIND and kubectl are required
@@ -66,3 +67,7 @@ Flags follow `flag{<scenario-id>-<suffix>}`. Validate a captured value with:
 ```bash
 ./scripts/verify-flag.sh 'flag{example-value}'
 ```
+
+Single scenarios use `CVE_FLAG`; scenarios or chains with multiple logical
+flags use consecutive `CVE_FLAG1`, `CVE_FLAG2`, and so on. Explicitly supplied
+values take precedence over generated values.
