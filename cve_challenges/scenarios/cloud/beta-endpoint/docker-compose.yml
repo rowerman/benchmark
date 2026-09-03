@@ -17,6 +17,8 @@ services:
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-24-invisible-write}}
       - API_CREDENTIAL=valid-sigv4
+    ports:
+      - "10635:5000"
     networks:
       c35-net:
         ipv4_address: 10.35.0.30
@@ -26,9 +28,8 @@ services:
       c35-net:
         ipv4_address: 10.35.0.40
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10635:5000"
     environment:
       - CONSOLE_URL=http://console:5000
       - PROD_URL=http://prod-api:5000

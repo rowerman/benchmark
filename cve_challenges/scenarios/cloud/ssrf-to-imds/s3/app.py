@@ -9,8 +9,20 @@ an attacker who steals IMDS credentials can access the control-plane flag.
 """
 import os
 from flask import Flask, request
+from werkzeug.serving import WSGIRequestHandler
 
 app = Flask(__name__)
+
+
+class CloudRequestHandler(WSGIRequestHandler):
+    def version_string(self):
+        return "AmazonS3"
+
+
+@app.after_request
+def s3_server_header(response):
+    response.headers["Server"] = "AmazonS3"
+    return response
 
 # Valid credentials — must match what IMDS returns
 VALID_AK = os.environ.get("S3_ACCESS_KEY", "AKIACLOUD01EXAMPLE")
@@ -53,4 +65,4 @@ def get_object(filepath: str):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, request_handler=CloudRequestHandler)

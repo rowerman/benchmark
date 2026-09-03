@@ -1,0 +1,290 @@
+# Cloud service identity manifest.
+# Single source of truth for nmap fingerprinting of public cloud-sim entries.
+# `probe`: http-root | http-health | http-marker | xml | header | standard | manual
+#   - http-*: nmap GET on the listed path then content/header match
+#   - xml:    protocol-style XML response match
+#   - header: stable Server/banner header match
+#   - standard: system nmap probes already identify the wire protocol
+#   - manual: aux endpoint exercised by black-box tests; not gated by nmap check
+
+main:
+  - id: cloud-01
+    port: 10601
+    archetype: ec2-console
+    product: Cloud Dashboard (SSRF to IMDS)
+    probe: http-root
+    marker: Cloud Dashboard
+  - id: cloud-03
+    port: 10604
+    archetype: lambda-gateway
+    product: Lambda Invocation API
+    probe: http-root
+    marker: Lambda Invocation API
+  - id: cloud-04
+    port: 10605
+    archetype: cloudformation-parser
+    product: CloudFormation Template Parser
+    probe: http-root
+    marker: CloudFormation
+  - id: cloud-05
+    port: 10608
+    archetype: ci-runner
+    product: CI Pipeline Runner
+    probe: http-root
+    marker: CI/CD
+  - id: cloud-06
+    port: 10609
+    archetype: ai-notebook
+    product: AI Notebook
+    probe: http-root
+    marker: AI Notebook
+  - id: cloud-07
+    port: 10611
+    archetype: oidc-idp
+    product: OpenID Connect Identity Provider
+    probe: http-marker
+    marker: /.well-known/openid-configuration
+  - id: cloud-08
+    port: 10612
+    archetype: iam-sts
+    product: AWS Security Token Service
+    probe: xml
+    marker: AssumeRoleResponse
+  - id: cloud-09
+    port: 10613
+    archetype: saml-idp
+    product: SAML Identity Provider
+    probe: http-marker
+    marker: saml-metadata.xml
+  - id: cloud-10
+    port: 10615
+    archetype: iam-sts
+    product: AWS Security Token Service
+    probe: xml
+    marker: AssumeRoleResponse
+  - id: cloud-11
+    port: 10621
+    archetype: s3-global
+    product: S3 Global Namespace
+    probe: http-root
+    marker: buckets
+  - id: cloud-12
+    port: 10623
+    archetype: managed-notebook
+    product: Managed Notebooks Frontend
+    probe: http-root
+    marker: Managed Notebooks
+  - id: cloud-13
+    port: 10624
+    archetype: rds-console
+    product: Managed PostgreSQL Console
+    probe: http-root
+    marker: Managed PostgreSQL Console
+  - id: cloud-14
+    port: 10625
+    archetype: cloudsql-console
+    product: Cloud SQL Console
+    probe: http-root
+    marker: Cloud SQL Console
+  - id: cloud-15
+    port: 10626
+    archetype: analytics-control-plane
+    product: Analytics Control Plane
+    probe: http-root
+    marker: Analytics Control Plane
+  - id: cloud-16
+    port: 10627
+    archetype: postgresql
+    product: PostgreSQL (replication endpoint)
+    probe: standard
+    marker: standard-protocol
+  - id: cloud-17
+    port: 10628
+    archetype: azure-host-agent
+    product: Azure Host Agent (WireServer)
+    probe: http-marker
+    marker: /machine/
+  - id: cloud-18
+    port: 10629
+    archetype: build-fleet
+    product: Managed Build Fleet
+    probe: http-root
+    marker: Managed Build Fleet
+  - id: cloud-19
+    port: 10630
+    archetype: model-registry
+    product: Model Registry
+    probe: http-root
+    marker: Model Registry
+  - id: cloud-20
+    port: 10631
+    archetype: block-storage-cp
+    product: Block Storage Control Plane
+    probe: http-root
+    marker: Block Storage Control Plane
+  - id: cloud-21
+    port: 10632
+    archetype: directory-api
+    product: Directory API
+    probe: http-root
+    marker: Directory API
+  - id: cloud-22
+    port: 10633
+    archetype: omi-agent
+    product: OMI Agent (WSMan)
+    probe: http-health
+    marker: OMI Agent
+  - id: cloud-23
+    port: 10634
+    archetype: iam-enum-cp
+    product: IAM Enumeration Control Plane
+    probe: http-root
+    marker: IAM Enumeration
+  - id: cloud-24
+    port: 10635
+    archetype: service-catalog-beta
+    product: Service Catalog Beta API
+    probe: http-root
+    marker: Service Catalog
+  - id: cloud-25
+    port: 10636
+    archetype: resource-explorer
+    product: Resource Explorer
+    probe: http-root
+    marker: Resource Explorer
+  - id: cloud-26
+    port: 10637
+    archetype: composer
+    product: Managed Data Platform (Composer)
+    probe: http-root
+    marker: Composer
+  - id: cloud-27
+    port: 10638
+    archetype: connector-store
+    product: API Connections Store
+    probe: http-root
+    marker: API Connections Store
+  - id: cloud-28
+    port: 10639
+    archetype: shared-nat-victim
+    product: Shared NAT Victim API
+    probe: http-root
+    marker: source-IP allowlist
+  - id: cloud-29
+    port: 10640
+    archetype: dataform
+    product: Data Workflow Control Plane
+    probe: http-root
+    marker: Data Workflow Control Plane
+  - id: cloud-30
+    port: 10641
+    archetype: serverless
+    product: Serverless Functions API
+    probe: http-root
+    marker: Serverless Functions
+  - id: cloud-31
+    port: 10642
+    archetype: automation
+    product: Managed Automation API
+    probe: http-root
+    marker: Managed Automation
+
+aux:
+  - id: cloud-01-imds
+    port: 10670
+    scenario: cloud-01
+    archetype: ec2-imds
+    product: Amazon EC2 Instance Metadata Service
+    probe: header
+    marker: EC2ws
+  - id: cloud-01-s3
+    port: 10671
+    scenario: cloud-01
+    archetype: s3
+    product: S3-compatible Object Storage
+    probe: http-root
+    marker: objects
+  - id: cloud-07-oidc
+    port: 10703
+    scenario: cloud-07
+    archetype: oidc-idp
+    product: OpenID Connect Identity Provider
+    probe: http-marker
+    marker: jwks.json
+  - id: cloud-07/09-sts-or-saml
+    port: 10707
+    scenario: cloud-07|cloud-09
+    archetype: iam-sts|saml-idp
+    product: AWS Security Token Service | SAML Identity Provider
+    probe: xml|http-marker
+    marker: dual
+  - id: cloud-09-sts
+    port: 10709
+    scenario: cloud-09
+    archetype: iam-sts
+    product: AWS Security Token Service
+    probe: xml
+    marker: AssumeRoleResponse
+  - id: cloud-16-ca
+    port: 10716
+    scenario: cloud-16
+    archetype: internal-ca
+    product: Internal Certificate Authority
+    probe: manual
+    marker: black-box only
+  - id: cloud-18-registry
+    port: 10718
+    scenario: cloud-18
+    archetype: container-registry
+    product: Container Registry
+    probe: manual
+    marker: black-box only
+  - id: cloud-18-puller
+    port: 10719
+    scenario: cloud-18
+    archetype: tenant-puller
+    product: Tenant Puller
+    probe: manual
+    marker: black-box only
+  - id: cloud-19-inference
+    port: 10720
+    scenario: cloud-19
+    archetype: inference
+    product: Model Inference API
+    probe: manual
+    marker: black-box only
+  - id: cloud-19-cluster
+    port: 10721
+    scenario: cloud-19
+    archetype: cluster-api
+    product: EKS-style Cluster API
+    probe: manual
+    marker: black-box only
+  - id: cloud-17/19-node-imds-or-cp
+    port: 10722
+    scenario: cloud-17|cloud-19
+    archetype: control-plane|node-imds
+    product: Node Control Plane | Node IMDS
+    probe: manual
+    marker: dual
+  - id: cloud-23-sts
+    port: 10723
+    scenario: cloud-23
+    archetype: sts-oracle
+    product: STS AssumeRole Oracle
+    probe: manual
+    marker: black-box only
+  - id: cloud-23-audit
+    port: 10724
+    scenario: cloud-23
+    archetype: audit-log
+    product: CloudTrail-style Audit Log
+    probe: manual
+    marker: black-box only
+  - id: cloud-26-registry
+    port: 10726
+    scenario: cloud-26
+    archetype: pkg-registry
+    product: Package Registry
+    probe: manual
+    marker: black-box only

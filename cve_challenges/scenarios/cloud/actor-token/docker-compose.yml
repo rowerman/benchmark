@@ -8,6 +8,8 @@ services:
         ipv4_address: 10.32.0.10
   directory-api:
     build: ./directory-api
+    ports:
+      - "10632:5000"
     environment:
       - SIGNING_SECRET=shared-signing-secret
       - FLAG=${CVE_FLAG:-flag{cloud-21-tenant-b-admin}}
@@ -15,9 +17,8 @@ services:
       c32-net:
         ipv4_address: 10.32.0.20
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10632:5000"
     environment:
       - STS_URL=http://sts:5000
       - DIR_URL=http://directory-api:5000

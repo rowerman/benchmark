@@ -5,6 +5,9 @@ from flask import Flask, request
 app = Flask(__name__)
 FLAG = os.environ.get("FLAG", "flag{cloud-05-step2-pipeline}")
 
+@app.route("/")
+def docs(): return {"service": "CI/CD Pipeline Runner", "endpoints": ["POST /run", "GET /secrets"]}
+
 @app.route("/health")
 def health(): return {"status": "ok"}
 

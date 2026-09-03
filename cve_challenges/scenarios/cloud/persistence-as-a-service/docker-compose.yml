@@ -16,6 +16,8 @@ services:
         ipv4_address: 10.42.0.20
   automation-service:
     build: ./automation-service
+    ports:
+      - "10642:5000"
     environment:
       - VAULT_URL=http://credential-vault:5000
       - VAULT_TOKEN=vault-token-abc
@@ -24,9 +26,8 @@ services:
       c42-net:
         ipv4_address: 10.42.0.30
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10642:5000"
     environment:
       - AUTOMATION_URL=http://automation-service:5000
       - VAULT_URL=http://credential-vault:5000

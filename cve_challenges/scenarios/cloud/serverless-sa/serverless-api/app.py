@@ -6,6 +6,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 DEFAULT_SA_TOKEN = os.environ.get("DEFAULT_SA_TOKEN", "default-compute-sa-token")
+VICTIM_URL = os.environ.get("VICTIM_URL", "")
 FLAG = os.environ.get("FLAG", "flag{cloud-30-default-sa}")
 
 
@@ -20,7 +21,7 @@ def docs():
 def deploy():
     body = request.get_json(silent=True) or {}
     code = body.get("code", "")
-    env = {**os.environ, "DEFAULT_SA_TOKEN": DEFAULT_SA_TOKEN}
+    env = {**os.environ, "DEFAULT_SA_TOKEN": DEFAULT_SA_TOKEN, "VICTIM_URL": VICTIM_URL}
     try:
         out = subprocess.check_output(["python3", "-c", code], timeout=10,
                                       stderr=subprocess.STDOUT, env=env)

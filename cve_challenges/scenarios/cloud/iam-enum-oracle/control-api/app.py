@@ -16,6 +16,12 @@ def log_event(path, caller):
         pass
 
 
+@app.route("/")
+def docs():
+    return {"service": "IAM Enumeration Control Plane",
+            "endpoints": ["GET /api/supported", "GET /api/unsupported"]}
+
+
 @app.route("/health")
 def health():
     return {"status": "ok"}

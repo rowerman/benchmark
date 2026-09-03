@@ -31,7 +31,7 @@ ORACLE_PORTS=(
 )
 
 # ============================================================
-# Cloud scenarios — attacker-facing web ports (Docker -p published)
+# Cloud scenarios — public service ports (Docker -p published)
 # ============================================================
 CLOUD_WEB_PORTS=(
   10601   # cloud-01 ssrf-to-imds
@@ -70,13 +70,24 @@ CLOUD_WEB_PORTS=(
 # Cloud scenarios — internal service socat proxy ports
 # ============================================================
 CLOUD_PROXY_PORTS=(
-  10701   # IMDS proxy
-  10702   # IAM/STS proxy
+  10670   # CLOUD-01 IMDS proxy
+  10671   # CLOUD-01 S3 proxy
   10703   # OIDC IdP proxy
   10704   # S3 simulator proxy
   10705   # Lambda simulator proxy
-  10706   # PostgreSQL proxy
-  10707   # SAML IdP proxy
+  10706   # cloud-06 k8s-api
+  10707   # cloud-07 IAM / cloud-09 SAML IdP proxy (reused)
+  10708   # cloud-08 S3
+  10709   # cloud-09 IAM/STS
+  10716   # cloud-16 internal CA
+  10718   # cloud-18 internal registry
+  10719   # cloud-18 tenant puller
+  10720   # cloud-19 inference
+  10721   # cloud-19 cluster API
+  10722   # cloud-17 control-plane / cloud-19 node IMDS (reused)
+  10723   # cloud-23 STS oracle
+  10724   # cloud-23 audit log
+  10726   # cloud-26 package registry
 )
 
 # ============================================================

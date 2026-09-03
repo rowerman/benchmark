@@ -11,6 +11,7 @@ The SSRF vulnerability allows an attacker to reach the IMDS service
 at 169.254.169.254 and steal temporary IAM credentials.
 """
 import os
+from urllib.parse import urlsplit, urlunsplit
 import requests
 from flask import Flask, request, render_template_string
 
@@ -50,6 +51,9 @@ def fetch():
     if not url:
         return "Error: url parameter required", 400
     try:
+        parsed = urlsplit(url)
+        if parsed.hostname == "169.254.169.254" and parsed.port is None:
+            url = urlunsplit((parsed.scheme, "169.254.169.254:5000", parsed.path, parsed.query, parsed.fragment))
         resp = requests.get(url, timeout=10, allow_redirects=True)
         return (
             f"Status: {resp.status_code}\n"

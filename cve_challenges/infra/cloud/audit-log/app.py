@@ -1,7 +1,10 @@
 """Audit log simulator -- records (or fails to record) control-plane events."""
+import os
+
 from flask import Flask, request
 
 app = Flask(__name__)
+FLAG = os.environ.get("FLAG")
 _logs = []
 
 
@@ -26,7 +29,10 @@ def log():
 
 @app.route("/logs")
 def get_logs():
-    return {"logs": _logs, "count": len(_logs)}
+    body = {"logs": _logs, "count": len(_logs)}
+    if FLAG and not _logs:
+        body["flag"] = FLAG
+    return body
 
 
 @app.route("/reset", methods=["POST"])

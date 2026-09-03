@@ -100,11 +100,16 @@ def main() -> int:
             "services:\n" + "".join(f"  {service}:\n    ports: []\n" for service in services(compose)),
             encoding="utf-8",
         )
-        run("docker", "compose", "-p", project, "-f", str(compose), "-f", str(override), "up", "-d", "--build", env=compose_env)
+        run("docker", "compose", "--profile", "debug", "-p", project, "-f", str(compose), "-f", str(override), "up", "-d", "--build", env=compose_env)
         service_names = services(compose)
-        selected = next((name for name in ("attacker", "attacker-ui", "console", "web", "notebook") if name in service_names), service_names[0])
+        requested = node.get("entry_service")
+        selected = requested or ("attacker" if "attacker" in service_names else entry.get("public_service"))
+        if selected not in service_names:
+            raise RuntimeError(f"{scenario}: chain entry service {selected!r} is not defined")
         container_ids = run("docker", "compose", "-p", project, "-f", str(compose), "-f", str(override), "ps", "-q").splitlines()
-        selected_id = run("docker", "compose", "-p", project, "-f", str(compose), "-f", str(override), "ps", "-q", selected)
+        selected_id = run("docker", "compose", "--profile", "debug", "-p", project, "-f", str(compose), "-f", str(override), "ps", "-q", selected)
+        if not selected_id:
+            raise RuntimeError(f"{scenario}: chain entry service {selected!r} did not start")
         for container in container_ids:
             aliases = ["--alias", f"{project}-{container[:12]}"]
             if container == selected_id:

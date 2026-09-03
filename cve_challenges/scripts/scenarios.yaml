@@ -430,6 +430,7 @@ scenarios:
     difficulty: L2
     cve: N/A (SSRF → IMDS)
     path: scenarios/cloud/ssrf-to-imds
+    public_service: web
     port: 10601
   cloud-03:
     id: CLOUD-03
@@ -438,6 +439,7 @@ scenarios:
     difficulty: L2
     cve: N/A (command injection + IAM privesc)
     path: scenarios/cloud/lambda-passrole
+    public_service: gateway
     port: 10604
   cloud-04:
     id: CLOUD-04
@@ -446,6 +448,7 @@ scenarios:
     difficulty: L2
     cve: N/A (CF Fn::Sub injection)
     path: scenarios/cloud/cf-injection
+    public_service: parser
     port: 10605
   cloud-05:
     id: CLOUD-05
@@ -454,6 +457,7 @@ scenarios:
     difficulty: L2
     cve: N/A (CI/CD script injection)
     path: scenarios/cloud/ci-poisoning
+    public_service: ci-runner
     port: 10608
   cloud-06:
     id: CLOUD-06
@@ -462,6 +466,7 @@ scenarios:
     difficulty: L3
     cve: N/A (notebook escape + SA token)
     path: scenarios/cloud/notebook-escape
+    public_service: notebook
     port: 10609
   cloud-07:
     id: CLOUD-07
@@ -470,6 +475,7 @@ scenarios:
     difficulty: L2
     cve: N/A (OIDC federation misconfiguration)
     path: scenarios/cloud/oidc-federation
+    public_service: oidc
     port: 10611
   cloud-08:
     id: CLOUD-08
@@ -478,6 +484,7 @@ scenarios:
     difficulty: L2
     cve: N/A (overly permissive trust policy)
     path: scenarios/cloud/cross-account-trust
+    public_service: iam
     port: 10612
   cloud-09:
     id: CLOUD-09
@@ -486,6 +493,7 @@ scenarios:
     difficulty: L3
     cve: N/A (SAML signing key exposure)
     path: scenarios/cloud/golden-saml
+    public_service: saml-idp
     port: 10613
   cloud-10:
     id: CLOUD-10
@@ -494,6 +502,7 @@ scenarios:
     difficulty: L2
     cve: N/A (SCP enforcement gap)
     path: scenarios/cloud/scp-bypass
+    public_service: iam
     port: 10615
   cloud-11:
     id: CLOUD-11
@@ -502,6 +511,7 @@ scenarios:
     difficulty: L3
     cve: N/A (global namespace resource squatting)
     path: scenarios/cloud/global-s3-squatting
+    public_service: s3-global
     port: 10621
   cloud-12:
     id: CLOUD-12
@@ -510,6 +520,7 @@ scenarios:
     difficulty: L2
     cve: "N/A (forwardingId authz bypass, case #073)"
     path: scenarios/cloud/cosmiss-notebook
+    public_service: front-end
     port: 10623
   cloud-13:
     id: CLOUD-13
@@ -518,6 +529,7 @@ scenarios:
     difficulty: L2
     cve: "N/A (log_fdw path traversal, case #015)"
     path: scenarios/cloud/rds-logfdw
+    public_service: console
     port: 10624
   cloud-14:
     id: CLOUD-14
@@ -526,6 +538,7 @@ scenarios:
     difficulty: L3
     cve: "N/A (ATExecChangeOwner patch + ANALYZE, case #052)"
     path: scenarios/cloud/cloudsql-index-rce
+    public_service: console
     port: 10625
   cloud-15:
     id: CLOUD-15
@@ -534,6 +547,7 @@ scenarios:
     difficulty: L3
     cve: "N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062)"
     path: scenarios/cloud/synlapse-ir
+    public_service: control-api
     port: 10626
   cloud-16:
     id: CLOUD-16
@@ -542,6 +556,7 @@ scenarios:
     difficulty: L3
     cve: "N/A (internal subnet + mis-anchored cert regex, case #061)"
     path: scenarios/cloud/extrareplica-repl
+    public_service: pg-proxy
     port: 10627
   cloud-17:
     id: CLOUD-17
@@ -550,6 +565,7 @@ scenarios:
     difficulty: L3
     cve: "N/A (unvalidated transport cert, case #255/#184)"
     path: scenarios/cloud/wireserver-bootstrap
+    public_service: host-agent
     port: 10628
   cloud-18:
     id: CLOUD-18
@@ -558,6 +574,7 @@ scenarios:
     difficulty: L2
     cve: "N/A (unauth internal registry, case #260 lineage)"
     path: scenarios/cloud/buildfleet-registry
+    public_service: build-worker
     port: 10629
   cloud-19:
     id: CLOUD-19
@@ -566,6 +583,7 @@ scenarios:
     difficulty: L2
     cve: "N/A (pickle deserialization, case #091)"
     path: scenarios/cloud/pickle-model
+    public_service: model-registry
     port: 10630
   cloud-20:
     id: CLOUD-20
@@ -574,6 +592,7 @@ scenarios:
     difficulty: L2
     cve: N/A (control-plane ownership check missing)
     path: scenarios/cloud/attachme-volume
+    public_service: control-api
     port: 10631
   cloud-21:
     id: CLOUD-21
@@ -582,6 +601,7 @@ scenarios:
     difficulty: L2
     cve: "N/A (actor/tenant validation bug, case #246)"
     path: scenarios/cloud/actor-token
+    public_service: directory-api
     port: 10632
   cloud-22:
     id: CLOUD-22
@@ -590,6 +610,7 @@ scenarios:
     difficulty: L2
     cve: N/A (auth bypass in provider agent, CVE-2021-38647 lineage)
     path: scenarios/cloud/omigod-agent
+    public_service: omi-agent
     port: 10633
   cloud-23:
     id: CLOUD-23
@@ -598,6 +619,7 @@ scenarios:
     difficulty: L2
     cve: "N/A (uncovered service error oracle, case #134/#137)"
     path: scenarios/cloud/iam-enum-oracle
+    public_service: control-api
     port: 10634
   cloud-24:
     id: CLOUD-24
@@ -606,6 +628,7 @@ scenarios:
     difficulty: L2
     cve: "N/A (non-production endpoint skips audit, case #154)"
     path: scenarios/cloud/beta-endpoint
+    public_service: beta-api
     port: 10635
   cloud-25:
     id: CLOUD-25
@@ -614,6 +637,7 @@ scenarios:
     difficulty: L2
     cve: "N/A (unlogged search API, case #148)"
     path: scenarios/cloud/resource-explorer
+    public_service: explorer-api
     port: 10636
   cloud-26:
     id: CLOUD-26
@@ -622,6 +646,7 @@ scenarios:
     difficulty: L3
     cve: "N/A (global namespace dependency confusion, case #270)"
     path: scenarios/cloud/composer-depconf
+    public_service: composer-pipeline
     port: 10637
   cloud-27:
     id: CLOUD-27
@@ -630,6 +655,7 @@ scenarios:
     difficulty: L2
     cve: "N/A (connector store tenant-scope missing, case #249/#197)"
     path: scenarios/cloud/lowcode-secrets
+    public_service: connector-store
     port: 10638
   cloud-28:
     id: CLOUD-28
@@ -638,6 +664,7 @@ scenarios:
     difficulty: L2
     cve: "N/A (service-tag source-IP trust, case #259)"
     path: scenarios/cloud/shared-nat
+    public_service: victim-api
     port: 10639
   cloud-29:
     id: CLOUD-29
@@ -646,6 +673,7 @@ scenarios:
     difficulty: L3
     cve: "N/A (cross-tenant path traversal, case #267)"
     path: scenarios/cloud/dataform-pt
+    public_service: dataform-api
     port: 10640
   cloud-30:
     id: CLOUD-30
@@ -654,6 +682,7 @@ scenarios:
     difficulty: L2
     cve: "N/A (over-scoped default SA, case #266/#272)"
     path: scenarios/cloud/serverless-sa
+    public_service: serverless-api
     port: 10641
   cloud-31:
     id: CLOUD-31
@@ -662,6 +691,7 @@ scenarios:
     difficulty: L3
     cve: "N/A (automation-runbook persistence, case #149)"
     path: scenarios/cloud/persistence-as-a-service
+    public_service: automation-service
     port: 10642
   k8s-28:
     id: K8S-28

@@ -17,6 +17,12 @@ def authenticate():
     return request.headers.get("X-Api-Key") == API_CREDENTIAL
 
 
+@app.route("/")
+def docs():
+    return {"service": "Service Catalog Beta API",
+            "note": "beta endpoints write without audit events"}
+
+
 @app.route("/portfolios", methods=["POST"])
 def create():
     if not authenticate():

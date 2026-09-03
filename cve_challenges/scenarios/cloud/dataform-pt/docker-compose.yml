@@ -9,15 +9,16 @@ services:
         ipv4_address: 10.40.0.10
   dataform-api:
     build: ./dataform-api
+    ports:
+      - "10640:5000"
     environment:
       - EXECUTOR_URL=http://shared-executor:5000
     networks:
       c40-net:
         ipv4_address: 10.40.0.20
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10640:5000"
     environment:
       - API_URL=http://dataform-api:5000
     networks:

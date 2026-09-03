@@ -3,10 +3,10 @@
 # Configure nmap to detect DARWIN Cloud Benchmark simulated services.
 #
 # Two steps:
-#   1. Merge custom cloud probes into ~/.nmap/nmap-service-probes
-#      (so nmap -sV can identify ec2-imds, aws-sts, oidc-idp services)
+#   1. Merge custom cloud probes into a complete Nmap data directory
+#      (Nmap 7.x has no --servicedb option; use --datadir)
 #   2. Run fix-nmap-tcpwrapped.sh (with sudo) to add iptables rules for
-#      Docker-published cloud ports (10601-10622, 10701-10707)
+#      Docker-published cloud ports (10601-10642 and protocol aux ports)
 #
 # Usage:
 #   bash setup-cloud-nmap.sh              # interactive (prompts for sudo)
@@ -29,6 +29,7 @@ echo ""
 
 # ── Step 1: Merge custom probes ──────────────────────────────────────
 mkdir -p "$HOME/.nmap"
+cp -a /usr/share/nmap/. "$HOME/.nmap/"
 
 if [ ! -f "$CLOUD_PROBES" ]; then
     echo "[!] Cloud probes file not found: $CLOUD_PROBES"
@@ -40,6 +41,7 @@ cat "$SYSTEM_PROBES" "$CLOUD_PROBES" > "$USER_PROBES"
 echo "[+] Merged cloud probes into $USER_PROBES"
 echo "    ($(wc -l < "$SYSTEM_PROBES") system lines + $(wc -l < "$CLOUD_PROBES") cloud lines)"
 echo "    nmap will auto-use $USER_PROBES for service detection."
+echo "    For Nmap 7.x, invoke: nmap --datadir $HOME/.nmap -sV ..."
 echo ""
 
 # ── Step 2: iptables rules for cloud ports ──────────────────────────
@@ -62,7 +64,8 @@ echo ""
 echo "=== Setup complete ==="
 echo ""
 echo "    Verify with:"
-echo "      nmap -sV -p 10601,10701,10702 localhost"
+echo "      nmap --datadir $HOME/.nmap -sV --version-all -Pn -p 10601,10670,10671 localhost"
+echo "      bash $SCRIPT_DIR/validate-cloud-nmap.sh cloud-01"
 echo "    (requires a running cloud scenario, e.g. cloud-01)"
 echo ""
 echo "    Revert with:"

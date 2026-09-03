@@ -22,7 +22,21 @@ _users = {
 
 @app.route("/")
 def docs():
-    return {"service": "Directory API", "endpoint": "GET /api/users?tenant=<tenant>"}
+    return {"service": "Directory API", "endpoints": [
+        "POST /token {tenant} -> signed JWT",
+        "GET /api/users?tenant=<tenant>",
+    ]}
+
+
+@app.route("/token", methods=["POST"])
+def token():
+    body = request.get_json(silent=True) or {}
+    tenant = body.get("tenant", "tenant-a")
+    encoded = jwt.encode(
+        {"tenant": tenant, "principal": f"admin@{tenant}", "sub": f"user-1@{tenant}"},
+        SECRET, algorithm="HS256",
+    )
+    return {"token": encoded, "claims": {"tenant": tenant, "principal": f"admin@{tenant}"}}
 
 
 @app.route("/api/users")

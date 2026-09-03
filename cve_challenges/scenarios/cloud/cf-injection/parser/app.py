@@ -10,6 +10,13 @@ from flask import Flask, request
 
 app = Flask(__name__)
 FLAG = os.environ.get("FLAG", "flag{cloud-04-step2-cf-inject}")
+
+
+@app.route("/")
+def docs():
+    return {"service": "CloudFormation Template Parser", "endpoint": "POST /parse"}
+
+
 # Simulated cross-stack exports
 EXPORTS = {"DemoApp-BucketName": "demo-app-assets", "FlagStore-BucketName": "flag-bucket-000000"}
 # Simulated SSM parameters

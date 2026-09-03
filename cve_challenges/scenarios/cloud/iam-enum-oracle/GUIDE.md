@@ -10,6 +10,7 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10634 |
+| 辅助入口 | localhost:10723（STS）；localhost:10724（审计） |
 
 ## 场景概述
 CloudTrail 并不覆盖所有服务：调用不支持的 API 不产生任何审计事件，
@@ -30,9 +31,11 @@ CloudTrail 并不覆盖所有服务：调用不支持的 API 不产生任何审�
 ## 利用步骤
 1. 用泄露的密钥调用未记录 API `/api/unsupported`——AccessDenied 返回
    完整 ARN，且审计日志无记录。
-2. 对单词表逐个调用 `sts:AssumeRole`，比对错误信息差异，确认存在的角色
+2. 对单词表逐个调用公开 STS 入口 `http://localhost:10723/assume-role`，
+   比对错误信息差异，确认存在的角色
    （AdminRole / SecretRole / DataPipelineRole）。
-3. 检查 `/logs`——审计记录数为 0，侦察完全不可见。
+3. 检查公开审计入口 `http://localhost:10724/logs`——审计记录数为 0，
+   侦察完全不可见；空审计状态返回动态 Flag。
 
 ## Flag
 `flag{cloud-23-zero-audit-enum}`

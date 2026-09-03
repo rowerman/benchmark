@@ -28,6 +28,10 @@ cve_challenges/
 │   ├── validate-structure.py  # 注册表、GUIDE、端口和攻击链引用校验
 │   ├── validate-flag-contract.py # 校验单点与攻击链 Flag 运行时注入
 │   ├── check-cloud-consistency.py # 云场景 ID、路径和链引用一致性校验
+│   ├── cloud-service-identities.yaml # 云服务身份清单（nmap 特征单一事实来源）
+│   ├── nmap-cloud-probes.txt  # 云服务特征驱动的 nmap service probe
+│   ├── validate-cloud-entrypoints.py # 公开入口契约与 probe/manifest 覆盖校验
+│   ├── validate-cloud-nmap.sh # 逐端口 nmap 服务识别回归（特征匹配）
 │   ├── validate-all.sh        # 批量启动、可达性检查和停止
 │   └── flag_manager.py / verify-flag.sh # Flag 生成和格式/蜜罐值校验
 └── README.md
@@ -75,6 +79,9 @@ Docker 场景只能通过 `start-scenario.sh` 启动。单 Flag 场景使用 `CV
 python3 scripts/validate-structure.py
 python3 scripts/check-cloud-consistency.py
 python3 scripts/validate-flag-contract.py
+python3 scripts/validate-cloud-entrypoints.py --strict-probes
+bash scripts/setup-cloud-nmap.sh            # 一次性：合并 probe（iptables 需 root）
+bash scripts/validate-cloud-nmap.sh         # 30 个 Docker cloud 主端口特征识别回归
 bash scripts/validate-all.sh                 # 默认验证 Docker 场景
 bash scripts/validate-all.sh k8s             # 仅验证 Kubernetes 场景
 bash scripts/validate-all.sh all             # 验证全部非 optional 场景

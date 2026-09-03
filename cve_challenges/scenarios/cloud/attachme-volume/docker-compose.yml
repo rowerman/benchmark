@@ -1,6 +1,8 @@
 services:
   control-api:
     build: ./control-api
+    ports:
+      - "10631:5000"
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-20-victim-volume}}
     networks:
@@ -15,9 +17,8 @@ services:
       c31-net:
         ipv4_address: 10.31.0.20
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10631:5000"
     environment:
       - API_URL=http://control-api:5000
       - INSTANCE_URL=http://attacker-instance:5000

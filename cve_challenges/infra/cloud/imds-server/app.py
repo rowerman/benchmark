@@ -17,8 +17,20 @@ import json
 from datetime import datetime, timedelta, timezone
 
 from flask import Flask, request
+from werkzeug.serving import WSGIRequestHandler
 
 app = Flask(__name__)
+
+
+class CloudRequestHandler(WSGIRequestHandler):
+    def version_string(self):
+        return "EC2ws"
+
+
+@app.after_request
+def cloud_server_header(response):
+    response.headers["Server"] = "EC2ws"
+    return response
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -204,4 +216,4 @@ def meta_handler(subpath: str):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, request_handler=CloudRequestHandler)

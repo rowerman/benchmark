@@ -1,8 +1,11 @@
 services:
   serverless-api:
     build: ./serverless-api
+    ports:
+      - "10641:5000"
     environment:
       - DEFAULT_SA_TOKEN=default-compute-sa-token
+      - VICTIM_URL=http://victim-project:5000
       - FLAG=${CVE_FLAG:-flag{cloud-30-default-sa}}
     networks:
       c41-net:
@@ -11,14 +14,13 @@ services:
     build: ./victim-project
     environment:
       - DEFAULT_SA_TOKEN=default-compute-sa-token
-      - FLAG=${CVE_FLAG:-flag{cloud-30-victim-project}}
+      - FLAG=${CVE_FLAG:-flag{cloud-30-default-sa}}
     networks:
       c41-net:
         ipv4_address: 10.41.0.20
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10641:5000"
     environment:
       - SERVERLESS_URL=http://serverless-api:5000
       - VICTIM_URL=http://victim-project:5000

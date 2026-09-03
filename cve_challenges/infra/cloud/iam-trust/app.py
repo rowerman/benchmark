@@ -40,6 +40,7 @@ ACCOUNT_ID = os.environ.get("IAM_ACCOUNT_ID", "000000000000")
 OIDC_JWKS_URL = os.environ.get("OIDC_JWKS_URL", "")
 # Optional: load OIDC public key PEM directly
 OIDC_PUBLIC_KEY_FILE = os.environ.get("OIDC_PUBLIC_KEY_FILE", "")
+FLAG = os.environ.get("FLAG", "")
 
 # ---------------------------------------------------------------------------
 # Load config
@@ -254,6 +255,10 @@ def _elem(tag: str, text: str = "") -> Element:
     return e
 
 
+def _flag_elem() -> Element | None:
+    return _elem("Flag", FLAG) if FLAG else None
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -449,6 +454,8 @@ def sts_handler():
         return _handle_assume_role(params)
     elif action == "AssumeRoleWithWebIdentity":
         return _handle_assume_role_web_identity(params)
+    elif action == "AssumeRoleWithSAML":
+        return _handle_assume_role_with_saml(params)
     elif action == "GetCallerIdentity":
         return _handle_get_caller_identity(params)
     elif action == "GetSessionToken":
@@ -524,7 +531,10 @@ def _handle_assume_role(params: dict):
     SubElement(creds_elem, "SessionToken").text = creds["SessionToken"]
     SubElement(creds_elem, "Expiration").text = creds["Expiration"]
 
-    xml = _xml_response("AssumeRole", [assumed_role_elem, creds_elem])
+    result = [assumed_role_elem, creds_elem]
+    if _flag_elem() is not None:
+        result.append(_flag_elem())
+    xml = _xml_response("AssumeRole", result)
     return (xml, 200, {"Content-Type": "application/xml"})
 
 
@@ -588,9 +598,18 @@ def _handle_assume_role_web_identity(params: dict):
     provider = _elem("Provider")
     provider.text = issuer
 
-    xml = _xml_response("AssumeRoleWithWebIdentity",
-                        [assumed_role_elem, creds_elem, sub_from_token, audience, provider])
+    result = [assumed_role_elem, creds_elem, sub_from_token, audience, provider]
+    if _flag_elem() is not None:
+        result.append(_flag_elem())
+    xml = _xml_response("AssumeRoleWithWebIdentity", result)
     return (xml, 200, {"Content-Type": "application/xml"})
+
+
+def _handle_assume_role_with_saml(params: dict):
+    """Accept the simulator's signed SAML/JWT assertion through STS Query."""
+    forwarded = dict(params)
+    forwarded["WebIdentityToken"] = forwarded.get("SAMLAssertion", "")
+    return _handle_assume_role_web_identity(forwarded)
 
 
 def _handle_get_caller_identity(params: dict):

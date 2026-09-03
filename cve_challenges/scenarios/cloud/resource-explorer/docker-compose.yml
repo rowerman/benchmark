@@ -1,6 +1,8 @@
 services:
   explorer-api:
     build: ./explorer-api
+    ports:
+      - "10636:5000"
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-25-flag-store}}
       - RESOURCE_READER_ARN=arn:aws:iam::111122223333:user/attacker
@@ -13,9 +15,8 @@ services:
       c36-net:
         ipv4_address: 10.36.0.20
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10636:5000"
     environment:
       - EXPLORER_URL=http://explorer-api:5000
       - AUDIT_URL=http://audit-log:5000

@@ -117,3 +117,33 @@
 - 未完成 21 条云链的容器级端到端 exploit-to-flag 验收。
 - runtime 已提供 artifact API，但各攻击器尚未全部自动消费 `CHAIN_BUS_URL`，部分链仍需控制台交接。
 - CLOUD-27 仍使用模拟调用者 header，未实现真实 SigV4；IAM `/validate` 仍是内存态且未做资源 ARN 级授权。
+
+
+修改日期：2026-09-03
+
+## 一、公有云特征与 nmap 服务识别补齐
+
+- 新增 `scripts/cloud-service-identities.yaml`：30 个注册主端口与协议辅助端口的
+  服务身份清单（archetype / 期望 nmap product / 探测策略），作为 probe 编写、
+  应用改造与自动验收的单一事实来源。
+- 重写 `scripts/nmap-cloud-probes.txt` 为特征驱动规则：删除“任意 HTTP 状态行
+  即贴服务名”的通用规则；按 header（`EC2ws`/`AmazonS3`）、XML 根元素
+  （STS/IAM `*Response`、SAML `EntityDescriptor`）、JSON 内容（`objects`/
+  `buckets`/`service` 等）与 discovery 路径匹配；修正 10702 死规则、
+  CloudFormation probe 双反斜杠与 STS Content-Length。
+- 应用层补齐稳定服务标识：CloudFormation Parser、CI/CD Runner、IAM Enumeration
+  Control Plane、Service Catalog Beta API 新增 GET `/` docs 路由；其余服务沿用
+  既有 docs/health 的 `service` 标识或 banner。
+- 新增 `scripts/validate-cloud-nmap.sh/.py`：合并 datadir 后逐端口
+  `nmap -sV --version-all`，断言产品名与清单一致且不含 Werkzeug/unknown；
+  `validate-cloud-entrypoints.py --strict-probes` 扩展为同时校验 manifest 覆盖。
+- 同步 `fix-nmap-tcpwrapped.sh` 端口清单与 `setup-cloud-nmap.sh` 示例/注释。
+
+## 二、验证情况
+
+- 特征识别回归：30/30 Docker cloud 主端口 PASS（含 PostgreSQL 真实 wire protocol），
+  协议代理 10670/10671/10703/10707/10709 随场景 PASS。
+- 黑盒回归：`python3 tests/cloud/run.py` 30/30 PASS，动态 Flag 与 GUIDE 一致。
+- 静态校验：structure（89/37/60）、cloud consistency、flag contract、
+  `validate-cloud-entrypoints.py --strict-probes` 全部通过。
+- `validate-all.sh cloud`：30 PASS / 0 FAIL / 0 SKIP。

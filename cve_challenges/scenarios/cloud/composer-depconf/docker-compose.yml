@@ -4,11 +4,15 @@ services:
     networks:
       c37-net:
         ipv4_address: 10.37.0.10
+    ports:
+      - "10726:5000"
   composer-pipeline:
     build:
       context: ./composer-pipeline
       args:
         CVE_FLAG: ${CVE_FLAG:-flag{cloud-26-platform-worker}}
+    ports:
+      - "10637:5000"
     environment:
       - REGISTRY_URL=http://pkg-registry:5000
       - WORKER_TOKEN=composer-worker-token
@@ -24,9 +28,8 @@ services:
       c37-net:
         ipv4_address: 10.37.0.40
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10637:5000"
     environment:
       - REGISTRY_URL=http://pkg-registry:5000
       - PIPELINE_URL=http://composer-pipeline:5000

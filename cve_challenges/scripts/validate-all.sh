@@ -1,6 +1,6 @@
 #!/bin/bash
 # Full-scenario validation: start each scenario, verify it, stop it.
-# Usage: ./validate-all.sh [docker|k8s|vagrant|all]
+# Usage: ./validate-all.sh [docker|cloud|k8s|vagrant|all]
 # Default: docker (only scenarios deployable without Vagrant)
 
 set -euo pipefail
@@ -19,7 +19,7 @@ import yaml
 d = yaml.safe_load(open('$SCRIPT_DIR/scenarios.yaml'))
 for sid, s in sorted(d['scenarios'].items()):
     t = s['type']
-    if '$FILTER' == 'all' or t == '$FILTER':
+    if '$FILTER' == 'all' or t == '$FILTER' or ('$FILTER' == 'cloud' and t == 'docker' and sid.lower().startswith('cloud-')):
         if not s.get('optional'):
             print(sid)
 " 2>/dev/null); do
@@ -37,8 +37,8 @@ for sid, s in sorted(d['scenarios'].items()):
             echo "PASS (no port check)" | tee -a "$LOG"
             PASS=$((PASS + 1))
         else
-            echo "PASS (files exist)" | tee -a "$LOG"
-            PASS=$((PASS + 1))
+            echo "FAIL (port $PORT unreachable)" | tee -a "$LOG"
+            FAIL=$((FAIL + 1))
         fi
 
         bash "$SCRIPT_DIR/stop-scenario.sh" "$sid" >> "$LOG" 2>&1
@@ -47,6 +47,10 @@ for sid, s in sorted(d['scenarios'].items()):
         SKIP=$((SKIP + 1))
     fi
 done
+
+if [ "$FILTER" = "cloud" ]; then
+    python3 "$SCRIPT_DIR/validate-cloud-entrypoints.py" | tee -a "$LOG"
+fi
 
 echo "" | tee -a "$LOG"
 echo "=== Results: $PASS PASS | $FAIL FAIL | $SKIP SKIP ===" | tee -a "$LOG"

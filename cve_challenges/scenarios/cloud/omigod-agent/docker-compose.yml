@@ -14,13 +14,14 @@ services:
       context: ./omi-agent
       args:
         CVE_FLAG: ${CVE_FLAG:-flag{cloud-22-vm-root}}
+    ports:
+      - "10633:5986"
     networks:
       c33-net:
         ipv4_address: 10.33.0.30
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10633:5000"
     environment:
       - AGENT_URL=http://omi-agent:5986
     networks:

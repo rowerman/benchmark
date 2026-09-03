@@ -3,6 +3,8 @@ services:
     build: ./build-worker
     environment:
       - BUILD_SECRET=build-fleet-internal-secret
+    ports:
+      - "10629:5000"
     networks:
       c29-net:
         ipv4_address: 10.29.0.10
@@ -10,6 +12,8 @@ services:
     build: ./internal-registry
     environment:
       - VICTIM_IMAGE=echo 'victim app running'; id
+    ports:
+      - "10718:5000"
     networks:
       c29-net:
         ipv4_address: 10.29.0.20
@@ -21,13 +25,14 @@ services:
     environment:
       - REGISTRY_URL=http://internal-registry:5000
       - IMAGE_NAME=victim-app:latest
+    ports:
+      - "10719:5000"
     networks:
       c29-net:
         ipv4_address: 10.29.0.30
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10629:5000"
     environment:
       - BUILD_URL=http://build-worker:5000
       - REGISTRY_URL=http://internal-registry:5000

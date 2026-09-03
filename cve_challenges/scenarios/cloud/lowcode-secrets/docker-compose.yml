@@ -1,15 +1,16 @@
 services:
   connector-store:
     build: ./connector-store
+    ports:
+      - "10638:5000"
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-27-connector-secret}}
     networks:
       c38-net:
         ipv4_address: 10.38.0.10
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10638:5000"
     environment:
       - STORE_URL=http://connector-store:5000
     networks:

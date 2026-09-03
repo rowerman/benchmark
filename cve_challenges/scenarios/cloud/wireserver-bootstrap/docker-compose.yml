@@ -1,6 +1,8 @@
 services:
   host-agent:
     build: ../../../infra/cloud/host-agent
+    ports:
+      - "10628:5000"
     environment:
       - BOOTSTRAP_SCRIPT=TLS_BOOTSTRAP_TOKEN=token-abcdef
       - FLAG=${CVE_FLAG1:-flag{cloud-17-bootstrap}}
@@ -12,6 +14,8 @@ services:
     environment:
       - BOOTSTRAP_TOKEN=token-abcdef
       - FLAG=${CVE_FLAG2:-flag{cloud-17-node-secrets}}
+    ports:
+      - "10722:5000"
     networks:
       c28-net:
         ipv4_address: 168.63.129.20
@@ -21,9 +25,8 @@ services:
       c28-net:
         ipv4_address: 168.63.129.30
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10628:5000"
     environment:
       - HOST_AGENT_URL=http://168.63.129.16:5000
       - CONTROL_URL=http://control-plane:5000

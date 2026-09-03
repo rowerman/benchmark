@@ -23,6 +23,10 @@ cd cve_challenges
 # Check registry, scenario documentation, and chain references
 python scripts/validate-structure.py
 python scripts/validate-flag-contract.py
+
+# Feature-driven nmap service identification for Docker cloud scenarios
+bash scripts/setup-cloud-nmap.sh             # once: merge probes (iptables needs root)
+bash scripts/validate-cloud-nmap.sh          # 30 cloud main ports, no Werkzeug/unknown
 ```
 
 Docker Compose is required for Docker scenarios. KIND and kubectl are required

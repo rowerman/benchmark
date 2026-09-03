@@ -1,11 +1,10 @@
 services:
   attacker:
+    profiles: [debug]
     build:
       context: ./attacker
       args:
         CVE_FLAG: ${CVE_FLAG:-flag{cloud-09-default}}
-    ports:
-      - "10613:5000"
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-09-default}}
       - IDP_URL=http://saml-idp:5000
@@ -19,6 +18,8 @@ services:
 
   saml-idp:
     build: ./saml-idp
+    ports:
+      - "10613:5000"
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-09-golden-saml}}
 
@@ -41,5 +42,8 @@ services:
     build:
       context: ../../../infra/cloud/iam-trust
     environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-09-golden-saml}}
       - IAM_ROLES_FILE=/app/roles/default.yaml
       - OIDC_JWKS_URL=http://saml-idp:5000/.well-known/jwks.json
+    ports:
+      - "10709:5000"

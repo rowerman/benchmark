@@ -1,6 +1,8 @@
 services:
   control-api:
     build: ./control-api
+    ports:
+      - "10634:5000"
     environment:
       - AUDIT_URL=http://audit-log:5000
     networks:
@@ -8,18 +10,23 @@ services:
         ipv4_address: 10.34.0.10
   sts:
     build: ./sts
+    ports:
+      - "10723:5000"
     networks:
       c34-net:
         ipv4_address: 10.34.0.20
   audit-log:
     build: ../../../infra/cloud/audit-log
+    ports:
+      - "10724:5000"
+    environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-23-zero-audit-enum}}
     networks:
       c34-net:
         ipv4_address: 10.34.0.30
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10634:5000"
     environment:
       - API_URL=http://control-api:5000
       - STS_URL=http://sts:5000

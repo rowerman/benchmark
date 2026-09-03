@@ -1,11 +1,10 @@
 services:
   attacker:
+    profiles: [debug]
     build:
       context: ./attacker
       args:
         CVE_FLAG: ${CVE_FLAG:-flag{cloud-07-default}}
-    ports:
-      - "10611:5000"
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-07-default}}
       - OIDC_URL=http://oidc:5000
@@ -20,6 +19,8 @@ services:
   oidc:
     build:
       context: ../../../infra/cloud/oidc-idp
+    ports:
+      - "10611:5000"
     environment:
       - OIDC_ISSUER=https://token.actions.githubusercontent.com
       - OIDC_TOKEN_TTL=3600
@@ -28,8 +29,11 @@ services:
     build:
       context: ../../../infra/cloud/iam-trust
     environment:
+      - FLAG=${CVE_FLAG:-flag{cloud-07-default}}
       - OIDC_JWKS_URL=http://oidc:5000/.well-known/jwks.json
       - IAM_ROLES_FILE=/app/roles/default.yaml
+    ports:
+      - "10707:5000"
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
       interval: 15s

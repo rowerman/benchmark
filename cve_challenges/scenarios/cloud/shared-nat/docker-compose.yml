@@ -1,8 +1,11 @@
 services:
   victim-api:
     build: ./victim-api
+    ports:
+      - "10639:5000"
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-28-allowlist-bypass}}
+      - NAT_URL=http://shared-nat:5000
     networks:
       c39-trust:
         ipv4_address: 168.63.0.20
@@ -14,9 +17,8 @@ services:
       c39-public:
         ipv4_address: 10.39.1.10
   attacker:
+    profiles: [debug]
     build: ./attacker
-    ports:
-      - "10639:5000"
     environment:
       - NAT_URL=http://shared-nat:5000
       - VICTIM_URL=http://victim-api:5000

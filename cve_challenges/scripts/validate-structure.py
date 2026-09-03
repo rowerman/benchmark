@@ -160,11 +160,24 @@ def validates_registered_port(entry: dict[str, object], compose: Path) -> bool:
     if not entry.get("port"):
         return True
     services = (yaml.safe_load(compose.read_text(encoding="utf-8")) or {}).get("services", {})
+    attacker = services.get("attacker")
+    if isinstance(attacker, dict) and published_ports(attacker):
+        return False
     registered_port = int(entry["port"])
+    public_service = entry.get("public_service")
+    if public_service is None:
+        return any(
+            isinstance(config, dict)
+            and (registered_port in published_ports(config) or has_host_proxy_port(config, registered_port))
+            for config in services.values()
+        )
+    if not isinstance(public_service, str) or public_service == "attacker" or public_service not in services:
+        return False
     return any(
         isinstance(config, dict)
+        and service_name == public_service
         and (registered_port in published_ports(config) or has_host_proxy_port(config, registered_port))
-        for config in services.values()
+        for service_name, config in services.items()
     )
 
 

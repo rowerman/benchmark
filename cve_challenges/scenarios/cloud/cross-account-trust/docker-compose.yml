@@ -1,11 +1,10 @@
 services:
   attacker:
+    profiles: [debug]
     build:
       context: ./attacker
       args:
         CVE_FLAG: ${CVE_FLAG:-flag{cloud-08-default}}
-    ports:
-      - "10612:5000"
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-08-default}}
       - IAM_URL=http://iam:5000
@@ -19,6 +18,8 @@ services:
   iam:
     build:
       context: ../../../infra/cloud/iam-trust
+    ports:
+      - "10612:5000"
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
       interval: 15s
@@ -47,5 +48,7 @@ services:
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-08-step2-cross-account}}
       - IAM_URL=http://iam:5000
+    ports:
+      - "10708:5000"
     depends_on:
       - iam

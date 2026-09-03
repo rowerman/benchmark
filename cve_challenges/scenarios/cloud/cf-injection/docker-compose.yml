@@ -4,8 +4,6 @@ services:
       context: ./console
       args:
         CVE_FLAG: ${CVE_FLAG:-flag{cloud-04-default}}
-    ports:
-      - "10605:5000"
     environment:
       - FLAG=${CVE_FLAG:-flag{cloud-04-default}}
       - PARSER_URL=http://parser:5000
@@ -25,6 +23,8 @@ services:
       - FLAG=${CVE_FLAG:-flag{cloud-04-default}}
       - SSM_URL=http://ssm:5000
       - EXECUTION_ROLE_TOKEN=stack-execution-role
+    ports:
+      - "10605:5000"
     depends_on:
       - ssm
     healthcheck:
