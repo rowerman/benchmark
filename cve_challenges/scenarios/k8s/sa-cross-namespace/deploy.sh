@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
-FLAG1="${CVE_FLAG1:-flag{k8s-32-step1-sa}}"
-FLAG2="${CVE_FLAG2:-flag{k8s-32-step2-cross-ns}}"
+FLAG1="${CVE_FLAG1:-flag{k8s-32-step1-sa\}}"
+FLAG2="${CVE_FLAG2:-flag{k8s-32-step2-cross-ns\}}"
 K8S_ID="k8s-32"
 CLUSTER_NAME="cve-k8s32-sa-cross-ns"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"

@@ -2,8 +2,8 @@
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
-FLAG1="${CVE_FLAG1:-flag{c34-step1-xxe}}"
-FLAG2="${CVE_FLAG2:-flag{c34-step2-es}}"
+FLAG1="${CVE_FLAG1:-flag{c34-step1-xxe\}}"
+FLAG2="${CVE_FLAG2:-flag{c34-step2-es\}}"
 
 echo "[Chain-34] XXE SVG to Elasticsearch Data Exfiltration — 2 steps, Web→DB"
 

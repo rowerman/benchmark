@@ -2,8 +2,8 @@
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
-FLAG1="${CVE_FLAG1:-flag{c35-step1-php}}"
-FLAG2="${CVE_FLAG2:-flag{c35-step2-mongo}}"
+FLAG1="${CVE_FLAG1:-flag{c35-step1-php\}}"
+FLAG2="${CVE_FLAG2:-flag{c35-step2-mongo\}}"
 
 echo "[Chain-35] PHP Deserialization to MongoDB NoSQL Injection — 2 steps, Web→DB"
 

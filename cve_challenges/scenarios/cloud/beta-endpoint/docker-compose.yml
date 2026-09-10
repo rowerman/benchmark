@@ -1,6 +1,10 @@
 services:
   console:
     build: ./console
+    environment:
+      - API_CREDENTIAL=valid-sigv4
+    ports:
+      - "10727:5000"
     networks:
       c35-net:
         ipv4_address: 10.35.0.10
@@ -9,6 +13,8 @@ services:
     environment:
       - AUDIT_URL=http://audit-log:5000
       - API_CREDENTIAL=valid-sigv4
+    ports:
+      - "10729:5000"
     networks:
       c35-net:
         ipv4_address: 10.35.0.20
@@ -24,6 +30,8 @@ services:
         ipv4_address: 10.35.0.30
   audit-log:
     build: ../../../infra/cloud/audit-log
+    ports:
+      - "10728:5000"
     networks:
       c35-net:
         ipv4_address: 10.35.0.40

@@ -5,9 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 CLUSTER_NAME="cve-chain-k8s-admin"
 source "$SCRIPT_DIR/../../scripts/k8s-common.sh"
-FLAG1="${CVE_FLAG1:-flag{chain2-step1-rbac}}"
-FLAG2="${CVE_FLAG2:-flag{chain2-step2-escape}}"
-FLAG3="${CVE_FLAG3:-flag{chain2-step3-etcd-final}}"
+FLAG1="${CVE_FLAG1:-flag{chain2-step1-rbac\}}"
+FLAG2="${CVE_FLAG2:-flag{chain2-step2-escape\}}"
+FLAG3="${CVE_FLAG3:-flag{chain2-step3-etcd-final\}}"
 
 echo "[Chain 2] Container to Cluster Admin — 3 steps, K8s only"
 

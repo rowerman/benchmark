@@ -14,7 +14,9 @@ FLAG = os.environ.get("FLAG", "flag{cloud-04-step2-cf-inject}")
 
 @app.route("/")
 def docs():
-    return {"service": "CloudFormation Template Parser", "endpoint": "POST /parse"}
+    return {"service": "CloudFormation Template Parser",
+            "endpoint": "POST /parse",
+            "sub_namespaces": ["/secure/app/db-password", "/secure/app/api-key"]}
 
 
 # Simulated cross-stack exports

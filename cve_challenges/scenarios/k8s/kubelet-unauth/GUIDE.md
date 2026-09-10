@@ -24,13 +24,13 @@
 | Difficulty | L2 |
 | Type | k8s (KIND cluster) |
 | Cluster Name | cve-k8s-07-kubelet |
-| Flag Location | Flag is stored in a ConfigMap or pod environment; accessible via kubelet `/runningpods/` endpoint |
+| Flag Location | Flag is a plaintext pod environment variable on `flag-holder` (visible in the kubelet `/pods` pod spec) |
 
 ## Attack Path Summary
 1. Kubelet is configured with `anonymous-auth: true` and `authorization-mode: AlwaysAllow`
 2. The kubelet API is accessible on port 10250 without authentication
 3. Use the kubelet `/runningpods/` endpoint to list pods and read their information
-4. Extract the flag from pod metadata, environment variables, or ConfigMaps visible through the kubelet
+4. Extract the flag from the container environment variables in the kubelet pod spec
 
 ## Prerequisites
 - kubectl access to KIND cluster `cve-k8s-07-kubelet`
@@ -101,7 +101,7 @@ curl -k "https://${NODE_IP}:10250/run/default/flag-holder/nginx?cmd=cat%20/etc/h
 
 ### Step 6: Capture Flag
 - Flag format: `flag{k8s-07-*}`
-- Flag location: Accessible via the kubelet API's pod information (may be in environment variables, ConfigMap references, or the pod spec)
+- Flag location: Plaintext env var `FLAG` of the `flag-holder` container, returned in the kubelet API's pod spec
 - Expected output: `flag{k8s-07-default}` (or custom value from `CVE_FLAG`)
 
 ## Verification Commands

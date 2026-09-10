@@ -11,6 +11,8 @@ services:
         ipv4_address: 10.36.0.10
   audit-log:
     build: ../../../infra/cloud/audit-log
+    ports:
+      - "10725:5000"
     networks:
       c36-net:
         ipv4_address: 10.36.0.20
@@ -20,7 +22,6 @@ services:
     environment:
       - EXPLORER_URL=http://explorer-api:5000
       - AUDIT_URL=http://audit-log:5000
-      - CALLER_ARN=arn:aws:iam::111122223333:user/attacker
     networks:
       c36-net:
         ipv4_address: 10.36.0.30

@@ -4,9 +4,9 @@ set -euo pipefail
 K8S_ID="chain12"
 CLUSTER_NAME="cve-chain12-caps-cluster"
 source "$(dirname "$0")/../../scripts/k8s-common.sh"
-FLAG1="${CVE_FLAG1:-flag{chain12-step1-capsys}}"
-FLAG2="${CVE_FLAG2:-flag{chain12-step2-rbac}}"
-FLAG3="${CVE_FLAG3:-flag{chain12-step3-etcd-final}}"
+FLAG1="${CVE_FLAG1:-flag{chain12-step1-capsys\}}"
+FLAG2="${CVE_FLAG2:-flag{chain12-step2-rbac\}}"
+FLAG3="${CVE_FLAG3:-flag{chain12-step3-etcd-final\}}"
 
 echo "[Chain 12] CAP_SYS_ADMIN to Full Cluster — 3 steps"
 

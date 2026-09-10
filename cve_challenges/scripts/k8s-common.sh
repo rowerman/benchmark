@@ -38,7 +38,7 @@ FLAGS_ROOT="${FLAGS_ROOT:-/home/kianabin/cve-flags}"
 
 k8s_init() {
     SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-    FLAG="${CVE_FLAG:-flag{${K8S_ID}-default}}"
+    FLAG="${CVE_FLAG:-flag{${K8S_ID}-default\}}"
     FLAG_DIR="${FLAGS_ROOT}/${K8S_ID}"
     export K8S_ID CLUSTER_NAME FLAG FLAG_DIR SCRIPT_DIR
 }

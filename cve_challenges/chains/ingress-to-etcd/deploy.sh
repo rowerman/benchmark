@@ -32,10 +32,10 @@ nodes:
 YAML
 
 FLAG_DIR="/home/kianabin/cve-flags/chain23"
-FLAG1="${CVE_FLAG1:-flag{chain23-step1-ingress}}"
-FLAG2="${CVE_FLAG2:-flag{chain23-step2-token}}"
-FLAG3="${CVE_FLAG3:-flag{chain23-step3-rbac}}"
-FLAG4="${CVE_FLAG4:-flag{chain23-step4-etcd-final}}"
+FLAG1="${CVE_FLAG1:-flag{chain23-step1-ingress\}}"
+FLAG2="${CVE_FLAG2:-flag{chain23-step2-token\}}"
+FLAG3="${CVE_FLAG3:-flag{chain23-step3-rbac\}}"
+FLAG4="${CVE_FLAG4:-flag{chain23-step4-etcd-final\}}"
 mkdir -p "$FLAG_DIR"
 
 kind create cluster --name "$CLUSTER_NAME" --config /tmp/chain23-kind-config.yaml

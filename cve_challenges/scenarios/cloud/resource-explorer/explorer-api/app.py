@@ -24,7 +24,9 @@ _resources = [
 @app.route("/")
 def docs():
     return {"service": "Resource Explorer",
-            "endpoint": "GET /search?q=<query>",
+            "endpoints": ["GET /search?q=<query>",
+                          "GET /resources/<id>",
+                          "GET /whoami"],
             "note": "search does not generate audit events"}
 
 
@@ -34,6 +36,12 @@ def search():
     results = [r for r in _resources if q in r["name"].lower() or q in r["type"].lower()]
     # NO audit call on purpose -- quiet enumeration
     return {"results": [{k: v for k, v in r.items() if k != "secret"} for r in results]}
+
+
+@app.route("/whoami")
+def whoami():
+    """sts:GetCallerIdentity-style lookup -- the caller context used downstream."""
+    return {"caller_arn": RESOURCE_READER_ARN}
 
 
 @app.route("/resources/<rid>")

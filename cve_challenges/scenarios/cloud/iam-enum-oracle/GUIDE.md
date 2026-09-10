@@ -34,8 +34,15 @@ CloudTrail 并不覆盖所有服务：调用不支持的 API 不产生任何审�
 2. 对单词表逐个调用公开 STS 入口 `http://localhost:10723/assume-role`，
    比对错误信息差异，确认存在的角色
    （AdminRole / SecretRole / DataPipelineRole）。
-3. 检查公开审计入口 `http://localhost:10724/logs`——审计记录数为 0，
-   侦察完全不可见；空审计状态返回动态 Flag。
+3. 验证「未记录层」：按端点过滤查询公开审计入口——
+   `http://localhost:10724/logs?path=/api/unsupported` 返回 0 条记录，
+   并返回动态 Flag；对照 `http://localhost:10724/logs?path=/api/supported`
+   会返回 ≥1 条记录，证明 `control-api` 已公布的 `/api/supported` 是
+   **被审计覆盖**的端点。
+
+> 审计 Flag 的判定条件是「指定端点没有任何审计条目」，而不是「审计日志
+> 整体为空」。因此先探测 `/api/supported` 不会打掉 Flag——它只是对照组，
+> 说明被覆盖的 API 会留痕。
 
 ## Flag
 `flag{cloud-23-zero-audit-enum}`

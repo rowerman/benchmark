@@ -11,7 +11,7 @@ k8s_wait_ready
 k8s_load_images python:3.11-slim
 
 NODE_NAME=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
-IMDS_FLAG="${CVE_FLAG:-flag{cloud-02-step1-netraw}}"
+IMDS_FLAG="${CVE_FLAG:-flag{cloud-02-step1-netraw\}}"
 
 # The simulated IMDS is reachable through a Service and only from victim pods.
 kubectl apply -f - << YAML

@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 CLUSTER_NAME="chain24-externalip-to-secrets"
-FLAG1="${CVE_FLAG1:-flag{chain24-step1-hijack}}"
-FLAG2="${CVE_FLAG2:-flag{chain24-step2-capture}}"
-FLAG3="${CVE_FLAG3:-flag{chain24-step3-crossns}}"
-FLAG4="${CVE_FLAG4:-flag{chain24-step4-secrets-final}}"
+FLAG1="${CVE_FLAG1:-flag{chain24-step1-hijack\}}"
+FLAG2="${CVE_FLAG2:-flag{chain24-step2-capture\}}"
+FLAG3="${CVE_FLAG3:-flag{chain24-step3-crossns\}}"
+FLAG4="${CVE_FLAG4:-flag{chain24-step4-secrets-final\}}"
 
 echo "[Chain-24] ExternalIP Hijack to Secret Theft"
 echo "[*] Deploying infrastructure..."

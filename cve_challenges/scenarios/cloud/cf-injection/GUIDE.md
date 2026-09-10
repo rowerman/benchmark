@@ -27,11 +27,14 @@ CloudFormation 控制台接受 YAML 模板，解析器对 `Fn::Sub` 的处理存
 - IaC 服务端解析的注入面
 
 ## 利用步骤
-1. 通过控制台（localhost:10605）提交原始 YAML 模板，其中 `BucketName`
-   使用 `!Sub ${/secure/flag}` 简写（等价于 `Fn::Sub` 字典）。
-2. 控制台把模板原文发给解析器；解析器按 CloudFormation 内建函数求值，
+1. 读取模板解析器根入口（localhost:10605）——除公布 `POST /parse` 外，
+   它还暴露了 `Fn::Sub` 可解析的参数命名空间（形如
+   `/secure/<name>`，例如 `/secure/app/db-password`）。
+2. 向该入口提交原始 YAML 模板，其中 `BucketName` 使用
+   `!Sub ${/secure/flag}` 简写（等价于 `Fn::Sub` 字典）。
+3. 解析器按 CloudFormation 内建函数求值，
    将 `${/secure/flag}` 替换为 SSM 参数值。
-3. 观察解析器输出——泄露的 SSM 参数即为 flag。
+4. 观察解析器输出——泄露的 SSM 参数即为 flag。
 
 > 注意：模板必须以 YAML 原文提交；若套上 JSON 包装，`Fn::Sub` 会退化成
 > 普通字符串而不被求值。

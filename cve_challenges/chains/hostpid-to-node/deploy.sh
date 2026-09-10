@@ -2,8 +2,8 @@
 set -euo pipefail
 CLUSTER_NAME="chain25-hostpid-to-node"
 FLAG_DIR="/home/kianabin/cve-flags/chain25"
-FLAG1="${CVE_FLAG1:-flag{chain25-step1-hostpid}}"
-FLAG2="${CVE_FLAG2:-flag{chain25-step2-escape-final}}"
+FLAG1="${CVE_FLAG1:-flag{chain25-step1-hostpid\}}"
+FLAG2="${CVE_FLAG2:-flag{chain25-step2-escape-final\}}"
 mkdir -p "$FLAG_DIR"
 
 echo "[Chain-25] hostPID to Node Control (2 steps)"

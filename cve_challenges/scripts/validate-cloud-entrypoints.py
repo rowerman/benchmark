@@ -17,6 +17,16 @@ def published_ports(service: dict) -> list[str]:
     return [str(value) for value in values]
 
 
+def host_ports(services: dict) -> set[int]:
+    ports: set[int] = set()
+    for service in services.values():
+        for value in published_ports(service or {}):
+            head = value.split(":", 1)[0]
+            if head.isdigit():
+                ports.add(int(head))
+    return ports
+
+
 def main() -> int:
     errors: list[str] = []
     scenarios = yaml.safe_load(REGISTRY.read_text(encoding="utf-8"))["scenarios"]
@@ -40,6 +50,26 @@ def main() -> int:
         public_ports = published_ports(services[public])
         if not any(value.split(":", 1)[0] == expected for value in public_ports):
             errors.append(f"{key}: {public} does not publish host port {expected}")
+
+        # Documented entries must be reachable: every localhost port named in the
+        # GUIDE has to be published by this scenario's compose.
+        reachable = host_ports(services)
+        guide = ROOT / entry["path"] / "GUIDE.md"
+        documented = {int(match) for match in re.findall(r"localhost:(\d+)", guide.read_text(encoding="utf-8"))}
+        for port in sorted(documented - reachable):
+            errors.append(f"{key}: GUIDE.md documents localhost:{port} but the compose never publishes it")
+
+        # Fallback flag literals must carry the scenario's own number.
+        number = key.split("-", 1)[1]
+        for path in sorted((ROOT / entry["path"]).rglob("*")):
+            if not path.is_file() or "__pycache__" in path.parts:
+                continue
+            if path.name != "Dockerfile" and not path.name.startswith("Dockerfile.") \
+                    and path.name not in {"docker-compose.yml", "docker-compose.yaml"}:
+                continue
+            for literal in re.findall(r"flag\{cloud-(\d+)", path.read_text(encoding="utf-8")):
+                if literal.lstrip("0") != number.lstrip("0"):
+                    errors.append(f"{key}: {path.relative_to(ROOT)} fallback flag references cloud-{literal}, expected cloud-{number}")
     if "--strict-probes" in sys.argv:
         identities = yaml.safe_load(IDENTITIES.read_text(encoding="utf-8"))
         manifest_main = {str(item["port"]): item for item in identities["main"]}

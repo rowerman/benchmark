@@ -2,9 +2,9 @@
 # Chain 11: hostPath → Kubelet → CRI Socket (3 steps)
 set -euo pipefail
 CLUSTER_NAME="cve-chain11-hostpath-node"
-FLAG1="${CVE_FLAG1:-flag{chain11-step1-hostpath}}"
-FLAG2="${CVE_FLAG2:-flag{chain11-step2-kubelet}}"
-FLAG3="${CVE_FLAG3:-flag{chain11-step3-node-final}}"
+FLAG1="${CVE_FLAG1:-flag{chain11-step1-hostpath\}}"
+FLAG2="${CVE_FLAG2:-flag{chain11-step2-kubelet\}}"
+FLAG3="${CVE_FLAG3:-flag{chain11-step3-node-final\}}"
 
 echo "[Chain 11] hostPath to Node Control — 3 steps"
 

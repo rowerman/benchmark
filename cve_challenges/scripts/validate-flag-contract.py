@@ -39,6 +39,24 @@ def main() -> int:
         for line in text.splitlines():
             if re.search(r"(?:FLAG\d*|CVE_FLAG\d*)=\s*['\"]?flag\{", line):
                 errors.append(f"{script.relative_to(ROOT)}: hardcoded Flag assignment")
+
+    # Shell parameter expansion closes the default word at an unescaped '}', so
+    # "${VAR:-flag{x}}" silently appends a stray '}' when VAR is set and the
+    # runtime Flag becomes malformed. The closing brace must be escaped.
+    shell_scripts = (
+        sorted((ROOT / "scripts").glob("*.sh"))
+        + sorted((ROOT / "scenarios").glob("*/*/deploy.sh"))
+        + sorted((ROOT / "scenarios").glob("*/*/teardown.sh"))
+        + sorted((ROOT / "chains").glob("*/deploy.sh"))
+        + sorted((ROOT / "chains").glob("*/teardown.sh"))
+    )
+    for script in shell_scripts:
+        for number, line in enumerate(script.read_text(encoding="utf-8").splitlines(), 1):
+            if ":-flag{" in line and not re.search(r":-flag\{.*\\\}", line):
+                errors.append(
+                    f"{script.relative_to(ROOT)}:{number}: unescaped closing brace in "
+                    f"Flag default (use \\}} before the closing quote)"
+                )
     if errors:
         print("Flag contract validation failed:")
         print("\n".join(f"- {error}" for error in errors))

@@ -11,9 +11,9 @@ echo "  K8S-16 (CRI Socket) -> K8S-06 (secrets from node shell) -> K8S-08 (etcd)
 # Prepare flags
 FLAG_DIR="/home/kianabin/cve-flags/chain21"
 mkdir -p "$FLAG_DIR"
-FLAG1="${CVE_FLAG1:-flag{chain21-step1-cri}}"
-FLAG2="${CVE_FLAG2:-flag{chain21-step2-rbac}}"
-FLAG3="${CVE_FLAG3:-flag{chain21-step3-etcd}}"
+FLAG1="${CVE_FLAG1:-flag{chain21-step1-cri\}}"
+FLAG2="${CVE_FLAG2:-flag{chain21-step2-rbac\}}"
+FLAG3="${CVE_FLAG3:-flag{chain21-step3-etcd\}}"
 echo "$FLAG1" > "$FLAG_DIR/step1.txt"
 
 echo "[*] Creating unified KIND cluster..."

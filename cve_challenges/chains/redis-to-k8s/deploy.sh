@@ -4,10 +4,10 @@ set -euo pipefail
 K8S_ID="chain16"
 CLUSTER_NAME="cve-chain16-redis-k8s"
 source "$(dirname "$0")/../../scripts/k8s-common.sh"
-FLAG1="${CVE_FLAG1:-flag{chain16-step1-redis}}"
-FLAG2="${CVE_FLAG2:-flag{chain16-step2-priv}}"
-FLAG3="${CVE_FLAG3:-flag{chain16-step3-rbac}}"
-FLAG4="${CVE_FLAG4:-flag{chain16-step4-etcd-final}}"
+FLAG1="${CVE_FLAG1:-flag{chain16-step1-redis\}}"
+FLAG2="${CVE_FLAG2:-flag{chain16-step2-priv\}}"
+FLAG3="${CVE_FLAG3:-flag{chain16-step3-rbac\}}"
+FLAG4="${CVE_FLAG4:-flag{chain16-step4-etcd-final\}}"
 
 echo "[Chain 16] Redis to K8s Cluster Admin — 4 steps"
 
