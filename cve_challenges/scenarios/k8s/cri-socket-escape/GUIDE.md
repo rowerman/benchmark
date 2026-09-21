@@ -10,35 +10,23 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-16-cri-socket |
 
 ## 场景概述
-- 技术：CRI socket abuse
-- 难度：L2
-- 交付方式：k8s
-## 攻击路径与利用步骤
 
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | CRI socket abuse (container runtime socket) |
-| Difficulty | L2 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-16-cri-socket |
-| Flag Location | `/host-flag/flag.txt` on the KIND node (not mounted into the pod; reachable only after escape) |
-
-## Attack Path Summary
 1. Pod has `/run/containerd/containerd.sock` mounted via hostPath with `type: Socket`
 2. Pod runs as root with `ctr` binary (containerd CLI) installed
 3. Use `ctr` to list images available through the host containerd
 4. Launch a **privileged** container via the host containerd socket that mounts the host filesystem
 5. Read the flag from the escaped container
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-16-cri-socket`
 - Pod name: `cri-escape-pod`
 - Tools inside pod: `ctr` (containerd CLI), bash
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Initial Access
 The pod `cri-escape-pod` is deployed with the containerd socket mounted. Verify access:
@@ -115,7 +103,8 @@ cat /host/host-flag/flag.txt
 - Flag location: `/host-flag/flag.txt` on the KIND node, accessible as `/mnt/flag.txt` from the escape container
 - Expected output: `flag{k8s-16-default}` (or custom value from `CVE_FLAG` env var)
 
-## Verification Commands
+## 验证命令
+
 ```bash
 # Verify the scenario is deployed and running
 kubectl get pod cri-escape-pod
@@ -130,6 +119,10 @@ kubectl exec cri-escape-pod -- ls -la /run/containerd/containerd.sock
 kubectl exec cri-escape-pod -- ctr --address /run/containerd/containerd.sock run --rm --privileged --mount type=bind,src=/host-flag,dst=/mnt,options=rbind:rw docker.io/library/alpine:latest escape cat /mnt/flag.txt
 ```
 
+## Flag
+
+- Flag 位置：`/host-flag/flag.txt` on the KIND node (not mounted into the pod; reachable only after escape)
+
 ## 此场景利用了哪些知识
 
 | 规划维度 | 所需知识 |
@@ -141,4 +134,5 @@ kubectl exec cri-escape-pod -- ctr --address /run/containerd/containerd.sock run
 | 验证 | Read the host flag through the created container |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

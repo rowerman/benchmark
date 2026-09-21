@@ -10,35 +10,23 @@
 | 难度 | L1 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-06-rbac |
 
 ## 场景概述
-- 技术：N/A (misconfiguration)
-- 难度：L1
-- 交付方式：k8s
-## 攻击路径与利用步骤
 
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | N/A (misconfiguration) -- overly permissive ClusterRole |
-| Difficulty | L1 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-06-rbac |
-| Flag Location | Secret `flag-secret` in namespace `kube-system` |
-
-## Attack Path Summary
 1. A ServiceAccount `attacker-sa` is bound to ClusterRole `secrets-reader`
 2. The ClusterRole grants `get` and `list` on `secrets` across all namespaces
 3. An attacker pod uses this SA to read secrets cluster-wide
 4. The flag is stored in `flag-secret` in `kube-system` namespace
 5. Decode the base64-encoded flag value
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-06-rbac`
 - Pod name: `attacker-pod` (bitnami/kubectl image)
 - The attacker-pod uses `serviceAccountName: attacker-sa`
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Initial Access
 Exec into the attacker pod that uses the overly-permissive ServiceAccount:
@@ -116,7 +104,8 @@ kubectl get pods -n kube-system
 - Access requirements: `get` permission on secrets in any namespace
 - Expected output: `flag{k8s-06-default}` (or custom value from `CVE_FLAG`)
 
-## Verification Commands
+## 验证命令
+
 ```bash
 # Verify the cluster is deployed
 kubectl cluster-info --context kind-cve-k8s-06-rbac
@@ -132,6 +121,10 @@ kubectl get secret flag-secret -n kube-system
 kubectl exec attacker-pod -- kubectl get secret flag-secret -n kube-system -o jsonpath='{.data.flag}' | base64 -d
 ```
 
+## Flag
+
+- Flag 位置：Secret `flag-secret` in namespace `kube-system`
+
 ## 此场景利用了哪些知识
 
 | 规划维度 | 所需知识 |
@@ -143,4 +136,5 @@ kubectl exec attacker-pod -- kubectl get secret flag-secret -n kube-system -o js
 | 验证 | Decode kube-system/flag-secret |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

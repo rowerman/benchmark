@@ -10,34 +10,22 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-07-kubelet |
 
 ## 场景概述
-- 技术：N/A (misconfiguration)
-- 难度：L2
-- 交付方式：k8s
-## 攻击路径与利用步骤
 
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | N/A (misconfiguration) -- anonymous kubelet on port 10250 |
-| Difficulty | L2 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-07-kubelet |
-| Flag Location | Flag is a plaintext pod environment variable on `flag-holder` (visible in the kubelet `/pods` pod spec) |
-
-## Attack Path Summary
 1. Kubelet is configured with `anonymous-auth: true` and `authorization-mode: AlwaysAllow`
 2. The kubelet API is accessible on port 10250 without authentication
 3. Use the kubelet `/runningpods/` endpoint to list pods and read their information
 4. Extract the flag from the container environment variables in the kubelet pod spec
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-07-kubelet`
 - `curl` (or similar HTTP client) on the attack machine
 - Network access to the KIND node's kubelet port 10250
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Get the Node IP
 ```bash
@@ -104,7 +92,8 @@ curl -k "https://${NODE_IP}:10250/run/default/flag-holder/nginx?cmd=cat%20/etc/h
 - Flag location: Plaintext env var `FLAG` of the `flag-holder` container, returned in the kubelet API's pod spec
 - Expected output: `flag{k8s-07-default}` (or custom value from `CVE_FLAG`)
 
-## Verification Commands
+## 验证命令
+
 ```bash
 # Verify the cluster is deployed
 kubectl cluster-info --context kind-cve-k8s-07-kubelet
@@ -123,6 +112,10 @@ curl -sk https://${NODE_IP}:10250/pods | head -100
 kubectl describe node | grep -A5 Kubelet
 ```
 
+## Flag
+
+- Flag 位置：Flag is a plaintext pod environment variable on `flag-holder` (visible in the kubelet `/pods` pod spec)
+
 ## 此场景利用了哪些知识
 
 | 规划维度 | 所需知识 |
@@ -134,4 +127,5 @@ kubectl describe node | grep -A5 Kubelet
 | 验证 | Use kubelet access to obtain the scenario flag |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

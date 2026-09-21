@@ -10,23 +10,10 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-28-node-evasion |
 
 ## 场景概述
-- 技术：N/A (scheduling bypass)
-- 难度：L2
-- 交付方式：k8s
-## 攻击路径与利用步骤
 
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | N/A (nodeSelector scheduling bypass) |
-| Difficulty | L2 |
-| Type | k8s (KIND cluster, multi-node) |
-| Cluster Name | cve-k8s-28-node-evasion |
-| Flag Location | `/flag.txt` in flag-holder pod on restricted node |
-
-## Attack Path Summary
 ```
 Attacker tenant (attacker-ns, limited RBAC) → Discover restricted node with
   security=restricted label → Create pod in own tenant with matching
@@ -37,7 +24,7 @@ Attacker tenant (attacker-ns, limited RBAC) → Discover restricted node with
 > 准入策略（Gatekeeper/Kyverno/PSA）来限制租户将工作负载调度到受保护节点；
 > 攻击者本身只能在自己的 namespace（attacker-ns）内创建 pod。
 
-## Prerequisites
+## 前置知识
 
 ### Knowledge
 - Kubernetes scheduling: Understanding nodeSelector and how it constrains pod placement
@@ -47,7 +34,7 @@ Attacker tenant (attacker-ns, limited RBAC) → Discover restricted node with
 ### Tools
 - kubectl: K8s API interaction (get nodes, run pods, exec, describe)
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Discover Node Labels
 ```bash
@@ -72,14 +59,18 @@ FLAG_IP=$(kubectl get svc flag-svc -n secure-ns -o jsonpath='{.spec.clusterIP}')
 kubectl --token=$TOKEN exec evader -n attacker-ns -- wget -qO- http://${FLAG_IP}:8080
 ```
 
-## Flag Location
-- `/flag.txt` in the `flag-holder` pod running on the restricted node
+## 验证命令
 
-## Verification Commands
 ```bash
 kubectl cluster-info --context kind-cve-k8s-28-node-evasion
 kubectl get nodes --show-labels
 ```
+
+## Flag
+
+- `/flag.txt` in the `flag-holder` pod running on the restricted node
+
+- Flag 位置：`/flag.txt` in flag-holder pod on restricted node
 
 ## 此场景利用了哪些知识
 
@@ -92,4 +83,5 @@ kubectl get nodes --show-labels
 | 验证 | Verify access to the target node's flag |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

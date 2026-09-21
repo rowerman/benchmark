@@ -49,7 +49,7 @@ def main() -> int:
     registry = yaml.safe_load((ROOT / "scripts" / "scenarios.yaml").read_text(encoding="utf-8"))["scenarios"]
     network = f"chain-{chain_number}-net"
     if dry_run:
-        nodes = chain.get("nodes") or chain.get("steps_detail") or []
+        nodes = chain.get("nodes") or []
         for index, node in enumerate(nodes, 1):
             scenario = str(node.get("scenario", "")).lower()
             entry = registry.get(scenario)
@@ -71,7 +71,7 @@ def main() -> int:
 
     projects: list[dict[str, str]] = []
     step_urls: dict[str, str] = {}
-    nodes = chain.get("nodes") or chain.get("steps_detail") or []
+    nodes = chain.get("nodes") or []
     flag_index = 1
     for index, node in enumerate(nodes, 1):
         scenario = str(node.get("scenario", "")).lower()

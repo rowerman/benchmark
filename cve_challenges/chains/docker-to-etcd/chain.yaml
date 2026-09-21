@@ -1,5 +1,6 @@
 name: "Docker Socket to etcd Cluster Compromise"
-domain: Kubernetes
+domains:
+- k8s
 difficulty: L2
 steps: 3
 description: >
@@ -8,9 +9,9 @@ description: >
   cluster control. Simpler than the CRI socket chain since Docker
   CLI is more accessible.
 
-steps_detail:
+nodes:
   - step: 1
-    scenario: K8S-17
+    scenario: k8s-17
     name: "Docker Socket Escape"
     description: >
       Use the mounted Docker socket to run a container with host
@@ -19,7 +20,7 @@ steps_detail:
     flag_location: "/host-flag/step1.txt on host (readable after docker escape)"
 
   - step: 2
-    scenario: K8S-09
+    scenario: k8s-09
     name: "Registry Poisoning"
     description: >
       Push a malicious image to the private container registry,
@@ -28,7 +29,7 @@ steps_detail:
     flag_location: "Kubernetes Secret in default namespace"
 
   - step: 3
-    scenario: K8S-08
+    scenario: k8s-08
     name: "etcd Unauthorized Access"
     description: >
       Access exposed etcd to read all cluster state and secrets

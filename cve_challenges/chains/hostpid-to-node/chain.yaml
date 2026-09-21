@@ -1,5 +1,6 @@
 name: "hostPID to Node Control"
-domain: K8s
+domains:
+- k8s
 difficulty: L2
 steps: 2
 description: >
@@ -7,9 +8,9 @@ description: >
   (no privileged mode, capabilities dropped). hostPID alone exposes the host
   filesystem via /proc/1/root, leaking node-level flags.
 
-steps_detail:
+nodes:
   - step: 1
-    scenario: K8S-23
+    scenario: k8s-23
     name: "hostPID ProcFS Host Filesystem Read"
     technique: hostPID /proc escape
     description: >
@@ -19,7 +20,6 @@ steps_detail:
     flag_location: "/host-flag/flag.txt on the KIND node (via /proc/1/root)"
 
   - step: 2
-    scenario: Node Flag
     name: "Node Final Flag"
     technique: Host filesystem read
     description: >

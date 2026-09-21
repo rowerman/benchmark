@@ -10,27 +10,12 @@
 | 难度 | L3 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | localhost:10443 |
+| 集群 | cve-k8s-20-ingress-rce |
+| 组件 | ingress-nginx v1.11.0 (pre-patch) |
+| 镜像 | kindest/node:v1.27.3 |
+| 攻击面 | Unauthenticated admission controller RCE |
 
 ## 场景概述
-- 技术：CVE-2025-1974
-- 难度：L3
-- 交付方式：k8s
-- 入口端口：10443
-## 攻击路径与利用步骤
-
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE | CVE-2025-1974 (CVSS 9.8) |
-| Difficulty | L3 |
-| Type | k8s |
-| Cluster Name | cve-k8s-20-ingress-rce |
-| External Port | 10443 (admission webhook NodePort) |
-| KIND Image | kindest/node:v1.27.3 |
-| Vulnerable Component | ingress-nginx v1.11.0 (pre-patch) |
-| Attack Vector | Unauthenticated admission controller RCE |
-
-## Attack Path Summary
 
 ```
 Network access :10443 → ValidatingWebhookConfiguration admission endpoint
@@ -39,12 +24,13 @@ Network access :10443 → ValidatingWebhookConfiguration admission endpoint
   → RCE in ingress-nginx controller pod → Read flag from /tmp/flag.txt
 ```
 
-## Prerequisites
+## 前置知识
+
 - Network access to localhost:10443
 - Tools: curl, OpenSSL, Python 3
 - No authentication required (pre-auth vulnerability)
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Verify Webhook Accessibility
 
@@ -157,16 +143,11 @@ kubectl exec -n ingress-nginx $CONTROLLER_POD -- cat /tmp/flag.txt
 # Output: flag{k8s-20-xxxxxxxxxxxxxxxx}
 ```
 
-## Flag Location
-- **Primary**: `/tmp/flag.txt` in the ingress-nginx-controller pod
-- **Format**: `flag{k8s-20-<16-hex>}` (runtime generated) or `flag{k8s-20-default}`
-
-## Alternative Approaches
 - Use the `load_module` directive instead of `ssl_engine` for alternative injection
 - Chain with SA token theft for cluster-wide access (see Chain-23)
 - Use the `mirror` annotation for blind SSRF variant
 
-## Verification Commands
+## 验证命令
 
 ```bash
 # Deploy scenario
@@ -185,6 +166,11 @@ kubectl exec -n ingress-nginx $CONTROLLER_POD -- ls /tmp/flag.txt
 bash teardown.sh
 ```
 
+## Flag
+
+- **Primary**: `/tmp/flag.txt` in the ingress-nginx-controller pod
+- **Format**: `flag{k8s-20-<16-hex>}` (runtime generated) or `flag{k8s-20-default}`
+
 ## 此场景利用了哪些知识
 
 | 规划维度 | 所需知识 |
@@ -196,4 +182,5 @@ bash teardown.sh
 | 验证 | Use the admission-controller compromise to retrieve the flag |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

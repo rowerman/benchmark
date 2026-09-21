@@ -10,37 +10,24 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | localhost:10501 |
+| 集群 | cve-k8s-15-image-tag |
+| 镜像仓库 | localhost:10501 (no TLS, on the kind network as `registry`) |
 
 ## 场景概述
-- 技术：N/A (image tag mutation) -- 可变 tag + Always 拉取 + 镜像仓库镜像配置
-- 难度：L2
-- 交付方式：k8s
 
-## 攻击路径与利用步骤
-
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | N/A -- mutable image tag with imagePullPolicy: Always |
-| Difficulty | L2 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-15-image-tag |
-| Registry | localhost:10501 (no TLS, on the kind network as `registry`) |
-| Flag Location | ConfigMap `app-config` in namespace `default` |
-
-## Attack Path Summary
 1. A Deployment uses `image: nginx:1.24-alpine` with `imagePullPolicy: Always`
 2. The cluster's containerd mirrors `docker.io` pulls to a local registry (`http://registry:5000`) published on host port 10501
 3. The attacker pushes a malicious image to the registry under the mirrored path `library/nginx:1.24-alpine`
 4. Deleting the pod forces a re-pull; the Deployment runs the attacker's image
 5. The backdoored payload uses the pod SA token to read ConfigMap `app-config` and writes the flag to `/tmp/flag_found.txt`
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-15-image-tag`
 - Docker CLI with access to the host Docker daemon
 - Network access to `localhost:10501`
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Verify the Setup
 ```bash
@@ -103,17 +90,19 @@ kubectl exec "$NEW_POD" -- cat /tmp/flag_found.txt
 # Expected: flag{k8s-15-*}
 ```
 
-## Flag Location
-- ConfigMap `app-config` in namespace `default` (readable by the workload SA via the
-  pre-configured `configmap-reader` RoleBinding)
-- Flag format: `flag{k8s-15-*}`
+## 验证命令
 
-## Verification
 ```bash
 cd cve_challenges/scenarios/k8s/mutable-image-tag && bash deploy.sh
 kubectl get configmap app-config -o jsonpath='{.data.flag}'
 bash teardown.sh
 ```
+
+## Flag
+
+- ConfigMap `app-config` in namespace `default` (readable by the workload SA via the
+  pre-configured `configmap-reader` RoleBinding)
+- Flag format: `flag{k8s-15-*}`
 
 ## 此场景利用了哪些知识
 
@@ -126,6 +115,7 @@ bash teardown.sh
 | 验证 | Verify the substituted workload exposes the flag |
 
 ## 修复建议
+
 使用不可变镜像 digest（`image@sha256:...`）并禁止 `latest`/可变 tag；镜像仓库启用
 写权限控制与推送审计；为 registry mirror 配置只读代理；生产环境用镜像签名
 （cosign/notation）与准入校验（Kyverno/Gatekeeper）。

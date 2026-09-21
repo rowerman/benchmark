@@ -42,8 +42,8 @@ cve_challenges/
   scenarios/
     web/      # 18 scenarios
     db/       # 9 scenarios
-    cloud/    # 30 public-cloud scenarios: Docker Compose
-    k8s/      # 33 Kubernetes/KIND scenarios
+    cloud/    # 31 scenarios (30 Docker Compose + 1 KIND)
+    k8s/      # 31 Kubernetes/KIND scenarios
   infra/
     cloud/    # shared provider simulators; not deployable scenarios
   chains/     # 37 multi-scenario attack paths
@@ -63,6 +63,10 @@ When adding a scenario, add its guide in the same change and run
 
 Cloud scenarios can share provider simulators in `infra/cloud`; those helpers
 must not be registered as standalone scenarios.
+
+`../BENCHMARK_GUIDE_CLOUD_K8S.md` integrates every cloud and k8s `GUIDE.md`
+plus the registry view; regenerate it with
+`python3 scripts/build-cloud-k8s-guide.py`.
 
 ## Flags
 

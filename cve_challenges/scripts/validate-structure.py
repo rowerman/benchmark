@@ -14,7 +14,6 @@ REGISTRY = ROOT / "scripts" / "scenarios.yaml"
 SCENARIOS_ROOT = ROOT / "scenarios"
 INFRA_ROOT = ROOT / "infra"
 CHAINS_ROOT = ROOT / "chains"
-SCENARIO_ID = re.compile(r"^(?:web|db|cloud|k8s)-\d+$", re.IGNORECASE)
 TABLE_SPLIT = re.compile(r"(?<!\\)\|")
 PORT_MIN = 10000
 PORT_MAX = 14000
@@ -246,7 +245,7 @@ def main() -> None:
 
     for chain_file in sorted(CHAINS_ROOT.glob("*/chain.yaml")):
         chain = yaml.safe_load(chain_file.read_text(encoding="utf-8")) or {}
-        nodes = chain.get("nodes") or chain.get("steps_detail") or []
+        nodes = chain.get("nodes") or []
         steps = chain.get("steps")
         if isinstance(steps, int) and steps != len(nodes):
             fail(errors, f"{chain_file.parent.name}: steps does not match node count")
@@ -254,12 +253,13 @@ def main() -> None:
             if not isinstance(node, dict):
                 continue
             scenario_id = node.get("scenario")
-            if (
-                scenario_id
-                and SCENARIO_ID.fullmatch(str(scenario_id))
-                and str(scenario_id).lower() not in scenarios
-            ):
-                fail(errors, f"{chain_file.parent.name}: unknown scenario {scenario_id}")
+            if scenario_id is not None and str(scenario_id).lower() not in scenarios:
+                fail(
+                    errors,
+                    f"{chain_file.parent.name}: step {node.get('step')} references unknown scenario {scenario_id!r}",
+                )
+            if not scenario_id and not node.get("name"):
+                fail(errors, f"{chain_file.parent.name}: step {node.get('step')} has neither a scenario nor a name")
 
         domains = chain.get("domains", [])
         if isinstance(domains, str):

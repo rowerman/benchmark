@@ -10,35 +10,23 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-12-hostpath |
 
 ## 场景概述
-- 技术：N/A (hostPath mount)
-- 难度：L2
-- 交付方式：k8s
-## 攻击路径与利用步骤
 
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | N/A (misconfiguration) -- writable hostPath volume + symlink |
-| Difficulty | L2 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-12-hostpath |
-| Flag Location | `/host-flag/flag.txt` on KIND node (or host) |
-
-## Attack Path Summary
 1. Pod `hostpath-pod` mounts `/var/log` from the host as a writable hostPath volume
 2. The flag lives on the node at `/host-flag` (mounted into the node, not into the pod)
 3. Create a symlink in `/var/log` pointing to the host's `/host-flag` directory
 4. Read the flag through the symlink -- or use the writable mount to write SSH keys, cron jobs, etc.
 5. Alternatively, the symlink trick can redirect writes to escape to the host filesystem
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-12-hostpath`
 - Pod name: `hostpath-pod` (alpine image)
 - Tools inside pod: `ln`, `cat`, `ls`
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Initial Access
 Exec into the pod with hostPath volumes:
@@ -120,7 +108,8 @@ cat /host-log/flag-link/flag.txt
   - Symlink escape: `ln -sf /host-flag /host-log/flag-link && cat /host-log/flag-link/flag.txt`
 - Expected output: `flag{k8s-12-default}` (or custom value from `CVE_FLAG`)
 
-## Verification Commands
+## 验证命令
+
 ```bash
 # Verify the scenario is deployed and running
 kubectl get pod hostpath-pod
@@ -137,6 +126,10 @@ kubectl exec hostpath-pod -- ls -la /host-flag/
 kubectl exec hostpath-pod -- sh -c 'ln -sf /host-flag /host-log/flag-link 2>/dev/null; cat /host-log/flag-link/flag.txt'
 ```
 
+## Flag
+
+- Flag 位置：`/host-flag/flag.txt` on KIND node (or host)
+
 ## 此场景利用了哪些知识
 
 | 规划维度 | 所需知识 |
@@ -148,4 +141,5 @@ kubectl exec hostpath-pod -- sh -c 'ln -sf /host-flag /host-log/flag-link 2>/dev
 | 验证 | Read the mounted host flag |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

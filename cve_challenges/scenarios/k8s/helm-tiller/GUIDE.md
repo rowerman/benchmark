@@ -10,34 +10,22 @@
 | 难度 | L1 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-10-helm |
 
 ## 场景概述
-- 技术：N/A (misconfiguration)
-- 难度：L1
-- 交付方式：k8s
-## 攻击路径与利用步骤
 
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | N/A (misconfiguration) -- Helm v2 Tiller without authentication |
-| Difficulty | L1 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-10-helm |
-| Flag Location | Secret `helm-flag` in namespace `kube-system` |
-
-## Attack Path Summary
 1. Helm v2 Tiller is deployed in `kube-system` with `cluster-admin` privileges
 2. Tiller's gRPC API is exposed on port 44134 without authentication
 3. An attacker can use the `helm` CLI to interact with Tiller and deploy charts
 4. Deploy a malicious Helm chart with cluster-admin privileges to read `helm-flag` secret
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-10-helm`
 - `helm` (v2) CLI installed on the attack machine
 - Network access to Tiller service: `tiller-deploy.kube-system:44134`
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Verify Tiller is Accessible
 ```bash
@@ -162,7 +150,8 @@ kubectl logs flag-reader
 - Access requirements: ability to deploy charts via Tiller (which runs as cluster-admin)
 - Expected output: `flag{k8s-10-default}` (or custom value from `CVE_FLAG`)
 
-## Verification Commands
+## 验证命令
+
 ```bash
 # Verify the cluster is deployed
 kubectl cluster-info --context kind-cve-k8s-10-helm
@@ -177,6 +166,10 @@ kubectl get secret helm-flag -n kube-system
 helm --host tiller-deploy.kube-system:44134 version
 ```
 
+## Flag
+
+- Flag 位置：Secret `helm-flag` in namespace `kube-system`
+
 ## 此场景利用了哪些知识
 
 | 规划维度 | 所需知识 |
@@ -188,4 +181,5 @@ helm --host tiller-deploy.kube-system:44134 version
 | 验证 | Deploy/read the flag-bearing resource |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

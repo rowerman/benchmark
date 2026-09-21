@@ -21,7 +21,7 @@ def scenario_flag_count(scenario_id: str) -> int:
 
 def chain_nodes(chain_dir: Path) -> list[dict[str, object]]:
     data = yaml.safe_load((chain_dir / "chain.yaml").read_text(encoding="utf-8")) or {}
-    return data.get("nodes") or data.get("steps_detail") or []
+    return data.get("nodes") or []
 
 
 def chain_flag_count(chain_dir: Path) -> int:

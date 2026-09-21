@@ -10,26 +10,11 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | localhost:10480 |
+| 集群 | cve-k8s-21-ingress-snippet |
+| 镜像 | kindest/node:v1.27.3 |
+| 攻击面 | Ingress annotation injection → SA token theft → Secret access |
 
 ## 场景概述
-- 技术：CVE-2021-25742
-- 难度：L2
-- 交付方式：k8s
-- 入口端口：10480
-## 攻击路径与利用步骤
-
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE | CVE-2021-25742 (CVSS 7.6) |
-| Difficulty | L2 |
-| Type | k8s |
-| Cluster Name | cve-k8s-21-ingress-snippet |
-| External Port | 10480 (ingress HTTP) |
-| KIND Image | kindest/node:v1.27.3 |
-| Attack Vector | Ingress annotation injection → SA token theft → Secret access |
-
-## Attack Path
 
 ```
 kubectl access → Modify Ingress server-snippet annotation
@@ -37,7 +22,12 @@ kubectl access → Modify Ingress server-snippet annotation
   → Use SA token to call K8s API → Read flag-secret
 ```
 
-## Step-by-Step Exploitation
+## 前置知识
+
+- kubectl access to KIND cluster `cve-k8s-21-ingress-snippet`
+- ingress-nginx 允许通过 Ingress annotation 注入 server-snippet（CVE-2021-25742）
+
+## 利用步骤
 
 ### Step 1: Identify Vulnerable Ingress
 
@@ -78,16 +68,18 @@ curl -k -H "Authorization: Bearer $TOKEN" \
 # Base64 decode the flag from the response
 ```
 
-## Flag Location
-- **Primary**: Kubernetes Secret `flag-secret` in `default` namespace
-- **Format**: `flag{k8s-21-<16-hex>}`
+## 验证命令
 
-## Verification
 ```bash
 cd cve_challenges/scenarios/k8s/ingress-snippet && bash deploy.sh
 kubectl get secret flag-secret -o jsonpath='{.data.flag}' | base64 -d
 bash teardown.sh
 ```
+
+## Flag
+
+- **Primary**: Kubernetes Secret `flag-secret` in `default` namespace
+- **Format**: `flag{k8s-21-<16-hex>}`
 
 ## 此场景利用了哪些知识
 
@@ -100,4 +92,5 @@ bash teardown.sh
 | 验证 | Return/read the secret containing the flag |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

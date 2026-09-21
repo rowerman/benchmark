@@ -10,35 +10,23 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-18-sa-admin |
 
 ## 场景概述
-- 技术：RBAC misconfiguration
-- 难度：L2
-- 交付方式：k8s
-## 攻击路径与利用步骤
 
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | RBAC misconfiguration -- leaked cluster-admin SA token |
-| Difficulty | L2 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-18-sa-admin |
-| Flag Location | Secret `flag-secret` in `ns-admin` namespace |
-
-## Attack Path Summary
 1. Cluster has two namespaces: `ns-admin` and `ns-ops`
 2. A ServiceAccount `cluster-admin-sa` exists in `ns-admin` bound to the `cluster-admin` ClusterRole
 3. The SA token for `cluster-admin-sa` is **leaked** as a Secret named `leaked-admin-token` in `ns-ops`
 4. An `init-pod` in `ns-ops` with a default ServiceAccount can discover the leaked token
 5. Use the leaked token with kubectl to read `flag-secret` in `ns-admin`
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-18-sa-admin`
 - Pods in `ns-ops`: `init-pod` (alpine), `attacker-pod` (bitnami/kubectl)
 - Tools: kubectl, curl, or any HTTP client
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Initial Foothold
 Start from a pod with limited permissions in `ns-ops`:
@@ -124,7 +112,8 @@ kubectl --token=$TOKEN run test --image=nginx -n default
 - Access requires cluster-admin privileges (or at least `get` on secrets in `ns-admin`)
 - Expected output: `flag{k8s-18-default}` (or custom value from `CVE_FLAG`)
 
-## Verification Commands
+## 验证命令
+
 ```bash
 # Verify the cluster is deployed
 kubectl get nodes
@@ -147,6 +136,10 @@ kubectl get secret flag-secret -n ns-admin
 # Note: default SA in ns-ops cannot do this; must use leaked token
 ```
 
+## Flag
+
+- Flag 位置：Secret `flag-secret` in `ns-admin` namespace
+
 ## 此场景利用了哪些知识
 
 | 规划维度 | 所需知识 |
@@ -158,4 +151,5 @@ kubectl get secret flag-secret -n ns-admin
 | 验证 | Read the protected flag resource |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

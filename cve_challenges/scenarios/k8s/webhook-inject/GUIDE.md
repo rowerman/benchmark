@@ -10,24 +10,10 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-25-webhook-inject |
 
 ## 场景概述
-- 技术：滥用"可注册 MutatingWebhookConfiguration"的越权 RBAC，注入恶意 sidecar
-- 难度：L2
-- 交付方式：k8s
 
-## 攻击路径与利用步骤
-
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | N/A -- overprivileged RBAC (create mutatingwebhookconfigurations) |
-| Difficulty | L2 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-25-webhook-inject |
-| Flag Location | Secret `vault-flag` in namespace `target-ns` |
-
-## Attack Path Summary
 1. Attacker SA `attacker-sa` is overprivileged: it can create `MutatingWebhookConfiguration` objects cluster-wide
 2. A webhook server (attacker-controlled, self-signed TLS) is pre-deployed in `attacker-ns`
 3. The attacker registers a mutating webhook whose `namespaceSelector` targets `attacker-ns`
@@ -35,11 +21,12 @@
 5. The sidecar writes the (victim-sa) SA token to `/tmp/token.txt`
 6. The attacker reads the token, then uses it to read `vault-flag` in `target-ns` (the only permission `victim-sa` has)
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-25-webhook-inject`
 - Pod name: `attacker-pod` in `attacker-ns` (bitnami/kubectl, uses `attacker-sa`)
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Get the Attacker SA Token
 ```bash
@@ -109,16 +96,18 @@ curl -sk -H "Authorization: Bearer $VICTIM_TOKEN" \
 # Output: flag{k8s-25-<16-hex>}
 ```
 
-## Flag Location
-- **Primary**: Secret `vault-flag` in namespace `target-ns`
-- **Format**: `flag{k8s-25-<16-hex>}`
+## 验证命令
 
-## Verification
 ```bash
 cd cve_challenges/scenarios/k8s/webhook-inject && bash deploy.sh
 kubectl get secret vault-flag -n target-ns -o jsonpath='{.data.flag}' | base64 -d
 bash teardown.sh
 ```
+
+## Flag
+
+- **Primary**: Secret `vault-flag` in namespace `target-ns`
+- **Format**: `flag{k8s-25-<16-hex>}`
 
 ## 此场景利用了哪些知识
 
@@ -131,6 +120,7 @@ bash teardown.sh
 | 验证 | Use the stolen victim-sa token to read the protected Secret |
 
 ## 修复建议
+
 将 `mutatingwebhookconfigurations` 的创建权限限制给受控的集群管理员，不允许
 普通平台运维/租户角色持有；对 admission webhook 的注册增加审计与告警；用
 Pod Security Admission / OPA 策略限制 sidecar 注入与 `serviceAccountName` 篡改。

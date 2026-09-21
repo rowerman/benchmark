@@ -10,23 +10,10 @@
 | 难度 | L3 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-19-ptrace |
 
 ## 场景概述
-- 技术：CAP_SYS_PTRACE abuse
-- 难度：L3
-- 交付方式：k8s
-## 攻击路径与利用步骤
 
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | CAP_SYS_PTRACE + CAP_SYS_ADMIN abuse, hostPID: true |
-| Difficulty | L3 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-19-ptrace |
-| Flag Location | `/host-flag/flag.txt` on the KIND node (not mounted into the pod; reachable only via host process injection) |
-
-## Attack Path Summary
 1. Pod runs with `CAP_SYS_PTRACE` and `CAP_SYS_ADMIN` capabilities, `hostPID: true`
 2. Ubuntu 22.04 image with `gdb` installed
 3. Identify `kubelet` process PID on the host (visible via hostPID)
@@ -34,12 +21,13 @@
 5. Use `gdb` to call `system()` inside the kubelet process, writing the flag to a readable file
 6. Read the flag from the temporary file
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-19-ptrace`
 - Pod name: `ptrace-pod`
 - Tools inside pod: `gdb` (pre-installed), `bash`, `ps`, `cat`
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Initial Access
 Exec into the pod with elevated capabilities:
@@ -143,7 +131,8 @@ gdb -p $KUBELET_PID -batch -ex "call (int)system(\"bash /tmp/escape.sh\")"
 - Read method: inject `system()` call via gdb into kubelet process to write flag to `/tmp/flag_out.txt`
 - Expected output: `flag{k8s-19-default}` (or custom value from `CVE_FLAG`)
 
-## Verification Commands
+## 验证命令
+
 ```bash
 # Verify the scenario is deployed and running
 kubectl get pod ptrace-pod
@@ -160,6 +149,10 @@ kubectl exec ptrace-pod -- ps aux | grep kubelet
 kubectl exec ptrace-pod -- which gdb
 ```
 
+## Flag
+
+- Flag 位置：`/host-flag/flag.txt` on the KIND node (not mounted into the pod; reachable only via host process injection)
+
 ## 此场景利用了哪些知识
 
 | 规划维度 | 所需知识 |
@@ -171,4 +164,5 @@ kubectl exec ptrace-pod -- which gdb
 | 验证 | Extract the flag from the targeted host process/filesystem |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

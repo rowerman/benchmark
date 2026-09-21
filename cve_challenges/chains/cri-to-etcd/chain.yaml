@@ -1,5 +1,6 @@
 name: "CRI Socket to etcd Full Cluster Compromise"
-domain: Kubernetes
+domains:
+- k8s
 difficulty: L3
 steps: 3
 description: >
@@ -8,9 +9,9 @@ description: >
   privileged container, then accesses the exposed etcd to take full
   control of the Kubernetes cluster.
 
-steps_detail:
+nodes:
   - step: 1
-    scenario: K8S-16
+    scenario: k8s-16
     name: "CRI Socket Escape"
     description: >
       Use the mounted containerd socket to run a privileged container,
@@ -19,7 +20,7 @@ steps_detail:
     flag_location: "/host-flag/step1.txt on the host (readable after ctr escape)"
 
   - step: 2
-    scenario: K8S-06
+    scenario: k8s-06
     name: "Secrets via Node Shell (admin.conf)"
     description: >
       From the escaped host context, use the node's admin.conf to read a
@@ -28,7 +29,7 @@ steps_detail:
     flag_location: "Kubernetes Secret chain21-stage2 in kube-system namespace"
 
   - step: 3
-    scenario: K8S-08
+    scenario: k8s-08
     name: "etcd Unauthorized Access"
     description: >
       Access the exposed etcd (port 11379) and read all cluster

@@ -1,5 +1,6 @@
 name: "Inngress RCE to etcd Compromise"
-domain: K8s
+domains:
+- k8s
 difficulty: L3
 steps: 4
 description: >
@@ -8,9 +9,9 @@ description: >
   RBAC privilege escalation, and culminating in etcd data access for
   complete cluster compromise.
 
-steps_detail:
+nodes:
   - step: 1
-    scenario: K8S-20
+    scenario: k8s-20
     name: "ingress-nginx Admission Controller RCE"
     technique: CVE-2025-1974
     description: >
@@ -22,7 +23,6 @@ steps_detail:
     flag_location: "/tmp/flag.txt in ingress-nginx controller pod"
 
   - step: 2
-    scenario: Token Discovery
     name: "ServiceAccount Token Discovery"
     technique: Credential Discovery
     description: >
@@ -33,7 +33,7 @@ steps_detail:
     flag_location: "SA token stored in /var/run/secrets/kubernetes.io/serviceaccount/token"
 
   - step: 3
-    scenario: K8S-06
+    scenario: k8s-06
     name: "RBAC Secrets Abuse"
     technique: ATT&CK T1552.007
     description: >
@@ -44,7 +44,7 @@ steps_detail:
     flag_location: "Secret 'rbac-flag' in kube-system namespace"
 
   - step: 4
-    scenario: K8S-08
+    scenario: k8s-08
     name: "etcd Unauthorized Access"
     technique: etcd Data Access
     description: >

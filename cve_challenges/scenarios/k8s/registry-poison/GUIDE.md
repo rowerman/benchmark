@@ -10,37 +10,24 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | localhost:10500 |
+| 集群 | cve-k8s-09-registry |
+| 镜像仓库 | localhost:10500 (no TLS, on the kind network as `k8s-registry`) |
 
 ## 场景概述
-- 技术：N/A (misconfiguration) -- 无鉴权私有镜像仓库 + 可变 tag + Always 拉取
-- 难度：L2
-- 交付方式：k8s
 
-## 攻击路径与利用步骤
-
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | N/A -- insecure registry with mutable tags |
-| Difficulty | L2 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-09-registry |
-| Registry | localhost:10500 (no TLS, on the kind network as `k8s-registry`) |
-| Flag Location | Secret `registry-flag` in namespace `default` (readable only by the workload SA) |
-
-## Attack Path Summary
 1. An insecure private registry runs on `localhost:10500` (no TLS), attached to the kind network as `k8s-registry`
 2. A Deployment (`registry-target`) pulls `k8s-registry:5000/backdoored-nginx:latest` with `imagePullPolicy: Always`
 3. The attacker pushes a malicious image with the same tag to the registry
 4. Deleting the pod forces a re-pull; the Deployment runs the backdoored image
 5. The backdoored payload uses the pod SA token to read Secret `registry-flag` and writes it to `/tmp/flag.txt`
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-09-registry`
 - Docker CLI with access to the host Docker daemon
 - Network access to `localhost:10500`
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Verify the Insecure Registry
 ```bash
@@ -96,18 +83,22 @@ kubectl exec "$NEW_POD" -- cat /tmp/flag.txt
 # Expected: flag{k8s-09-*}
 ```
 
-## Flag Location
-- Secret `registry-flag` in namespace `default` (readable by the default SA via the
-  pre-configured `registry-secret-reader` RoleBinding)
-- Flag format: `flag{k8s-09-*}`
+## 验证命令
 
-## Verification
 ```bash
 cd cve_challenges/scenarios/k8s/registry-poison && bash deploy.sh
 curl -s http://localhost:10500/v2/
 kubectl get deploy registry-target
 bash teardown.sh
 ```
+
+## Flag
+
+- Secret `registry-flag` in namespace `default` (readable by the default SA via the
+  pre-configured `registry-secret-reader` RoleBinding)
+- Flag format: `flag{k8s-09-*}`
+
+- Flag 位置：Secret `registry-flag` in namespace `default` (readable only by the workload SA)
 
 ## 此场景利用了哪些知识
 
@@ -120,6 +111,7 @@ bash teardown.sh
 | 验证 | Observe the poisoned workload and retrieve its flag |
 
 ## 修复建议
+
 私有镜像仓库必须启用鉴权、TLS 与推送审计；集群内镜像引用使用不可变 digest；
 对 `imagePullPolicy: Always` 的 Deployment 做镜像来源准入校验（Kyverno/Gatekeeper）
 并开启镜像签名验证。

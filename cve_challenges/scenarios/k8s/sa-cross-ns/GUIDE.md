@@ -10,35 +10,23 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-13-sa-cross |
 
 ## 场景概述
-- 技术：N/A (RBAC lateral)
-- 难度：L2
-- 交付方式：k8s
-## 攻击路径与利用步骤
 
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | N/A (RBAC lateral movement) -- leaked SA token across namespaces |
-| Difficulty | L2 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-13-sa-cross |
-| Flag Location | Secret `flag-secret` in namespace `ns-beta` |
-
-## Attack Path Summary
 1. Two namespaces: `ns-alpha` (attacker's initial foothold) and `ns-beta` (target)
 2. A ServiceAccount `target-reader` in `ns-beta` has `get/list` on secrets
 3. The token for `target-reader` is leaked as a Secret named `leaked-token` in `ns-alpha`
 4. An attacker pod in `ns-alpha` discovers the leaked token via environment variable
 5. Use the leaked token to authenticate as `target-reader` and read `flag-secret` in `ns-beta`
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-13-sa-cross`
 - Pod name: `attacker-pod` in namespace `ns-alpha`
 - Tools: kubectl (or curl + jq for API access)
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Initial Foothold
 Exec into the attacker pod in `ns-alpha`:
@@ -127,7 +115,8 @@ kubectl --token=$TOKEN get secrets -n kube-system
 - Access requirements: leaked SA token with secrets read permissions in `ns-beta`
 - Expected output: `flag{k8s-13-default}` (or custom value from `CVE_FLAG`)
 
-## Verification Commands
+## 验证命令
+
 ```bash
 # Verify the cluster is deployed
 kubectl cluster-info --context kind-cve-k8s-13-sa-cross
@@ -146,6 +135,10 @@ kubectl get secret leaked-token -n ns-alpha
 kubectl get secret flag-secret -n ns-beta
 ```
 
+## Flag
+
+- Flag 位置：Secret `flag-secret` in namespace `ns-beta`
+
 ## 此场景利用了哪些知识
 
 | 规划维度 | 所需知识 |
@@ -157,4 +150,5 @@ kubectl get secret flag-secret -n ns-beta
 | 验证 | Read the target namespace flag/secret |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

