@@ -48,6 +48,10 @@ k8s_init() {
 k8s_create_cluster() {
     echo "[${K8S_ID}] Creating KIND cluster: ${CLUSTER_NAME}..."
 
+    # extraMount host paths must exist before the node container is created;
+    # otherwise docker creates them as root and the scenario cannot write the flag.
+    [ -n "${FLAG_DIR:-}" ] && mkdir -p "$FLAG_DIR"
+
     local config_flag=""
     local config_file="${SCRIPT_DIR}/kind-config.yaml"
     if [ -f "$config_file" ]; then
@@ -113,9 +117,21 @@ k8s_wait_job() {
 k8s_install_calico() {
     echo "[${K8S_ID}] Installing Calico (NetworkPolicy enforcement)..."
     local calico_manifest="/tmp/calico-${K8S_ID}.yaml"
-    curl -sL --connect-timeout 10 --max-time 60 \
-        https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml \
-        -o "$calico_manifest"
+    # The manifest is fetched over the network; retry so a slow mirror does not fail the deploy.
+    for attempt in 1 2 3; do
+        curl -sL --connect-timeout 10 --max-time 120 \
+            https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml \
+            -o "$calico_manifest" || true
+        if grep -q 'name: calico-node' "$calico_manifest" 2>/dev/null; then
+            break
+        fi
+        echo "  Calico manifest download attempt ${attempt} incomplete, retrying..."
+        sleep 5
+    done
+    if ! grep -q 'name: calico-node' "$calico_manifest" 2>/dev/null; then
+        echo "[${K8S_ID}] ERROR: could not download the Calico manifest" >&2
+        exit 1
+    fi
     kubectl apply -f "$calico_manifest"
     # KIND does not support IPIP; switch Calico to VXLAN
     kubectl -n kube-system set env daemonset/calico-node CALICO_IPV4POOL_IPIP=Never 2>/dev/null || true
