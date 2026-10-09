@@ -27,8 +27,16 @@ def s3_server_header(response):
 # Valid credentials — must match what IMDS returns
 VALID_AK = os.environ.get("S3_ACCESS_KEY", "AKIACLOUD01EXAMPLE")
 VALID_SK = os.environ.get("S3_SECRET_KEY", "cloud01-imds-secret-key")
-FLAG = os.environ.get("FLAG", "flag{cloud-01-step2-imds}")
+def _read_flag(path, env_name, default):
+    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return handle.read().strip()
+    except OSError:
+        return os.environ.get(env_name, default)
 
+
+FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-01-step2-imds}")
 # Store objects in memory
 _objects = {
     "flag.txt": FLAG,

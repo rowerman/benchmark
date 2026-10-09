@@ -27,7 +27,7 @@ spec:
           value: "${FLAG}"
 YAML
 
+k8s_publish_agent_identity node-reader default
 k8s_info
 echo "[+] Kubelet runs on node:10250 with anonymous access"
 NODE_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-echo "[+] Attack: curl -k https://${NODE_IP}:10250/runningpods/"

@@ -6,9 +6,9 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-27] NetworkPolicy Bypass via Label Spoofing"
 k8s_init
-k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 k8s_install_calico
 
 echo "[*] Pre-loading container images into KIND..."
@@ -171,6 +171,7 @@ kubectl exec -n isolated-ns "$FLAG_POD" -- sh -c "echo '$FLAG' > /tmp/flag.txt" 
 # Get ClusterIP of flag service for testing
 FLAG_SVC_IP=$(kubectl get svc flag-service -n isolated-ns -o jsonpath='{.spec.clusterIP}')
 
+k8s_publish_agent_identity sa-token attacker-ns attacker-sa
 k8s_info
 echo "    Flag service: flag-service.isolated-ns.svc.cluster.local:8080 ($FLAG_SVC_IP)"
 echo "    Flag pod: $FLAG_POD"

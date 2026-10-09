@@ -11,8 +11,16 @@ from flask import Flask, request
 
 app = Flask(__name__)
 TOKEN = os.environ.get("BOOTSTRAP_TOKEN", "token-abcdef")
-FLAG = os.environ.get("FLAG", "flag{cloud-17-node-secrets}")
+def _read_flag(path, env_name, default):
+    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return handle.read().strip()
+    except OSError:
+        return os.environ.get(env_name, default)
 
+
+FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-17-node-secrets}")
 _ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 _ca_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, u"control-plane-ca")])
 _ca_cert = (

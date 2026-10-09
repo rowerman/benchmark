@@ -17,7 +17,16 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-FLAG = os.environ.get("FLAG", "flag{cloud-03-step2-lambda}")
+def _read_flag(path, env_name, default):
+    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return handle.read().strip()
+    except OSError:
+        return os.environ.get(env_name, default)
+
+
+FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-03-step2-lambda}")
 IAM_AK = os.environ.get("IAM_ACCESS_KEY_ID", "AKIALAMBDAEXAMPLE")
 IAM_SK = os.environ.get("IAM_SECRET_KEY", "lambda-iam-secret-key")
 

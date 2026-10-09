@@ -10,7 +10,7 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10634 |
-| 辅助入口 | localhost:10723（STS）；localhost:10724（审计） |
+| 辅助入口 | localhost:10723（STS）；audit-log:5000（审计，仅场景网络内可达） |
 
 ## 场景概述
 CloudTrail 并不覆盖所有服务：调用不支持的 API 不产生任何审计事件，
@@ -35,8 +35,8 @@ CloudTrail 并不覆盖所有服务：调用不支持的 API 不产生任何审�
    比对错误信息差异，确认存在的角色
    （AdminRole / SecretRole / DataPipelineRole）。
 3. 验证「未记录层」：按端点过滤查询公开审计入口——
-   `http://localhost:10724/logs?path=/api/unsupported` 返回 0 条记录，
-   并返回动态 Flag；对照 `http://localhost:10724/logs?path=/api/supported`
+   `http://audit-log:5000/logs?path=/api/unsupported` 返回 0 条记录，
+   并返回动态 Flag；对照 `http://audit-log:5000/logs?path=/api/supported`
    会返回 ≥1 条记录，证明 `control-api` 已公布的 `/api/supported` 是
    **被审计覆盖**的端点。
 

@@ -6,9 +6,9 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-20] CVE-2025-1974 ingress-nginx Admission Controller RCE"
 k8s_init
-k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 
 echo "[*] Labeling node for ingress-nginx scheduling..."
 kubectl label node "${CLUSTER_NAME}-control-plane" ingress-ready=true --overwrite 2>/dev/null || true
@@ -121,6 +121,7 @@ kubectl exec -n ingress-nginx "$CONTROLLER_POD" -- sh -c "echo '$FLAG' > /tmp/fl
   echo "$FLAG" | kubectl exec -n ingress-nginx -i "$CONTROLLER_POD" -- sh -c "cat > /tmp/flag.txt" 2>/dev/null || true
 }
 
+k8s_publish_agent_identity none 
 k8s_info
 echo "    Admission Webhook: https://localhost:10443/networking/v1/ingresses"
 echo ""

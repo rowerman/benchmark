@@ -48,5 +48,5 @@ spec:
               key: token
 YAML
 
+k8s_publish_agent_identity sa-token ns-alpha default
 k8s_info
-echo "[+] Attack: discover leaked SA token in ns-alpha → use to read flag-secret in ns-beta"

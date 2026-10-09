@@ -2,16 +2,10 @@ services:
   notebook:
     build:
       context: ./notebook
-      args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-06-default}}
     ports:
       - "10609:5000"
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-06-default}}
       - K8S_API_URL=http://k8s-api:5000
-    depends_on:
-      flag-seed:
-        condition: service_completed_successfully
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
@@ -20,16 +14,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-  flag-seed:
-    image: python:3.11-slim
-    entrypoint: ["sh", "-c", "mkdir -p /tmp/cloud-06-flag && echo \"${CVE_FLAG:-flag{cloud-06-default}}\" > /tmp/cloud-06-flag/flag.txt"]
-    volumes:
-      - /tmp/cloud-06-flag:/tmp/cloud-06-flag
-
   k8s-api:
     build: ./k8s-api
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-06-step2-sa-token}}
       - SA_TOKEN=eyJhbGciOiJub25lIn0.eyJzdWIiOiJicmlkZ2UifQ.
-    ports:
-      - "10706:5000"

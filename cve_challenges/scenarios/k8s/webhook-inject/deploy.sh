@@ -6,9 +6,9 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-25] MutatingWebhookConfiguration Overprivileged Registration"
 k8s_init
-k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 
 echo "[*] Pre-loading container images into KIND..."
 k8s_load_images alpine:latest nginx:1.24-alpine python:3.10-slim bitnami/kubectl:1.28
@@ -278,6 +278,7 @@ k8s_wait_pods_label "app=mutating-webhook" "attacker-ns"
 k8s_wait_pod "attacker-pod" "attacker-ns"
 sleep 5
 
+k8s_publish_agent_identity sa-token attacker-ns attacker-sa
 k8s_info
 echo "    Flag Secret: vault-flag in target-ns namespace"
 echo "    Victim SA: victim-sa (attacker-ns) - secrets read only in target-ns"

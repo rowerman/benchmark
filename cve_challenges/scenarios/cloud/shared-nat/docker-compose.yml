@@ -4,7 +4,6 @@ services:
     ports:
       - "10639:5000"
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-28-allowlist-bypass}}
       - NAT_URL=http://shared-nat:5000
     networks:
       c39-trust:

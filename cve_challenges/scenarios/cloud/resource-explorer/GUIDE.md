@@ -10,7 +10,7 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10636 |
-| 辅助入口 | localhost:10725（审计） |
+| 辅助入口 | audit-log:5000（审计，仅场景网络内可达） |
 
 ## 场景概述
 资源搜索服务（Resource Explorer）会索引租户内全部资源，但搜索操作
@@ -33,7 +33,7 @@
 3. 搜索只返回资源元数据（不含 secret）；发现 `flag-store` 后，携带
    该 `caller_arn` 请求 `/resources/s-001` 读取详情，获得 flag；
    缺少调用者上下文时返回 403。
-4. 检查公开审计入口 `http://localhost:10725/logs`：审计为 0，枚举不可见。
+4. 检查公开审计入口 `http://audit-log:5000/logs`：审计为 0，枚举不可见。
 
 ## Flag
 `flag{cloud-25-flag-store}`

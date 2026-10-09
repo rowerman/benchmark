@@ -17,8 +17,16 @@ from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
 
-FLAG = os.environ.get("FLAG", "flag{cloud-01-default}")
+def _read_flag(path, env_name, default):
+    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return handle.read().strip()
+    except OSError:
+        return os.environ.get(env_name, default)
 
+
+FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-01-default}")
 HOME_PAGE = """<!DOCTYPE html>
 <html>
 <head><title>Cloud Dashboard</title></head>

@@ -10,8 +10,6 @@ services:
     build: ./inference
     environment:
       - REGISTRY_URL=http://model-registry:5000
-    ports:
-      - "10720:5000"
     networks:
       c30-net:
         ipv4_address: 169.254.0.20
@@ -22,8 +20,6 @@ services:
       - ACCESS_KEY=AKIANODEEXAMPLE
       - SECRET_KEY=node-secret-key
       - SESSION_TOKEN=node-session-token
-    ports:
-      - "10722:5000"
     networks:
       c30-net:
         ipv4_address: 169.254.169.254
@@ -31,9 +27,6 @@ services:
     build: ./cluster-api
     environment:
       - NODE_TOKEN=node-session-token
-      - FLAG=${CVE_FLAG:-flag{cloud-19-cluster-secrets}}
-    ports:
-      - "10721:5000"
     networks:
       c30-net:
         ipv4_address: 169.254.0.40

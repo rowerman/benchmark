@@ -12,21 +12,15 @@ services:
     build: ./internal-registry
     environment:
       - VICTIM_IMAGE=echo 'victim app running'; id
-    ports:
-      - "10718:5000"
     networks:
       c29-net:
         ipv4_address: 10.29.0.20
   tenant-puller:
     build:
       context: ./tenant-puller
-      args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-18-victim-image}}
     environment:
       - REGISTRY_URL=http://internal-registry:5000
       - IMAGE_NAME=victim-app:latest
-    ports:
-      - "10719:5000"
     networks:
       c29-net:
         ipv4_address: 10.29.0.30

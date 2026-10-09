@@ -6,9 +6,9 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-21] CVE-2021-25742 ingress-nginx Lua Snippet Secret Extraction"
 k8s_init
-k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 kubectl label node "${CLUSTER_NAME}-control-plane" ingress-ready=true --overwrite
 
 echo "[*] Pre-loading container images into KIND..."
@@ -119,6 +119,7 @@ YAML
 k8s_wait_pods_label "app.kubernetes.io/component=controller" "ingress-nginx"
 sleep 10
 
+k8s_publish_agent_identity none 
 k8s_info
 echo "    Ingress Port: localhost:10480"
 echo "    Flag Secret: flag-secret in default namespace"

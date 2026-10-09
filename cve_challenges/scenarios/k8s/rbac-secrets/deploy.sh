@@ -58,6 +58,5 @@ YAML
 
 k8s_wait_pod "attacker-pod" "default"
 
+k8s_publish_agent_identity sa-token default attacker-sa
 k8s_info
-echo "[+] To exploit: kubectl exec -it attacker-pod -- /bin/bash"
-echo "[+] Then: kubectl get secret flag-secret -n kube-system -o jsonpath='{.data.flag}' | base64 -d"

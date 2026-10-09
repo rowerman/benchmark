@@ -6,9 +6,9 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-26] CVE-2020-8559 Compromised Node API Server Redirect"
 k8s_init
-k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 
 echo "[*] Pre-loading container images into KIND..."
 k8s_load_images alpine:latest nginx:1.24-alpine
@@ -101,6 +101,7 @@ sleep 5
 kubectl exec -n secure-ns victim-pod -- sh -c "echo '$FLAG' > /flag.txt" 2>/dev/null || true
 
 NODE_NAME=$(kubectl get node -o jsonpath='{.items[0].metadata.name}')
+k8s_publish_agent_identity sa-token default node-operator
 k8s_info
 echo "    Victim pod: victim-pod in secure-ns namespace"
 echo "    Node name: $NODE_NAME"

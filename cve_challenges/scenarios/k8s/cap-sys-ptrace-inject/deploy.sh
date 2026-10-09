@@ -6,8 +6,8 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init
 k8s_create_cluster
-k8s_create_host_flag
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 k8s_load_images ubuntu:22.04
 k8s_apply << 'YAML'
 apiVersion: v1
@@ -34,6 +34,7 @@ echo "[*] Installing gdb in the pod..."
 kubectl exec ptrace-pod -- bash -c "apt-get update -qq && apt-get install -y -qq gdb 2>/dev/null" 2>/dev/null || \
   echo "  gdb install in progress (may take a moment)..."
 
+k8s_publish_agent_identity pods-executor default
 k8s_info
 echo "    Exploitation steps:"
 echo "    1. kubectl exec -it ptrace-pod -- bash"

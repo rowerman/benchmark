@@ -6,9 +6,9 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-29] Toleration Abuse"
 k8s_init
-k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 
 echo "[*] Tainting one worker node to protect flag pod..."
 WORKER_NODES=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o name)
@@ -119,6 +119,7 @@ sleep 5
 FLAG_IP=$(kubectl get svc vault-svc -n vault-ns -o jsonpath='{.spec.clusterIP}')
 kubectl exec -n vault-ns vault-pod -- sh -c "echo '$FLAG' > /vault/flag.txt" 2>/dev/null || true
 
+k8s_publish_agent_identity sa-token attacker-ns attacker-sa
 k8s_info
 echo "    Flag in: vault-pod on tainted node"
 echo "    Service: vault-svc.vault-ns.svc.cluster.local:8080"

@@ -2,8 +2,6 @@ services:
   victim-pg:
     build:
       context: ./victim-pg
-      args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-16-cross-tenant-db}}
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -21,15 +19,14 @@ services:
       retries: 20
   internal-ca:
     build: ../../../infra/cloud/internal-ca
-    ports:
-      - "10716:5000"
     environment:
       - CN_REGEX=^replication\..*\.database\.azure\.com.*$
     networks:
       c27-internal:
         ipv4_address: 10.0.0.30
-  attacker:
-    profiles: [debug]
+  tenant-console:
+    ports:
+      - "10627:5000"
     build: ./attacker
     environment:
       - CA_URL=http://internal-ca:5000
@@ -45,17 +42,6 @@ services:
     networks:
       c27-public:
         ipv4_address: 10.27.1.10
-  pg-proxy:
-    image: alpine/socat:latest
-    ports:
-      - "10627:10627"
-    command: "TCP-LISTEN:10627,fork,reuseaddr TCP:victim-pg:5432"
-    depends_on:
-      victim-pg:
-        condition: service_healthy
-    networks:
-      c27-internal:
-        ipv4_address: 10.0.0.8
 networks:
   c27-internal:
     driver: bridge

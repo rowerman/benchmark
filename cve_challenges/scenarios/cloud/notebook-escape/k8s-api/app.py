@@ -3,7 +3,16 @@ import os
 from flask import Flask, request
 
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG", "flag{cloud-06-step2-sa-token}")
+def _read_flag(path, env_name, default):
+    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return handle.read().strip()
+    except OSError:
+        return os.environ.get(env_name, default)
+
+
+FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-06-step2-sa-token}")
 SA_TOKEN = os.environ.get("SA_TOKEN", "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06YnJpZGdlIiwiaWF0IjoxNTE2MjM5MDIyfQ.")
 
 @app.route("/health")

@@ -72,6 +72,6 @@ YAML
 
 k8s_create_k8s_configmap "app-config"
 
+k8s_publish_agent_identity none 
 k8s_info
 echo "    Registry: localhost:10501 (no TLS, on kind network as 'registry')"
-echo "[+] Attack: push malicious image with same tag → trigger redeploy → payload reads configmap → get flag"

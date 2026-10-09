@@ -6,9 +6,9 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-22] CVE-2020-8554 Service ExternalIP Traffic Interception"
 k8s_init
-k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 
 echo "[*] Pre-loading container images into KIND..."
 k8s_load_images alpine:latest nginx:1.24-alpine
@@ -168,6 +168,7 @@ sleep 5
 
 # Get the target service's ClusterIP for the hint
 TARGET_IP=$(kubectl get svc internal-api -n secure-ns -o jsonpath='{.spec.clusterIP}')
+k8s_publish_agent_identity sa-token attack-ns attacker-sa
 k8s_info
 echo "    Target Service ClusterIP: $TARGET_IP"
 echo "    Flag Secret: target-flag in secure-ns namespace"

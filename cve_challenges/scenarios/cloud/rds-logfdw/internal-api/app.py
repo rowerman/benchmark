@@ -5,9 +5,16 @@ from flask import Flask, request
 
 app = Flask(__name__)
 TOKEN = os.environ.get("INTERNAL_TOKEN", "grover-internal-credential-token")
-FLAG2 = os.environ.get("FLAG2", "flag{cloud-13-internal-api}")
+def _read_flag(path, env_name, default):
+    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return handle.read().strip()
+    except OSError:
+        return os.environ.get(env_name, default)
 
 
+FLAG2 = _read_flag("/run/flag2", "FLAG2", "flag{cloud-13-internal-api}")
 @app.route("/health")
 def health():
     return {"status": "ok"}

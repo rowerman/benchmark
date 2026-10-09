@@ -4,15 +4,12 @@ services:
     ports:
       - "10636:5000"
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-25-flag-store}}
       - RESOURCE_READER_ARN=arn:aws:iam::111122223333:user/attacker
     networks:
       c36-net:
         ipv4_address: 10.36.0.10
   audit-log:
     build: ../../../infra/cloud/audit-log
-    ports:
-      - "10725:5000"
     networks:
       c36-net:
         ipv4_address: 10.36.0.20

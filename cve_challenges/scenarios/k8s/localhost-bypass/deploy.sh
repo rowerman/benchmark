@@ -6,9 +6,9 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-24] CVE-2020-8558 kube-proxy Localhost Boundary Bypass"
 k8s_init
-k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 
 echo "[*] Pre-loading container images into KIND..."
 k8s_load_images alpine:latest nginx:1.24-alpine
@@ -59,6 +59,7 @@ sleep 5
 
 # Get node IP for the attacker
 NODE_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+k8s_publish_agent_identity pods-executor default
 k8s_info
 echo "    Flag service: 127.0.0.1:11080 (node-localhost, not externally accessible)"
 echo "    Node IP: $NODE_IP"

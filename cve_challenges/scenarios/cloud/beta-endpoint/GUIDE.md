@@ -10,7 +10,7 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10635 |
-| 辅助入口 | localhost:10727（console）；localhost:10729（production API）；localhost:10728（审计） |
+| 辅助入口 | localhost:10727（console）；localhost:10729（production API）；audit-log:5000（审计，仅场景网络内可达） |
 
 ## 场景概述
 云控制台页面的 CSP 头泄露了非生产（beta/gamma）端点
@@ -35,7 +35,7 @@
 3. 用同一凭据向 beta 端点（入口 `localhost:10635`）POST `/portfolios`：
    创建成功，响应只返回 `portfolio_id`，且**不产生新的审计事件**。
 4. 用同一凭据 `GET /portfolios/<portfolio_id>` 读取资源，获得 flag。
-5. 查询 `localhost:10728/logs`：审计计数相比第 2 步没有增长，写操作完全
+5. 查询 `audit-log:5000/logs`：审计计数相比第 2 步没有增长，写操作完全
    不可见。
 
 > 无凭据或错误凭据的请求返回 403——本场景刻画的是“审计盲区”而非

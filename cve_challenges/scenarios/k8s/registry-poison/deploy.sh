@@ -78,7 +78,7 @@ YAML
 
 k8s_wait_pods_label "app=registry-target" "default"
 
+k8s_publish_agent_identity none 
 k8s_info
 echo "    Registry: localhost:10500 (no TLS, on kind network as 'k8s-registry')"
 echo "    Flag Secret: registry-flag in default namespace (readable only by the workload SA)"
-echo "[+] Attack: push malicious image to localhost:10500/backdoored-nginx:latest → kubectl delete pod → payload reads secret → cat /tmp/flag.txt"

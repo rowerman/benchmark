@@ -6,9 +6,9 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-23] hostPID Process Information Disclosure"
 k8s_init
-k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 
 echo "[*] Pre-loading container images into KIND..."
 k8s_load_images alpine:latest
@@ -65,6 +65,7 @@ YAML
 echo "[*] Waiting for pod to be ready..."
 k8s_wait_pod "monitor-pod" "monitor-ns"
 
+k8s_publish_agent_identity sa-token monitor-ns monitor-sa
 k8s_info
 echo "    Flag leaked in host process: --flag=$FLAG"
 echo ""

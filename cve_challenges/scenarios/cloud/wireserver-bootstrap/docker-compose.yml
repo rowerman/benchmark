@@ -5,7 +5,6 @@ services:
       - "10628:5000"
     environment:
       - BOOTSTRAP_SCRIPT=TLS_BOOTSTRAP_TOKEN=token-abcdef
-      - FLAG=${CVE_FLAG1:-flag{cloud-17-bootstrap}}
     networks:
       c28-net:
         ipv4_address: 168.63.129.16
@@ -13,9 +12,6 @@ services:
     build: ./control-plane
     environment:
       - BOOTSTRAP_TOKEN=token-abcdef
-      - FLAG=${CVE_FLAG2:-flag{cloud-17-node-secrets}}
-    ports:
-      - "10722:5000"
     networks:
       c28-net:
         ipv4_address: 168.63.129.20

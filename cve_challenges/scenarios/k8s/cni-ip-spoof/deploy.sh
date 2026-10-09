@@ -6,9 +6,9 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 echo "[K8S-30] CNI IP Spoofing Bypass"
 k8s_init
-k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 k8s_install_calico
 
 k8s_load_images alpine:latest nicolaka/netshoot:latest
@@ -122,6 +122,7 @@ FLAG_IP=$(kubectl get svc flag-svc -n trust-zone -o jsonpath='{.spec.clusterIP}'
 TRUSTED_IP=$(kubectl get pod trusted-pod -n trust-zone -o jsonpath='{.status.podIP}')
 kubectl exec -n trust-zone flag-pod -- sh -c "echo '$FLAG' > /flag.txt" 2>/dev/null || true
 
+k8s_publish_agent_identity pods-executor untrust-zone
 k8s_info
 echo "    Flag in: flag-pod (trust-zone, IP-restricted)"
 echo "    Allowed IP: $TRUSTED_IP"

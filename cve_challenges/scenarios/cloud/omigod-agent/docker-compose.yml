@@ -12,8 +12,6 @@ services:
   omi-agent:
     build:
       context: ./omi-agent
-      args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-22-vm-root}}
     ports:
       - "10633:5986"
     networks:

@@ -3,10 +3,7 @@ services:
     profiles: [debug]
     build:
       context: ./attacker
-      args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-09-default}}
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-09-default}}
       - IDP_URL=http://saml-idp:5000
       - IAM_URL=http://iam:5000
     healthcheck:
@@ -20,8 +17,6 @@ services:
     build: ./saml-idp
     ports:
       - "10613:5000"
-    environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-09-golden-saml}}
 
   # socat proxies — expose internal services to host for nmap detection
   saml-proxy:
@@ -42,7 +37,6 @@ services:
     build:
       context: ../../../infra/cloud/iam-trust
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-09-golden-saml}}
       - IAM_ROLES_FILE=/app/roles/default.yaml
       - OIDC_JWKS_URL=http://saml-idp:5000/.well-known/jwks.json
     ports:

@@ -56,7 +56,7 @@ cve_challenges/
 ./scripts/stop-scenario.sh web-03
 ```
 
-Docker 场景只能通过 `start-scenario.sh` 启动。单 Flag 场景使用 `CVE_FLAG`，多 Flag 场景使用连续的 `CVE_FLAG1`、`CVE_FLAG2`……；脚本将变量写入场景目录的 `.env`/`flag.txt`（如存在），然后执行 `docker compose up -d --build`。Compose 文件及 Dockerfile 必须引用这些变量；固定 Flag 只能作为 fallback，不得成为脚本启动时实际使用的值。多 Flag 场景的每一枚 Flag 都必须在 GUIDE 中说明位置，并在启动输出中单独打印。Kubernetes 场景同样由 `start-scenario.sh` 唯一启动，变量由对应 `deploy.sh` 消费。
+Docker 场景只能通过 `start-scenario.sh` 启动。单 Flag 场景使用 `CVE_FLAG`，多 Flag 场景使用连续的 `CVE_FLAG1`、`CVE_FLAG2`……；脚本**不再**把 Flag 写进场景目录（`.env`/`flag.txt`），也不在启动输出里打印明文，而是按 `scripts/flag-sinks.yaml` 声明的位置，经 `scripts/inject-flags.py` 用 stdin+tar 注入到**容器内部**（宿主磁盘不留副本）。Compose 文件与 Dockerfile 不得再引用 `CVE_FLAG`；需要在启动后写进数据库/配置文件等运行时结构的场景，在 `flag-sinks.yaml` 的 `seeds` 段声明播种命令。多 Flag 场景的每一枚 Flag 都必须在 GUIDE 中说明位置。调试时设 `CVE_SHOW_FLAGS=1` 可临时打印明文。Kubernetes 场景同样由 `start-scenario.sh` 唯一启动，变量由对应 `deploy.sh` 消费。
 
 攻击链只能通过 `start-chain.sh <chain-directory>` 启动，通过 `stop-chain.sh <chain-directory>` 清理。链级 Flag 使用连续的 `CVE_FLAG1`、`CVE_FLAG2`……，`CVE_FLAG` 是第一枚 Flag 的兼容别名。显式传入的变量优先，缺失变量才生成随机值。每个链步骤按 `chain.yaml` 中的 Flag 声明分配编号；runtime 部署器将该步骤的编号 Flag 映射为当前单点 Compose 部署的 `CVE_FLAG`、`CVE_FLAG1...N`。攻击链的 `deploy.sh`、Compose、Dockerfile 和 Kubernetes manifest 必须消费这些变量，固定值只能作为 fallback。
 设置 `CHAIN_DRY_RUN=1` 可只验证链识别和 Flag 编号，不执行部署。

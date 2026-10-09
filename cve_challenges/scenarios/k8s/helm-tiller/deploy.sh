@@ -58,6 +58,6 @@ YAML
 
 k8s_create_k8s_secret "helm-flag" "kube-system"
 
+k8s_publish_agent_identity pods-executor kube-system
 k8s_info
 echo "[+] Tiller at tiller-deploy.kube-system:44134 (no auth)"
-echo "[+] Attack: helm --host tiller-deploy.kube-system:44134 ls --all"

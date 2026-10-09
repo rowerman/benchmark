@@ -72,6 +72,7 @@ YAML
 k8s_wait_pod "attacker-pod" "ns-ops"
 k8s_wait_pod "init-pod" "ns-ops"
 
+k8s_publish_agent_identity sa-token ns-ops default
 k8s_info
 echo "    Exploitation steps:"
 echo "    1. kubectl exec -it init-pod -n ns-ops -- sh"

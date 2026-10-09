@@ -3,16 +3,11 @@ services:
     profiles: [debug]
     build:
       context: ./attacker
-      args:
-        CVE_FLAG: ${CVE_FLAG:-flag{cloud-10-default}}
     environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-10-default}}
       - IAM_URL=http://iam:5000
   iam:
     build:
       context: ../../../infra/cloud/iam-trust
-    environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-10-default}}
     ports:
       - "10615:5000"
 

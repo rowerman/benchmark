@@ -418,7 +418,7 @@ scenarios:
     path: scenarios/k8s/sa-cross-namespace
   k8s-33:
     id: K8S-33
-    name: "Multi-Tenant K8s: Container Escape → Cross-Tenant Access"
+    name: 'Multi-Tenant K8s: Container Escape → Cross-Tenant Access'
     type: k8s
     difficulty: L3
     cve: N/A (privileged container + hostPID escape)
@@ -515,79 +515,79 @@ scenarios:
     port: 10621
   cloud-12:
     id: CLOUD-12
-    name: "CosMiss: Managed Notebook Front-End → Cross-Tenant RCE"
+    name: 'CosMiss: Managed Notebook Front-End → Cross-Tenant RCE'
     type: docker
     difficulty: L2
-    cve: "N/A (forwardingId authz bypass, case #073)"
+    cve: 'N/A (forwardingId authz bypass, case #073)'
     path: scenarios/cloud/cosmiss-notebook
     public_service: front-end
     port: 10623
   cloud-13:
     id: CLOUD-13
-    name: "RDS log_fdw: Managed DB Host File Read → Provider Internal Creds"
+    name: 'RDS log_fdw: Managed DB Host File Read → Provider Internal Creds'
     type: docker
     difficulty: L2
-    cve: "N/A (log_fdw path traversal, case #015)"
+    cve: 'N/A (log_fdw path traversal, case #015)'
     path: scenarios/cloud/rds-logfdw
     public_service: console
     port: 10624
   cloud-14:
     id: CLOUD-14
-    name: "Cloud SQL Engine Patch: Index Function Runs as Provider Role → Host RCE"
+    name: 'Cloud SQL Engine Patch: Index Function Runs as Provider Role → Host RCE'
     type: docker
     difficulty: L3
-    cve: "N/A (ATExecChangeOwner patch + ANALYZE, case #052)"
+    cve: 'N/A (ATExecChangeOwner patch + ANALYZE, case #052)'
     path: scenarios/cloud/cloudsql-index-rce
     public_service: console
     port: 10625
   cloud-15:
     id: CLOUD-15
-    name: "SynLapse: Shared Integration Runtime → Co-Tenant Credentials"
+    name: 'SynLapse: Shared Integration Runtime → Co-Tenant Credentials'
     type: docker
     difficulty: L3
-    cve: "N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062)"
+    cve: 'N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062)'
     path: scenarios/cloud/synlapse-ir
     public_service: control-api
     port: 10626
   cloud-16:
     id: CLOUD-16
-    name: "ExtraReplica: Internal Subnet + CN Regex → Cross-Tenant DB Replication"
+    name: 'ExtraReplica: Internal Subnet + CN Regex → Cross-Tenant DB Replication'
     type: docker
     difficulty: L3
-    cve: "N/A (internal subnet + mis-anchored cert regex, case #061)"
+    cve: 'N/A (internal subnet + mis-anchored cert regex, case #061)'
     path: scenarios/cloud/extrareplica-repl
-    public_service: pg-proxy
+    public_service: tenant-console
     port: 10627
   cloud-17:
     id: CLOUD-17
-    name: "WireServing: Host-Agent Channel → Node Bootstrap Secrets"
+    name: 'WireServing: Host-Agent Channel → Node Bootstrap Secrets'
     type: docker
     difficulty: L3
-    cve: "N/A (unvalidated transport cert, case #255/#184)"
+    cve: 'N/A (unvalidated transport cert, case #255/#184)'
     path: scenarios/cloud/wireserver-bootstrap
     public_service: host-agent
     port: 10628
   cloud-18:
     id: CLOUD-18
-    name: "Build Fleet + Internal Registry: Image Supply-Chain Overwrite"
+    name: 'Build Fleet + Internal Registry: Image Supply-Chain Overwrite'
     type: docker
     difficulty: L2
-    cve: "N/A (unauth internal registry, case #260 lineage)"
+    cve: 'N/A (unauth internal registry, case #260 lineage)'
     path: scenarios/cloud/buildfleet-registry
     public_service: build-worker
     port: 10629
   cloud-19:
     id: CLOUD-19
-    name: "Model-as-Code: Malicious Pickle → Inference Pod → Node IMDS"
+    name: 'Model-as-Code: Malicious Pickle → Inference Pod → Node IMDS'
     type: docker
     difficulty: L2
-    cve: "N/A (pickle deserialization, case #091)"
+    cve: 'N/A (pickle deserialization, case #091)'
     path: scenarios/cloud/pickle-model
     public_service: model-registry
     port: 10630
   cloud-20:
     id: CLOUD-20
-    name: "AttachMe: Predictable Volume ID + Missing Ownership Check"
+    name: 'AttachMe: Predictable Volume ID + Missing Ownership Check'
     type: docker
     difficulty: L2
     cve: N/A (control-plane ownership check missing)
@@ -596,16 +596,16 @@ scenarios:
     port: 10631
   cloud-21:
     id: CLOUD-21
-    name: "Entra Actor Token: Tenant-A Token Accepted by Tenant-B Directory"
+    name: 'Entra Actor Token: Tenant-A Token Accepted by Tenant-B Directory'
     type: docker
     difficulty: L2
-    cve: "N/A (actor/tenant validation bug, case #246)"
+    cve: 'N/A (actor/tenant validation bug, case #246)'
     path: scenarios/cloud/actor-token
     public_service: directory-api
     port: 10632
   cloud-22:
     id: CLOUD-22
-    name: "OMIGOD: Cloud Middleware Unauth Management Channel → VM Root"
+    name: 'OMIGOD: Cloud Middleware Unauth Management Channel → VM Root'
     type: docker
     difficulty: L2
     cve: N/A (auth bypass in provider agent, CVE-2021-38647 lineage)
@@ -614,82 +614,82 @@ scenarios:
     port: 10633
   cloud-23:
     id: CLOUD-23
-    name: "IAM Enumeration 2.0: Unlogged AccessDenied Oracle"
+    name: 'IAM Enumeration 2.0: Unlogged AccessDenied Oracle'
     type: docker
     difficulty: L2
-    cve: "N/A (uncovered service error oracle, case #134/#137)"
+    cve: 'N/A (uncovered service error oracle, case #134/#137)'
     path: scenarios/cloud/iam-enum-oracle
     public_service: control-api
     port: 10634
   cloud-24:
     id: CLOUD-24
-    name: "Service Catalog Beta Endpoint: Invisible Write"
+    name: 'Service Catalog Beta Endpoint: Invisible Write'
     type: docker
     difficulty: L2
-    cve: "N/A (non-production endpoint skips audit, case #154)"
+    cve: 'N/A (non-production endpoint skips audit, case #154)'
     path: scenarios/cloud/beta-endpoint
     public_service: beta-api
     port: 10635
   cloud-25:
     id: CLOUD-25
-    name: "Resource Explorer: Feature-Inherent Quiet Enumeration"
+    name: 'Resource Explorer: Feature-Inherent Quiet Enumeration'
     type: docker
     difficulty: L2
-    cve: "N/A (unlogged search API, case #148)"
+    cve: 'N/A (unlogged search API, case #148)'
     path: scenarios/cloud/resource-explorer
     public_service: explorer-api
     port: 10636
   cloud-26:
     id: CLOUD-26
-    name: "CloudImposer: Dependency Confusion in Managed Data Platform"
+    name: 'CloudImposer: Dependency Confusion in Managed Data Platform'
     type: docker
     difficulty: L3
-    cve: "N/A (global namespace dependency confusion, case #270)"
+    cve: 'N/A (global namespace dependency confusion, case #270)'
     path: scenarios/cloud/composer-depconf
     public_service: composer-pipeline
     port: 10637
   cloud-27:
     id: CLOUD-27
-    name: "Silent Reaper: Low-Code Connector Secrets via Control Plane"
+    name: 'Silent Reaper: Low-Code Connector Secrets via Control Plane'
     type: docker
     difficulty: L2
-    cve: "N/A (connector store tenant-scope missing, case #249/#197)"
+    cve: 'N/A (connector store tenant-scope missing, case #249/#197)'
     path: scenarios/cloud/lowcode-secrets
     public_service: connector-store
     port: 10638
   cloud-28:
     id: CLOUD-28
-    name: "Shared NAT Egress: Source-IP Allowlist Bypass"
+    name: 'Shared NAT Egress: Source-IP Allowlist Bypass'
     type: docker
     difficulty: L2
-    cve: "N/A (service-tag source-IP trust, case #259)"
+    cve: 'N/A (service-tag source-IP trust, case #259)'
     path: scenarios/cloud/shared-nat
     public_service: victim-api
     port: 10639
   cloud-29:
     id: CLOUD-29
-    name: "Dataform: Cross-Tenant Path Traversal in Managed Data Service"
+    name: 'Dataform: Cross-Tenant Path Traversal in Managed Data Service'
     type: docker
     difficulty: L3
-    cve: "N/A (cross-tenant path traversal, case #267)"
+    cve: 'N/A (cross-tenant path traversal, case #267)'
     path: scenarios/cloud/dataform-pt
     public_service: dataform-api
     port: 10640
   cloud-30:
     id: CLOUD-30
-    name: "Serverless Default Service Account: Platform Identity Escalation"
+    name: 'Serverless Default Service Account: Platform Identity Escalation'
     type: docker
     difficulty: L2
-    cve: "N/A (over-scoped default SA, case #266/#272)"
+    cve: 'N/A (over-scoped default SA, case #266/#272)'
     path: scenarios/cloud/serverless-sa
     public_service: serverless-api
     port: 10641
   cloud-31:
     id: CLOUD-31
-    name: "Persistence-as-a-Service: Managed Automation Backdoor"
+    name: 'Persistence-as-a-Service: Managed Automation Backdoor'
     type: docker
     difficulty: L3
-    cve: "N/A (automation-runbook persistence, case #149)"
+    cve: 'N/A (automation-runbook persistence, case #149)'
     path: scenarios/cloud/persistence-as-a-service
     public_service: automation-service
     port: 10642

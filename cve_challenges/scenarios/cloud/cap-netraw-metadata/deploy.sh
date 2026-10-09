@@ -130,3 +130,5 @@ echo "    Attacker pod: kubectl exec -it attacker -- sh"
 echo "    Metadata Service: metadata.default.svc.cluster.local:5000"
 echo "    Victim cache: kubectl exec victim -- cat /tmp/metadata-credentials.json"
 echo "    Exploit: use CAP_NET_RAW to observe/redirect victim -> metadata traffic"
+
+k8s_publish_agent_identity pods-executor default

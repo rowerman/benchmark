@@ -9,8 +9,6 @@ services:
         ipv4_address: 10.42.0.10
   victim-resource:
     build: ./victim-resource
-    environment:
-      - FLAG=${CVE_FLAG:-flag{cloud-31-persistence}}
     networks:
       c42-net:
         ipv4_address: 10.42.0.20

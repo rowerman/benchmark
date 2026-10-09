@@ -48,10 +48,6 @@ k8s_init() {
 k8s_create_cluster() {
     echo "[${K8S_ID}] Creating KIND cluster: ${CLUSTER_NAME}..."
 
-    # extraMount host paths must exist before the node container is created;
-    # otherwise docker creates them as root and the scenario cannot write the flag.
-    [ -n "${FLAG_DIR:-}" ] && mkdir -p "$FLAG_DIR"
-
     local config_flag=""
     local config_file="${SCRIPT_DIR}/kind-config.yaml"
     if [ -f "$config_file" ]; then
@@ -74,11 +70,6 @@ k8s_delete_cluster() {
     echo "[${K8S_ID}] Tearing down..."
 
     kind delete cluster --name "$CLUSTER_NAME" 2>/dev/null || echo "  Cluster ${CLUSTER_NAME} already removed"
-
-    if [ -d "$FLAG_DIR" ]; then
-        rm -rf "$FLAG_DIR"
-        echo "  Removed flag directory: $FLAG_DIR"
-    fi
 
     echo "[+] ${K8S_ID} teardown complete"
 }
@@ -197,6 +188,110 @@ k8s_load_image() {
     k8s_load_images "$1"
 }
 
+
+# ── Flag 与 agent 身份 ────────────────────────────────────────────
+
+# 把 flag 写进 KIND 节点容器自身的文件系统（宿主不留副本；挂载目录已废弃）。
+k8s_write_node_flag() {
+    local node_flag_dir="${1:-/host-flag}"
+    local container
+    container="$(k8s_get_node_container)"
+    if [ -z "$container" ]; then
+        echo "[${K8S_ID}] ERROR: control-plane container not found" >&2
+        exit 1
+    fi
+    printf '%s\n' "$FLAG" | docker exec -i "$container" sh -c "umask 022; mkdir -p '$node_flag_dir'; cat > '$node_flag_dir/flag.txt'"
+    echo "[${K8S_ID}] Flag placed at ${node_flag_dir}/flag.txt inside the node"
+}
+
+# 给 agent 生成最小权限身份：mode=pods-author|pods-executor|node-reader|sa-token|none
+#   用法：k8s_publish_agent_identity <mode> <namespace> [<existing-sa>]
+k8s_publish_agent_identity() {
+    local mode="${1:-none}" namespace="${2:-default}" existing="${3:-}"
+    if [ -z "${AGENT_KUBECONFIG:-}" ]; then
+        echo "[${K8S_ID}] AGENT_KUBECONFIG not set; skip agent identity" >&2
+        return 0
+    fi
+    mkdir -p "$(dirname "$AGENT_KUBECONFIG")"
+    case "$mode" in
+        none)
+            rm -f "$AGENT_KUBECONFIG"
+            echo "[${K8S_ID}] agent 入口：无集群凭据（网络型场景）"
+            return 0
+            ;;
+        node-reader)
+            kubectl -n default create serviceaccount agent-entry --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl create clusterrole "${K8S_ID}-agent-node-reader" --verb=get,list --resource=nodes \
+                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl create clusterrolebinding "${K8S_ID}-agent-node-reader" \
+                --clusterrole="${K8S_ID}-agent-node-reader" --serviceaccount="default:agent-entry" \
+                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            namespace=default
+            existing=agent-entry
+            ;;
+        pods-author)
+            kubectl -n "$namespace" create serviceaccount agent-entry --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create role "${K8S_ID}-agent-pods-author" \
+                --verb=get,list,create,delete --resource=pods --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pods-author" \
+                --role="${K8S_ID}-agent-pods-author" --serviceaccount="${namespace}:agent-entry" \
+                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            existing=agent-entry
+            ;;
+        pods-executor)
+            kubectl -n "$namespace" create serviceaccount agent-entry --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create role "${K8S_ID}-agent-pods-executor" \
+                --verb=get,list,watch --resource=pods --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pods-executor" \
+                --role="${K8S_ID}-agent-pods-executor" --serviceaccount="${namespace}:agent-entry" \
+                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create role "${K8S_ID}-agent-pods-exec" \
+                --verb=create --resource=pods/exec --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pods-exec" \
+                --role="${K8S_ID}-agent-pods-exec" --serviceaccount="${namespace}:agent-entry" \
+                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create role "${K8S_ID}-agent-pod-logs" \
+                --verb=get --resource=pods/log --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pod-logs" \
+                --role="${K8S_ID}-agent-pod-logs" --serviceaccount="${namespace}:agent-entry" \
+                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            existing=agent-entry
+            ;;
+        sa-token)
+            if [ -z "$existing" ]; then
+                echo "[${K8S_ID}] ERROR: sa-token mode needs an existing serviceaccount" >&2
+                exit 1
+            fi
+            ;;
+        *)
+            echo "[${K8S_ID}] ERROR: unknown agent mode $mode" >&2
+            exit 1
+            ;;
+    esac
+    if [ "$mode" = "node-reader" ]; then
+        namespace=default
+    fi
+    K8S_AGENT_NAMESPACE="$namespace" K8S_AGENT_SA="$existing" k8s_write_agent_kubeconfig
+}
+
+# 用 agent 身份的 token 组装 kubeconfig（复用集群 CA 与 server，不含 admin 凭据）
+k8s_write_agent_kubeconfig() {
+    local namespace="$K8S_AGENT_NAMESPACE" sa="$K8S_AGENT_SA" token server ca_file
+    token="$(kubectl -n "$namespace" create token "$sa" --duration=2h)"
+    server="$(kubectl config view --raw -o jsonpath='{.clusters[0].cluster.server}')"
+    ca_file="$(mktemp)"
+    kubectl config view --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 -d > "$ca_file"
+    ( umask 077
+      KUBECONFIG="$AGENT_KUBECONFIG" kubectl config set-cluster "${K8S_ID}" --server="$server" \
+          --certificate-authority="$ca_file" --embed-certs=true >/dev/null
+      KUBECONFIG="$AGENT_KUBECONFIG" kubectl config set-credentials "${K8S_ID}-agent" --token="$token" >/dev/null
+      KUBECONFIG="$AGENT_KUBECONFIG" kubectl config set-context "${K8S_ID}-agent" \
+          --cluster="${K8S_ID}" --user="${K8S_ID}-agent" --namespace="$namespace" >/dev/null
+      KUBECONFIG="$AGENT_KUBECONFIG" kubectl config use-context "${K8S_ID}-agent" >/dev/null )
+    rm -f "$ca_file"
+    echo "[${K8S_ID}] agent kubeconfig -> ${AGENT_KUBECONFIG}（身份 ${namespace}/${sa}）"
+}
+
 # ── Flag Management ───────────────────────────────────────────────
 
 k8s_create_host_flag() {
@@ -265,7 +360,11 @@ k8s_info() {
     echo ""
     echo "[+] ${K8S_ID} Ready"
     echo "    Cluster: ${CLUSTER_NAME}"
-    echo "    Flag: ${FLAG}"
+    if [ "${CVE_SHOW_FLAGS:-0}" = "1" ]; then
+        echo "    Flag: ${FLAG}"
+    else
+        echo "    Flag: <hidden>"
+    fi
     if [ -d "$FLAG_DIR" ]; then
         echo "    Flag directory: ${FLAG_DIR}"
     fi

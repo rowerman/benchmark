@@ -6,9 +6,9 @@ CLUSTER_NAME="cve-k8s-12-hostpath"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init
-k8s_create_host_flag
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 k8s_load_images alpine:latest
 k8s_apply << 'YAML'
 apiVersion: v1
@@ -30,5 +30,5 @@ spec:
         path: /var/log
 YAML
 
+k8s_publish_agent_identity pods-executor default
 k8s_info
-echo "[+] Attack: ln -sf /host-flag /host-log/flag-link && cat /host-log/flag-link/flag.txt"

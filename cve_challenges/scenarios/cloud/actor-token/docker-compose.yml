@@ -12,7 +12,6 @@ services:
       - "10632:5000"
     environment:
       - SIGNING_SECRET=shared-signing-secret
-      - FLAG=${CVE_FLAG:-flag{cloud-21-tenant-b-admin}}
     networks:
       c32-net:
         ipv4_address: 10.32.0.20

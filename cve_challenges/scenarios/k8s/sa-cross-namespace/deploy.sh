@@ -10,8 +10,8 @@ echo "[K8S-32] K8s SA Token → Cross-Namespace Access"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
+k8s_write_node_flag /host-flag
 k8s_load_images python:3.11-slim nginx:1.24-alpine
-k8s_create_host_flag
 
 # Create namespaces
 kubectl create namespace tenant-a
@@ -94,3 +94,5 @@ echo "[+] K8S-32 Ready"
 echo "    Attacker pod (tenant-a): kubectl exec -it -n tenant-a attacker -- sh"
 echo "    Target flag: kubectl get secret -n tenant-b target-flag -o jsonpath='{.data.flag}' | base64 -d"
 echo "    Exploit: Use broad SA token to access tenant-b resources"
+
+k8s_publish_agent_identity sa-token tenant-a broad-sa

@@ -1,0 +1,308 @@
+seeds:
+  cloud-13:
+  - command: 'set -e
+
+      read -r f
+
+      sed -i "s|^flag=.*|flag=$f|" /rdsdbdata/config/grover_volume.conf
+
+      grep -q "$f" /rdsdbdata/config/grover_volume.conf
+
+      '
+    flag: CVE_FLAG1
+    service: db
+  cloud-16:
+  - command: 'set -e
+
+      read -r f
+
+      psql -U postgres -d victim_db -c "TRUNCATE flags; INSERT INTO flags VALUES (''$f'');"
+
+      '
+    flag: CVE_FLAG
+    service: victim-pg
+  cloud-29:
+  - command: 'set -e
+
+      read -r f
+
+      printf ''%s'' "$f" > /app/workspaces/tenant-b/secret.txt
+
+      '
+    flag: CVE_FLAG
+    service: shared-executor
+sinks:
+  cloud-01:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: web
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: s3
+  cloud-03:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: gateway
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: lambda
+  cloud-04:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: console
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: parser
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: ssm
+  cloud-05:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+      - /etc/flag.txt
+    service: ci-runner
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+      - /etc/flag.txt
+    service: cloud-resource
+  cloud-06:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: notebook
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: k8s-api
+  cloud-07:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: iam
+  cloud-08:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: s3
+  cloud-09:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: saml-idp
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: iam
+  cloud-10:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: iam
+  cloud-11:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: s3-global
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: tenant-a
+  cloud-12:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: nb-b
+  cloud-13:
+  - flags:
+    - flag: CVE_FLAG1
+      paths:
+      - /run/flag
+    service: db
+  - flags:
+    - flag: CVE_FLAG2
+      paths:
+      - /run/flag2
+    service: internal-api
+  cloud-14:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /host_flag.txt
+    service: db
+  cloud-15:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: ir-worker
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: tenant-b
+  cloud-16:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: victim-pg
+  cloud-17:
+  - flags:
+    - flag: CVE_FLAG1
+      paths:
+      - /run/flag
+    service: host-agent
+  - flags:
+    - flag: CVE_FLAG2
+      paths:
+      - /run/flag
+    service: control-plane
+  cloud-18:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+    service: tenant-puller
+  cloud-19:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: cluster-api
+  cloud-20:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: control-api
+  cloud-21:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: directory-api
+  cloud-22:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+      - /root/flag.txt
+    service: omi-agent
+  cloud-23:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: audit-log
+  cloud-24:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: beta-api
+  cloud-25:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: explorer-api
+  cloud-26:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+      - /app/flag.txt
+    service: composer-pipeline
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+      - /flag.txt
+      - /app/flag.txt
+    service: victim-resource
+  cloud-27:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: connector-store
+  cloud-28:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: victim-api
+  cloud-29:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: shared-executor
+  cloud-30:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: serverless-api
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: victim-project
+  cloud-31:
+  - flags:
+    - flag: CVE_FLAG
+      paths:
+      - /run/flag
+    service: victim-resource
