@@ -2,9 +2,21 @@ services:
   shared-executor:
     build:
       context: ./shared-executor
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     networks:
       c40-net:
         ipv4_address: 10.40.0.10
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-29
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.40.0.10/32"],"hint":"平台密钥库只对共享执行器地址开放"}'
+    networks:
+      c40-net:
   dataform-api:
     build: ./dataform-api
     ports:

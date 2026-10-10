@@ -24,6 +24,17 @@ services:
       retries: 5
       start_period: 10s
 
+  # flag 唯一终点：三段式临时凭据要向 iam-trust 反查会话与角色
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-08
+      VAULT_MODE: session-creds
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_IAM_URL: http://iam:5000
+      VAULT_CONFIG: '{"roles":["CrossAccountRole"],"hint":"STS session credentials from the cross-account role"}'
+
   # socat proxies — expose internal services to host for nmap detection
   iam-proxy:
     image: alpine/socat:latest
@@ -46,5 +57,7 @@ services:
       - IAM_URL=http://iam:5000
     ports:
       - "10708:5000"
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     depends_on:
       - iam

@@ -31,12 +31,24 @@ services:
     environment:
       - CA_URL=http://internal-ca:5000
       - VICTIM_HOST=victim-pg
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     depends_on:
       victim-pg:
         condition: service_healthy
     networks:
       c27-internal:
         ipv4_address: 10.0.0.7
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-16
+      VAULT_MODE: mtls
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"ca_url":"http://internal-ca:5000/ca","cn_rule":"replication\\..*","hint":"内部 CA 签发且 CN 形如 replication.<id>… 的客户端证书"}'
+    networks:
+      c27-internal:
   firewall-proxy:
     build: ./firewall-proxy
     networks:

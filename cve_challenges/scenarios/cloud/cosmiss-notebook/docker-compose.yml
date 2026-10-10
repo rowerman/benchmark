@@ -16,9 +16,21 @@ services:
   nb-b:
     build:
       context: ./nb-b
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     networks:
       c23-net:
         ipv4_address: 10.23.0.30
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-12
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.23.0.30/32"],"hint":"租户笔记本的密钥只交付给笔记本运行时地址"}'
+    networks:
+      c23-net:
   attacker:
     profiles: [debug]
     build: ./attacker

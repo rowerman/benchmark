@@ -101,17 +101,12 @@ def start(scenario: str, port: int) -> tuple[subprocess.CompletedProcess[str], s
                             capture_output=True, text=True, timeout=180)
     if result.returncode:
         raise AssertionError(f"{scenario} failed to start:\n{result.stdout}\n{result.stderr}")
-    match = list(dict.fromkeys(re.findall(r"\[\+\] Flag(?: \d+)?: (flag\{[^}]+\})", result.stdout)))
-    expected = FLAG_COUNTS.get(scenario, 1)
-    if len(match) != expected:
-        stop(scenario)
-        raise AssertionError(f"expected one dynamic Flag for {scenario}, got {match!r}\n{result.stdout}")
     wait_port(port)
     if port in NON_HTTP_PORTS:
         wait_port(port)
     else:
         wait_http(f"http://127.0.0.1:{port}")
-    return result, match if expected > 1 else match[0]
+    return result, ""
 
 
 def stop(scenario: str) -> None:
@@ -119,13 +114,17 @@ def stop(scenario: str) -> None:
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def run_case(scenario: str, port: int, case) -> None:
+def run_case(scenario: str, port: int, case, expected_flag: str = "") -> None:
     started = False
     scenario_path = ROOT / "scenarios" / "cloud" / SCENARIO_DIRS[scenario]
     compose_env = scenario_path / ".env"
     original_env = compose_env.read_bytes() if compose_env.exists() else None
     try:
-        _, flag = start(scenario, port)
+        _, _ = start(scenario, port)
+        # flag 由验收侧显式传入（start-scenario.sh 不再打印明文）
+        flag = expected_flag
+        if not flag:
+            raise AssertionError(f"{scenario}: 缺少本轮 flag（验收侧必须显式传入）")
         started = True
         case(f"http://127.0.0.1:{port}", flag)
         print(f"PASS {scenario}: {flag}")

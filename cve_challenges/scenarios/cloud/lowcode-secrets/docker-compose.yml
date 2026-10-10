@@ -3,9 +3,22 @@ services:
     build: ./connector-store
     ports:
       - "10638:5000"
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     networks:
       c38-net:
         ipv4_address: 10.38.0.10
+  # flag 唯一终点：只交付给连接器控制面所在的内网地址
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-27
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.38.0.10/32"],"hint":"flag 只交付给连接器控制面的内网地址"}'
+    networks:
+      c38-net:
   attacker:
     profiles: [debug]
     build: ./attacker

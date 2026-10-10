@@ -4,25 +4,25 @@ Models Silent Reaper / API Connections (cases #249/#197): the control-plane
 API lists connections and returns their secrets without checking which
 tenant the caller belongs to.
 """
-import os
-
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
 
 
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-27-connector-secret}")
+def _victim_secret() -> str:
+    """跨租户读取受害者连接器时，才向 flag-vault 换取 flag 拼进密钥。"""
+    status, body = vault_client.fetch_flag()
+    if status != 200:
+        return "sp-secret-b"
+    return f"sp-secret-b flag={body}"
+
+
 _connectors = {
     "conn-1001": {"tenant": "tenant-a", "name": "attacker-salesforce", "secret": "sf-secret-a"},
     "conn-1002": {"tenant": "tenant-b", "name": "victim-sharepoint",
-                  "secret": f"sp-secret-b flag={FLAG}"},
+                  "secret": _victim_secret},
     "conn-1003": {"tenant": "tenant-b", "name": "victim-smtp", "secret": "smtp-secret-b"},
 }
 
@@ -46,7 +46,8 @@ def connection(cid):
     if cid not in _connectors:
         return "NotFound", 404
     c = _connectors[cid]
-    return {"id": cid, "tenant": c["tenant"], "name": c["name"], "secret": c["secret"]}
+    secret = c["secret"]() if callable(c["secret"]) else c["secret"]
+    return {"id": cid, "tenant": c["tenant"], "name": c["name"], "secret": secret}
 
 
 if __name__ == "__main__":

@@ -20,6 +20,9 @@ services:
       - "10624:5000"
     environment:
       - DB_URL=postgresql://postgres:postgres@db:5432/clouddb
+      - INTERNAL_TOKEN=grover-internal-credential-token
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     depends_on:
       db:
         condition: service_healthy
@@ -30,9 +33,22 @@ services:
     build: ./internal-api
     environment:
       - INTERNAL_TOKEN=grover-internal-credential-token
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     networks:
       c24-net:
         ipv4_address: 10.24.0.30
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-13
+      VAULT_MODE: header-secret
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_FLAG2_FILE: /vault/flag2
+      VAULT_CONFIG: '{"header":"Authorization","values":["Bearer grover-internal-credential-token"],"hint":"供应商内部凭据才能读懂宿主机文件指向的密文"}'
+    networks:
+      c24-net:
 networks:
   c24-net:
     driver: bridge

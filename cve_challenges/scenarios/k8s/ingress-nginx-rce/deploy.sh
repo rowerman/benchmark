@@ -112,13 +112,16 @@ spec:
                   number: 80
 YAML
 
-echo "[*] Placing flag in ingress-nginx controller pod..."
-# Wait for the controller pod to be fully running
+echo "[*] Placing flag as an nginx credential fragment inside the controller pod..."
+# flag 只在这里交付：admission webhook 的未鉴权配置注入能让 nginx -t 去 include 这个
+# 片段文件，报错信息会把文件里的 token 原样带回来。片段按 base64 落盘（flag 里的花括号
+# 会被 nginx 词法切开，base64 去掉了花括号），攻击者解回来就是 flag。
 sleep 5
 CONTROLLER_POD=$(kubectl get pods -n ingress-nginx -l app.kubernetes.io/component=controller -o jsonpath='{.items[0].metadata.name}')
-kubectl exec -n ingress-nginx "$CONTROLLER_POD" -- sh -c "echo '$FLAG' > /tmp/flag.txt" 2>/dev/null || {
-  echo "[!] Could not write flag to controller pod, trying copy..."
-  echo "$FLAG" | kubectl exec -n ingress-nginx -i "$CONTROLLER_POD" -- sh -c "cat > /tmp/flag.txt" 2>/dev/null || true
+kubectl exec -n ingress-nginx "$CONTROLLER_POD" -- sh -c \
+  "mkdir -p /etc/nginx/credentials && printf '%s;' \"\$(printf '%s' '$FLAG' | base64 -w0)\" > /etc/nginx/credentials/flag.b64" || {
+  echo "[!] Could not place credential fragment in controller pod" >&2
+  exit 1
 }
 
 k8s_publish_agent_identity none 
@@ -132,5 +135,8 @@ echo "    2. Craft malicious AdmissionReview payload (see docs/k8s-20)"
 echo "    3. Send exploit to achieve RCE in ingress-nginx controller"
 echo "    4. Read flag: cat /tmp/flag.txt (inside controller pod)"
 echo ""
-echo "    Note: CVE-2025-1974 allows unauthenticated RCE via the"
-echo "    ValidatingWebhookConfiguration admission endpoint."
+echo "    Note: CVE-2025-24514/2025-1974 —— admission webhook 会把 Ingress 注解未转义地"
+echo "    拼进 nginx 配置并跑 nginx -t；未鉴权即可注入指令。本版本 http 级"
+echo "    init_by_lua_block 已被模板占用（重复被拒），参考利用走 include 任意文件读："
+echo "    读出 /var/run/secrets/kubernetes.io/serviceaccount/token（JWT 是单个 token，会整段"
+echo "    出现在 nginx 报错里），再用它列出集群 Secret 拿 flag。"

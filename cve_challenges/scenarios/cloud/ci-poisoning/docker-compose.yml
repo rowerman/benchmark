@@ -21,6 +21,8 @@ services:
       - WORKLOAD_TOKEN=ci-workload-token
     ports:
       - "10608:5000"
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     depends_on:
       - cloud-resource
     healthcheck:
@@ -32,6 +34,18 @@ services:
 
   cloud-resource:
     build: ./cloud-resource
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
+
+  # flag 唯一终点：只认流水线工作负载令牌（CI runner 与云资源服务共用）
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-05
+      VAULT_MODE: header-secret
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"header":"X-Workload-Token","values":["ci-workload-token"],"hint":"流水线身份令牌"}'
 
   git-server:
     build: ./git-server

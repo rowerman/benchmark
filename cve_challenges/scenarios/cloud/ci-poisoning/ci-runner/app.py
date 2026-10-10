@@ -2,17 +2,18 @@
 import os, subprocess, json
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
 
 
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-05-step2-pipeline}")
+def _secret_flag() -> str:
+    """flag 只存在于 flag-vault；用流水线工作负载令牌换取。"""
+    status, body = vault_client.fetch_flag(vault_client.header_secret(
+        "X-Workload-Token", os.environ.get("WORKLOAD_TOKEN", "")))
+    return body if status == 200 else ""
+
+
 @app.route("/")
 def docs(): return {"service": "CI/CD Pipeline Runner", "endpoints": ["POST /run", "GET /secrets"]}
 
@@ -35,8 +36,8 @@ def run():
 
 @app.route("/secrets")
 def secrets():
-    # Internal endpoint — contains flag
-    return {"FLAG": FLAG, "DB_PASSWORD": "ci-db-password",
+    # Internal endpoint — the flag is exchanged for the pipeline identity token
+    return {"FLAG": _secret_flag(), "DB_PASSWORD": "ci-db-password",
             "WORKLOAD_TOKEN": os.environ.get("WORKLOAD_TOKEN", ""),
             "CLOUD_RESOURCE_URL": os.environ.get("CLOUD_RESOURCE_URL", "")}
 

@@ -10,6 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10631 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | control-api 经 flag-vault 交付（network-source：块存储控制面内网地址） |
 
 ## 场景概述
 块存储控制面的资源 ID 可预测（`ocid.vol.<4位>`，从 1000 顺序分配），
@@ -32,9 +34,17 @@
 2. 枚举/猜测 `ocid.vol.1001`，查询详情确认属主是 victim-tenant。
 3. 调用 `/attach` 把该卷附加到攻击者实例（无属主校验）。
 4. 从实例读取卷数据，得到 flag。
+5. 终端服务 control-api 向 flag-vault 出示块存储控制面内网地址，换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-20-victim-volume}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 control-api 向 flag-vault 出示「块存储控制面内网地址」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-20-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-20 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-20 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

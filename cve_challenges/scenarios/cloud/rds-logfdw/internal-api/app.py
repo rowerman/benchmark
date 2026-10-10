@@ -1,20 +1,10 @@
 """Provider-internal storage API reachable from the managed host network."""
-import os
-
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
-TOKEN = os.environ.get("INTERNAL_TOKEN", "grover-internal-credential-token")
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG2 = _read_flag("/run/flag2", "FLAG2", "flag{cloud-13-internal-api}")
+TOKEN = "grover-internal-credential-token"
 @app.route("/health")
 def health():
     return {"status": "ok"}
@@ -25,7 +15,10 @@ def api():
     auth = request.headers.get("Authorization", "")
     if auth != f"Bearer {TOKEN}":
         return {"error": "unauthorized"}, 403
-    return {"service": "apg-storage", "flag": FLAG2}
+    # flag 只在 flag-vault：内部存储 API 出示内部令牌换取第二枚 flag
+    status, body = vault_client.fetch_flag(
+        vault_client.header_secret("Authorization", f"Bearer {TOKEN}"), path="/flag2")
+    return {"service": "apg-storage", "flag": body if status == 200 else ""}
 
 
 if __name__ == "__main__":

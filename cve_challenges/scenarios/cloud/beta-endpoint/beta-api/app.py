@@ -7,19 +7,17 @@ import os
 
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-24-invisible-write}")
 API_CREDENTIAL = os.environ.get("API_CREDENTIAL", "valid-sigv4")
 _portfolios = []
+
+
+def _platform_flag() -> str:
+    """flag 只在 flag-vault：beta 写入时按内部地址身份取回，容器里不留明文。"""
+    status, body = vault_client.fetch_flag()
+    return body if status == 200 else ""
 
 
 def authenticate():
@@ -41,7 +39,7 @@ def create():
     body = request.get_json(silent=True) or {}
     pid = f"beta-{len(_portfolios) + 1}"
     _portfolios.append({"id": pid, "name": body.get("name", ""),
-                        "flag": FLAG})
+                        "flag": _platform_flag()})
     # NO audit call -- this endpoint bypasses the logging route
     return {"portfolio_id": pid, "audited": False, "endpoint": "beta"}
 

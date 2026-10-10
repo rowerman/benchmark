@@ -18,6 +18,12 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509 import load_pem_x509_certificate
 from flask import Flask, request
 
+try:
+    import vault_client
+except ImportError:
+    # 只有把 flag 迁到 flag-vault 的场景才挂载这个客户端
+    vault_client = None
+
 app = Flask(__name__)
 
 # Per-instance state generated at startup.
@@ -29,7 +35,14 @@ _BOOTSTRAP = os.environ.get(
     "TLS_BOOTSTRAP_TOKEN=<token>\nKUBELET_CLIENT_CERT_CONTENT=<kubelet-cert>\n"
     "KUBELET_CA_CRT=<ca-cert>",
 )
-_FLAG = os.environ.get("FLAG", "flag{host-agent-default}")
+
+
+def _node_flag() -> str:
+    """flag 只在 flag-vault：Wireserver 按主机服务地址换取后放进加密配置。"""
+    if vault_client is None:
+        return os.environ.get("FLAG", "")
+    status, body = vault_client.fetch_flag()
+    return body if status == 200 else ""
 
 
 def _init_cert():
@@ -125,7 +138,7 @@ def certs():
 @app.route("/vmSettings")
 def vm_settings():
     """Extension protectedSettings encrypted to the TenantEncryptionCert."""
-    plaintext = f"{_BOOTSTRAP}\nFLAG={_FLAG}\n".encode()
+    plaintext = f"{_BOOTSTRAP}\nFLAG={_node_flag()}\n".encode()
     envelope = _rsa_wrap(_tenant_key.public_key(), plaintext)
     return {
         "extensions": [

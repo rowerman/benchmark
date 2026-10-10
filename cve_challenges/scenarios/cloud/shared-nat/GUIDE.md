@@ -7,9 +7,11 @@
 | ID | CLOUD-28 |
 | 名称 | Shared NAT Egress: Source-IP Allowlist Bypass |
 | 技术/CVE | N/A (service-tag source-IP trust, case #259) |
-| 难度 | L2 |
+| 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10639 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | victim-api 经 flag-vault 交付（network-source：受保护接口内网地址（经共享 NAT 出口）） |
 
 ## 场景概述
 受害者防火墙按源 IP 信任供应商"服务地址段"（Azure service tags 模型）。
@@ -30,9 +32,17 @@
 1. 直接访问受害者 `/flag`——源 IP 不在受信段，403。
 2. 调用共享 NAT `/egress` 代理访问受害者 `/flag`——出口源 IP
    落在 168.63.0.0/24 受信段，返回 flag。
+3. 终端服务 victim-api 向 flag-vault 出示受保护接口内网地址（经共享 NAT 出口），换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-28-allowlist-bypass}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 victim-api 向 flag-vault 出示「受保护接口内网地址（经共享 NAT 出口）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-28-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-28 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-28 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

@@ -10,6 +10,8 @@
 | 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10627 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | 租户控制台 经 flag-vault 交付（mtls：内部 CA 签发、CN 形如 replication.<id>… 的客户端证书） |
 
 ## 场景概述
 托管数据库容器共享宿主网络命名空间，位于供应商内部子网 10.0.0.0/24。
@@ -28,18 +30,24 @@
 - 内部子网与公网防火墙的边界模型
 
 ## 利用步骤
-1. Step 1：侦察自己的托管实例网络，确认与受害者共享内部子网
-   `10.0.0.0/24`，公网防火墙不覆盖该路径。
+
+1. Step 1：侦察自己的托管实例网络，确认与受害者共享内部子网 `10.0.0.0/24`，
+   公网防火墙不覆盖该路径。
 2. Step 2：向内部 CA 申请客户端证书，CN 为
-   `replication.<victim-id>.database.azure.com.attacker.example`
-   （尾部后缀，CA 的正则允许）。
-3. Step 3：通过宿主机公开入口执行
-   `pg_basebackup -h 127.0.0.1 -p 10627 -U replication … --sslmode=require`
-   以复制用户身份拉取受害者整库，flag 在备份文件中。
-   （`victim-pg` 内部名仅存在于 debug/attacker 部署语境。）
+   `replication.<victim-id>.database.azure.com.attacker.example`（尾部后缀，CA 的正则允许）。
+3. Step 3：以复制用户身份 `pg_basebackup` 拉走受害者整库——得到的是同租户的轮换令牌，
+   不是明文 flag。
+4. 用同一张内部 CA 签发的客户端证书（`X-Client-Cert`）向 flag-vault 换取密文：证书是这个
+   终点的唯一凭据，pg_basebackup 只证明你已经越过了内网与证书两道边界。
 
 ## Flag
-`flag{cloud-16-cross-tenant-db}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 租户控制台 向 flag-vault 出示「内部 CA 签发、CN 形如 replication.<id>… 的客户端证书」（校验模式 `mtls`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-16-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-16 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-16 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

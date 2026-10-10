@@ -13,9 +13,21 @@ services:
     build: ./victim-project
     environment:
       - DEFAULT_SA_TOKEN=default-compute-sa-token
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     networks:
       c41-net:
         ipv4_address: 10.41.0.20
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-30
+      VAULT_MODE: header-secret
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"header":"Authorization","values":["Bearer default-compute-sa-token"],"hint":"平台默认服务账号令牌"}'
+    networks:
+      c41-net:
   attacker:
     profiles: [debug]
     build: ./attacker

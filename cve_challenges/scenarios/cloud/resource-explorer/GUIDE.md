@@ -7,10 +7,11 @@
 | ID | CLOUD-25 |
 | 名称 | Resource Explorer: Feature-Inherent Quiet Enumeration |
 | 技术/CVE | N/A (unlogged search API, case #148) |
-| 难度 | L2 |
+| 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10636 |
-| 辅助入口 | audit-log:5000（审计，仅场景网络内可达） |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | explorer-api 经 flag-vault 交付（network-source：资源浏览器内网地址（静默读取）） |
 
 ## 场景概述
 资源搜索服务（Resource Explorer）会索引租户内全部资源，但搜索操作
@@ -34,9 +35,17 @@
    该 `caller_arn` 请求 `/resources/s-001` 读取详情，获得 flag；
    缺少调用者上下文时返回 403。
 4. 检查公开审计入口 `http://audit-log:5000/logs`：审计为 0，枚举不可见。
+5. 终端服务 explorer-api 向 flag-vault 出示资源浏览器内网地址（静默读取），换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-25-flag-store}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 explorer-api 向 flag-vault 出示「资源浏览器内网地址（静默读取）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-25-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-25 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-25 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

@@ -10,6 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10641 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | victim-project 经 flag-vault 交付（header-secret：平台默认服务账号令牌） |
 
 ## 场景概述
 无服务器平台用"默认计算服务账号"运行函数，该账号权限过宽（可读
@@ -30,9 +32,17 @@
 2. 函数输出默认服务账号令牌。
 3. 用该令牌调用受害者项目 `/api/projects/victim/secrets`，
    读到 Secret 与 flag。
+4. 终端服务 victim-project 向 flag-vault 出示平台默认服务账号令牌，换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-30-victim-project}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 victim-project 向 flag-vault 出示「平台默认服务账号令牌」（校验模式 `header-secret`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-30-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-30 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-30 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

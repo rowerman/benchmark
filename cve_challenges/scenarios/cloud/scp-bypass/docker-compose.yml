@@ -10,6 +10,18 @@ services:
       context: ../../../infra/cloud/iam-trust
     ports:
       - "10615:5000"
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
+
+  # flag 唯一终点：只认 scp-bypass-user 长期密钥的 SigV4 签名
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-10
+      VAULT_MODE: sigv4
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"access_key":"AKIASCBPASSEXAMPLE","secret_key":"scp-bypass-secret","hint":"SigV4 with the IAM user secret key"}'
 
   # socat proxy — expose IAM/STS to host for nmap detection
   iam-proxy:

@@ -17,9 +17,23 @@ services:
         ipv4_address: 10.34.0.20
   audit-log:
     build: ../../../infra/cloud/audit-log
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
+    ports:
+      - "10724:5000"
     networks:
       c34-net:
         ipv4_address: 10.34.0.30
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-23
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.34.0.30/32"],"hint":"只交付给审计服务所在内网地址"}'
+    networks:
+      c34-net:
   attacker:
     profiles: [debug]
     build: ./attacker

@@ -10,7 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
-| 集群 | cve-k8s-18-sa-admin |
+| 入口身份 | exec-only ns-ops/attacker-pod（只能进这个 pod） |
+| 终点 | Secret flag-secret（ns-admin） |
 
 ## 场景概述
 
@@ -138,7 +139,12 @@ kubectl get secret flag-secret -n ns-admin
 
 ## Flag
 
-- Flag 位置：Secret `flag-secret` in `ns-admin` namespace
+- 位置：Secret flag-secret（ns-admin）。
+- 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
+  （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
+- 形态：`flag{k8s-18-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh k8s-18 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh k8s-18 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

@@ -10,6 +10,8 @@
 | 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10613 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | iam 经 flag-vault 交付（jwt：用 IdP 私钥伪造的 RS256 断言） |
 
 ## 场景概述
 SAML IdP 的签名私钥泄露（藏在 IdP 容器中）。攻击者拿到私钥后用
@@ -29,9 +31,17 @@ SAML IdP 的签名私钥泄露（藏在 IdP 容器中）。攻击者拿到私钥
 1. 从 SAML IdP 容器/配置中获取签名私钥。
 2. 构造 SAML 断言（NameID=目标管理员），用私钥签名。
 3. 提交断言换取控制面会话，读取 flag。
+4. 终端服务 iam 向 flag-vault 出示用 IdP 私钥伪造的 RS256 断言，换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-09-...}`（伪造身份可访问的资源）
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 iam 向 flag-vault 出示「用 IdP 私钥伪造的 RS256 断言」（校验模式 `jwt`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-09-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-09 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-09 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

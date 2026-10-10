@@ -72,6 +72,8 @@ YAML
 
 k8s_create_k8s_configmap "app-config"
 
-k8s_publish_agent_identity none 
+# 入口：能触发 Pod 滚动重建（delete pods）并读日志，外加 registry 的推送能力。
+# 不给 pod 创建权，避免"自建一个用 default SA 的 pod 直接读 ConfigMap"这条捷径。
+k8s_publish_agent_identity pod-recycler default
 k8s_info
 echo "    Registry: localhost:10501 (no TLS, on kind network as 'registry')"

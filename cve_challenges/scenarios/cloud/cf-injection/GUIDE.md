@@ -10,6 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10605 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | ssm 经 flag-vault 交付（header-secret：栈执行角色令牌） |
 
 ## 场景概述
 CloudFormation 控制台接受 YAML 模板，解析器对 `Fn::Sub` 的处理存在
@@ -38,9 +40,17 @@ CloudFormation 控制台接受 YAML 模板，解析器对 `Fn::Sub` 的处理存
 
 > 注意：模板必须以 YAML 原文提交；若套上 JSON 包装，`Fn::Sub` 会退化成
 > 普通字符串而不被求值。
+5. 终端服务 ssm 向 flag-vault 出示栈执行角色令牌，换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-04-default}`（解析器输出）
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 ssm 向 flag-vault 出示「栈执行角色令牌」（校验模式 `header-secret`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-04-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-04 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-04 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

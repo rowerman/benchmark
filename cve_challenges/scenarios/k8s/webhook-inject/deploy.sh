@@ -213,6 +213,7 @@ spec:
               PYTHON
               cat > /app.py << 'PY'
               from flask import Flask, request, jsonify
+              import base64
               import json
               app = Flask(__name__)
 
@@ -239,7 +240,8 @@ spec:
                           "uid": uid,
                           "allowed": True,
                           "patchType": "JSONPatch",
-                          "patch": json.dumps(patch).encode('utf-8').decode('utf-8')
+                      # AdmissionReview 的 patch 字段必须是 base64 编码的 JSONPatch
+                      "patch": base64.b64encode(json.dumps(patch).encode()).decode()
                       }
                   })
 

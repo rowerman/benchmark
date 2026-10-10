@@ -7,9 +7,11 @@
 | ID | K8S-33 |
 | 名称 | Multi-Tenant K8s: Container Escape → Cross-Tenant Access |
 | 技术/CVE | N/A (privileged container + hostPID escape) |
-| 难度 | L3 |
+| 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
+| 入口身份 | exec-only tenant-a/attacker（只能进这个 pod） |
+| 终点 | 跨租户目标 pod / 节点 root-only 文件 |
 
 ## 场景概述
 
@@ -77,9 +79,12 @@ kubectl exec -n tenant-a attacker -- cat /proc/1/status | grep -E 'Seccomp|Cap'
 
 ## Flag
 
-`flag{k8s-33-cross-tenant}`（tenant-b target pod 环境）
-
-- Flag: Environment variable in tenant-b target pod
+- 位置：跨租户目标 pod / 节点 root-only 文件。
+- 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
+  （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
+- 形态：`flag{k8s-33-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh k8s-33 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh k8s-33 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

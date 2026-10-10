@@ -10,7 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
-| 集群 | cve-k8s-28-node-evasion |
+| 入口身份 | sa-token attacker-ns/attacker-sa |
+| 终点 | flag-svc（secure-ns，受限节点上） |
 
 ## 场景概述
 
@@ -68,9 +69,12 @@ kubectl get nodes --show-labels
 
 ## Flag
 
-- `/flag.txt` in the `flag-holder` pod running on the restricted node
-
-- Flag 位置：`/flag.txt` in flag-holder pod on restricted node
+- 位置：flag-svc（secure-ns，受限节点上）。
+- 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
+  （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
+- 形态：`flag{k8s-28-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh k8s-28 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh k8s-28 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

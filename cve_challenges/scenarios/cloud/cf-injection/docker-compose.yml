@@ -30,3 +30,15 @@ services:
 
   ssm:
     build: ./ssm
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
+
+  # flag 唯一终点：SSM 出示内部执行角色令牌才交付
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-04
+      VAULT_MODE: header-secret
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"header":"X-Execution-Role","values":["stack-execution-role"],"hint":"SSM 以内部执行角色令牌换取 /secure/flag"}'

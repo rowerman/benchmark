@@ -7,9 +7,11 @@
 | ID | CLOUD-07 |
 | 名称 | OIDC Claim Mismatch → Cross-Repo AssumeRole |
 | 技术/CVE | N/A (OIDC federation misconfiguration) |
-| 难度 | L2 |
+| 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10611 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | iam 经 flag-vault 交付（jwt：OIDC 的 RS256 令牌（含 iss/aud/sub）） |
 
 ## 场景概述
 IAM 的 OIDC 联合信任策略缺少/放宽了 claim 条件（如仓库名、环境、
@@ -30,9 +32,17 @@ ref），攻击者可以伪造或利用其他仓库的 OIDC token 通过信任�
 2. 发现信任策略只校验 issuer 不校验 sub/仓库条件。
 3. 伪造/借用合法签发的 JWT（含目标角色 sub），调用 AssumeRoleWithWebIdentity
    获得角色凭据与 flag。
+4. 终端服务 iam 向 flag-vault 出示OIDC 的 RS256 令牌（含 iss/aud/sub），换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-07-...}`（角色凭据换取的资源）
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 iam 向 flag-vault 出示「OIDC 的 RS256 令牌（含 iss/aud/sub）」（校验模式 `jwt`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-07-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-07 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-07 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

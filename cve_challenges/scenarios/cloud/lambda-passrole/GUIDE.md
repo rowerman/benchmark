@@ -10,6 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10604 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | lambda 经 flag-vault 交付（sigv4：Lambda 执行角色的 AK/SK 签名） |
 
 ## 场景概述
 API Gateway 把用户提交的代码原样转发给 Lambda 沙箱执行（命令注入）。
@@ -30,9 +32,17 @@ Lambda 执行环境携带 IAM 临时凭据；攻击者利用凭据进一步 Assu
    Lambda 环境（或直接 `cat` 环境文件），拿到 IAM AK/SK。
 2. 用凭据调用 IAM 服务（`_infra/iam-trust`）AssumeRole，换取目标角色。
 3. 用角色凭据读取受保护资源得到 flag。
+4. 终端服务 lambda 向 flag-vault 出示Lambda 执行角色的 AK/SK 签名，换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-03-step2-lambda}`（Lambda 环境）及跨账号 flag
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 lambda 向 flag-vault 出示「Lambda 执行角色的 AK/SK 签名」（校验模式 `sigv4`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-03-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-03 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-03 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

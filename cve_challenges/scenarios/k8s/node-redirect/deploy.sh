@@ -57,6 +57,10 @@ rules:
   - apiGroups: [""]
     resources: ["nodes/proxy"]
     verbs: ["get", "create"]
+  # kubectl exec 会先 get pod 再走 pods/exec，节点运维身份通常也能列 pod
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
   - apiGroups: [""]
     resources: ["pods/exec", "pods/attach"]
     verbs: ["create", "get"]

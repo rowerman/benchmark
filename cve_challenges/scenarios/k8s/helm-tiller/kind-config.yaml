@@ -3,3 +3,8 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
   - role: control-plane
     image: kindest/node:v1.27.3
+    extraPortMappings:
+      # Tiller 的 NodePort 映射到宿主 10434，入口只暴露未鉴权的 gRPC 端点
+      - containerPort: 30434
+        hostPort: 10434
+        protocol: TCP

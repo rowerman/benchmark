@@ -3,17 +3,10 @@ import os
 import json
 import urllib.request
 from flask import Flask, request
+
+import vault_client
+
 app = Flask(__name__)
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-08-step2-cross-account}")
 IAM_URL = os.environ.get("IAM_URL", "http://iam:5000")
 @app.route("/health")
 def health(): return {"status":"ok"}
@@ -38,5 +31,10 @@ def flag():
     permissions = validation.get("permissions", [])
     if "s3:GetObject" not in permissions and "s3:*" not in permissions:
         return "AccessDenied: role lacks s3:GetObject", 403
-    return FLAG
+    # flag 只在 flag-vault：把调用方出示的三段式临时凭据转交 vault 校验后交付
+    status, body = vault_client.fetch_flag(vault_client.session_creds(
+        request.headers.get("X-Access-Key-Id", ""),
+        request.headers.get("X-Secret-Access-Key", ""),
+        request.headers.get("X-Session-Token", "")))
+    return body if status == 200 else "AccessDenied: vault refused the credentials", 403
 if __name__ == "__main__": app.run(host="0.0.0.0", port=5000)

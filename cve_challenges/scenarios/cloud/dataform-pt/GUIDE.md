@@ -7,9 +7,11 @@
 | ID | CLOUD-29 |
 | 名称 | Dataform: Cross-Tenant Path Traversal in Managed Data Service |
 | 技术/CVE | N/A (cross-tenant path traversal, case #267) |
-| 难度 | L3 |
+| 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10640 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | shared-executor 经 flag-vault 交付（network-source：共享执行器内网地址（路径逃出本租户工作区）） |
 
 ## 场景概述
 托管数据工作流服务把所有租户的工作区放在同一个共享执行器上，而
@@ -30,9 +32,17 @@ dataset 引用的路径没有做容器化校验。攻击者提交 `../` 引用�
 2. 提交 workflow：`workspace=tenant-a`，
    `dataset_ref=../tenant-b/secret.txt`（从本租户工作区逃逸到相邻租户）。
 3. 执行器解析出 `tenant-b/secret.txt`，返回内容与 flag。
+4. 终端服务 shared-executor 向 flag-vault 出示共享执行器内网地址（路径逃出本租户工作区），换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-29-cross-tenant-workspace}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 shared-executor 向 flag-vault 出示「共享执行器内网地址（路径逃出本租户工作区）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-29-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-29 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-29 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

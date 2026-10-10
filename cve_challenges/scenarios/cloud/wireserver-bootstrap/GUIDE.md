@@ -10,6 +10,8 @@
 | 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10628 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | Wireserver / 控制面 经 flag-vault 交付（network-source：两个内部服务地址，各取自己那枚 flag） |
 
 ## 场景概述
 托管 K8s 节点上的普通 pod（无特权、无 hostNetwork）能访问宿主代理
@@ -37,13 +39,17 @@ WireServer（168.63.129.16）。goalstate 无鉴权；证书端点不校验调�
    得到 `TLS_BOOTSTRAP_TOKEN` 与 flag。
 4. 用 bootstrap token 向控制面提交 CSR（CN=system:node:*）——自动签发。
 5. 以伪造的 node 身份读取 `/node-secrets`，拿到最终 flag。
+6. 终端服务 Wireserver / 控制面 向 flag-vault 出示两个内部服务地址，各取自己那枚 flag，换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-- 直接运行 `docker compose` 时的默认值：
-  - `CVE_FLAG1`（引导脚本内）
-  - `CVE_FLAG2`（节点 Secret）
-- 通过 `./scripts/start-scenario.sh cloud-17` 启动时，终端会输出本次运行生成的
-  两枚 Flag；测试时应以该输出对应的值为准。
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 Wireserver / 控制面 向 flag-vault 出示「两个内部服务地址，各取自己那枚 flag」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-17-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-17 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-17 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

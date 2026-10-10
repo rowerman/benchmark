@@ -301,7 +301,7 @@ aux:
   product: Container Registry
   probe: manual
   marker: black-box only
-  exposure: internal
+  exposure: public
   auth: required
 - id: cloud-18-puller
   port: 10719
@@ -310,7 +310,7 @@ aux:
   product: Tenant Puller
   probe: manual
   marker: black-box only
-  exposure: internal
+  exposure: public
   auth: required
 - id: cloud-19-inference
   port: 10720
@@ -319,7 +319,7 @@ aux:
   product: Model Inference API
   probe: manual
   marker: black-box only
-  exposure: internal
+  exposure: public
   auth: required
 - id: cloud-19-cluster
   port: 10721
@@ -328,7 +328,7 @@ aux:
   product: EKS-style Cluster API
   probe: manual
   marker: black-box only
-  exposure: internal
+  exposure: public
   auth: required
 - id: cloud-17/19-node-imds-or-cp
   port: 10722
@@ -337,7 +337,7 @@ aux:
   product: Node Control Plane | Node IMDS
   probe: manual
   marker: dual
-  exposure: internal
+  exposure: public
   auth: required
 - id: cloud-23-sts
   port: 10723
@@ -355,7 +355,7 @@ aux:
   product: CloudTrail-style Audit Log
   probe: manual
   marker: black-box only
-  exposure: internal
+  exposure: public
   auth: none
 - id: cloud-25-audit
   port: 10725
@@ -364,7 +364,7 @@ aux:
   product: CloudTrail-style Audit Log
   probe: manual
   marker: black-box only
-  exposure: internal
+  exposure: public
   auth: none
 - id: cloud-26-registry
   port: 10726
@@ -391,7 +391,7 @@ aux:
   product: CloudTrail-style Audit Log
   probe: manual
   marker: black-box only
-  exposure: internal
+  exposure: public
   auth: none
 - id: cloud-24-prod
   port: 10729

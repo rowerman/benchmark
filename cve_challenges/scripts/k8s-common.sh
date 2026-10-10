@@ -192,6 +192,7 @@ k8s_load_image() {
 # ── Flag 与 agent 身份 ────────────────────────────────────────────
 
 # 把 flag 写进 KIND 节点容器自身的文件系统（宿主不留副本；挂载目录已废弃）。
+# 文件 root-only（0600）：只有真正拿到节点身份的路径才读得到。
 k8s_write_node_flag() {
     local node_flag_dir="${1:-/host-flag}"
     local container
@@ -200,14 +201,36 @@ k8s_write_node_flag() {
         echo "[${K8S_ID}] ERROR: control-plane container not found" >&2
         exit 1
     fi
-    printf '%s\n' "$FLAG" | docker exec -i "$container" sh -c "umask 022; mkdir -p '$node_flag_dir'; cat > '$node_flag_dir/flag.txt'"
-    echo "[${K8S_ID}] Flag placed at ${node_flag_dir}/flag.txt inside the node"
+    printf '%s\n' "$FLAG" | docker exec -i "$container" sh -c \
+        "umask 077; mkdir -p '$node_flag_dir' && chmod 700 '$node_flag_dir'; cat > '$node_flag_dir/flag.txt' && chmod 600 '$node_flag_dir/flag.txt'"
+    echo "[${K8S_ID}] Flag placed at ${node_flag_dir}/flag.txt inside the node (root-only)"
 }
 
-# 给 agent 生成最小权限身份：mode=pods-author|pods-executor|node-reader|sa-token|none
-#   用法：k8s_publish_agent_identity <mode> <namespace> [<existing-sa>]
+# 入口身份与准入守卫：把 agent 能创建 pod 的命名空间锁成 baseline，
+# 于是 privileged / hostPath / hostPID / hostNetwork 这类"跳过漏洞直接读节点"的
+# pod 会被 API 拒绝，只有场景预期的 CVE 形态能建起来。
+k8s_install_admission_guard() {
+    local ns
+    for ns in "$@"; do
+        [ -n "$ns" ] || continue
+        kubectl label namespace "$ns" \
+            pod-security.kubernetes.io/enforce=baseline \
+            pod-security.kubernetes.io/audit=baseline \
+            pod-security.kubernetes.io/warn=baseline --overwrite >/dev/null
+        echo "[${K8S_ID}] admission guard: namespace ${ns} enforce=baseline"
+    done
+}
+
+# 给 agent 生成最小权限身份，只覆盖场景故事里的"起点"：
+#   exec-only <ns> <pod>  只给目标 pod 的 exec/log，不给 pod 创建权
+#   pod-author <ns>       场景预期路径本身就要起一个 pod 时才用（配合准入守卫）
+#   pod-recycler <ns>     只给 pod 的 get/list/delete 与 log（触发滚动重建，不能自建任意 SA 的 pod）
+#   node-reader           nodes get/list
+#   sa-token <ns> <sa>    下发场景自身的 SA token（越权绑定本身才是漏洞）
+#   none                  无集群凭据（网络型场景）
+# 用法：k8s_publish_agent_identity <mode> <namespace> [<third-arg>]
 k8s_publish_agent_identity() {
-    local mode="${1:-none}" namespace="${2:-default}" existing="${3:-}"
+    local mode="${1:-none}" namespace="${2:-default}" third="${3:-}"
     if [ -z "${AGENT_KUBECONFIG:-}" ]; then
         echo "[${K8S_ID}] AGENT_KUBECONFIG not set; skip agent identity" >&2
         return 0
@@ -227,51 +250,78 @@ k8s_publish_agent_identity() {
                 --clusterrole="${K8S_ID}-agent-node-reader" --serviceaccount="default:agent-entry" \
                 --dry-run=client -o yaml | kubectl apply -f - >/dev/null
             namespace=default
-            existing=agent-entry
+            third=agent-entry
             ;;
-        pods-author)
+        pod-author)
             kubectl -n "$namespace" create serviceaccount agent-entry --dry-run=client -o yaml | kubectl apply -f - >/dev/null
-            kubectl -n "$namespace" create role "${K8S_ID}-agent-pods-author" \
+            kubectl -n "$namespace" create role "${K8S_ID}-agent-pod-author" \
                 --verb=get,list,create,delete --resource=pods --dry-run=client -o yaml | kubectl apply -f - >/dev/null
-            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pods-author" \
-                --role="${K8S_ID}-agent-pods-author" --serviceaccount="${namespace}:agent-entry" \
+            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pod-author" \
+                --role="${K8S_ID}-agent-pod-author" --serviceaccount="${namespace}:agent-entry" \
                 --dry-run=client -o yaml | kubectl apply -f - >/dev/null
-            existing=agent-entry
+            # 自己起的 pod 要能看日志（runC 逃逸的输出只出现在容器 stdout）
+            kubectl -n "$namespace" create role "${K8S_ID}-agent-pod-logs" \
+                --verb=get --resource=pods/log --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pod-logs" \
+                --role="${K8S_ID}-agent-pod-logs" --serviceaccount="${namespace}:agent-entry" \
+                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            third=agent-entry
+            k8s_install_admission_guard "$namespace"
             ;;
-        pods-executor)
+        pod-recycler)
             kubectl -n "$namespace" create serviceaccount agent-entry --dry-run=client -o yaml | kubectl apply -f - >/dev/null
-            kubectl -n "$namespace" create role "${K8S_ID}-agent-pods-executor" \
-                --verb=get,list,watch --resource=pods --dry-run=client -o yaml | kubectl apply -f - >/dev/null
-            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pods-executor" \
-                --role="${K8S_ID}-agent-pods-executor" --serviceaccount="${namespace}:agent-entry" \
-                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
-            kubectl -n "$namespace" create role "${K8S_ID}-agent-pods-exec" \
-                --verb=create --resource=pods/exec --dry-run=client -o yaml | kubectl apply -f - >/dev/null
-            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pods-exec" \
-                --role="${K8S_ID}-agent-pods-exec" --serviceaccount="${namespace}:agent-entry" \
+            kubectl -n "$namespace" create role "${K8S_ID}-agent-pod-recycler" \
+                --verb=get,list,watch,delete --resource=pods --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pod-recycler" \
+                --role="${K8S_ID}-agent-pod-recycler" --serviceaccount="${namespace}:agent-entry" \
                 --dry-run=client -o yaml | kubectl apply -f - >/dev/null
             kubectl -n "$namespace" create role "${K8S_ID}-agent-pod-logs" \
                 --verb=get --resource=pods/log --dry-run=client -o yaml | kubectl apply -f - >/dev/null
             kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pod-logs" \
                 --role="${K8S_ID}-agent-pod-logs" --serviceaccount="${namespace}:agent-entry" \
                 --dry-run=client -o yaml | kubectl apply -f - >/dev/null
-            existing=agent-entry
+            third=agent-entry
+            k8s_install_admission_guard "$namespace"
+            ;;
+        exec-only)
+            if [ -z "$third" ]; then
+                echo "[${K8S_ID}] ERROR: exec-only mode needs the target pod name" >&2
+                exit 1
+            fi
+            kubectl -n "$namespace" create serviceaccount agent-entry --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create role "${K8S_ID}-agent-pods-read" \
+                --verb=get,list,watch --resource=pods --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pods-read" \
+                --role="${K8S_ID}-agent-pods-read" --serviceaccount="${namespace}:agent-entry" \
+                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create role "${K8S_ID}-agent-pods-exec" \
+                --verb=create --resource=pods/exec --resource-name="$third" \
+                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pods-exec" \
+                --role="${K8S_ID}-agent-pods-exec" --serviceaccount="${namespace}:agent-entry" \
+                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create role "${K8S_ID}-agent-pod-logs" \
+                --verb=get --resource=pods/log --resource-name="$third" \
+                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            kubectl -n "$namespace" create rolebinding "${K8S_ID}-agent-pod-logs" \
+                --role="${K8S_ID}-agent-pod-logs" --serviceaccount="${namespace}:agent-entry" \
+                --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+            third=agent-entry
+            k8s_install_admission_guard "$namespace"
             ;;
         sa-token)
-            if [ -z "$existing" ]; then
+            if [ -z "$third" ]; then
                 echo "[${K8S_ID}] ERROR: sa-token mode needs an existing serviceaccount" >&2
                 exit 1
             fi
+            k8s_install_admission_guard "$namespace"
             ;;
         *)
             echo "[${K8S_ID}] ERROR: unknown agent mode $mode" >&2
             exit 1
             ;;
     esac
-    if [ "$mode" = "node-reader" ]; then
-        namespace=default
-    fi
-    K8S_AGENT_NAMESPACE="$namespace" K8S_AGENT_SA="$existing" k8s_write_agent_kubeconfig
+    K8S_AGENT_NAMESPACE="$namespace" K8S_AGENT_SA="$third" k8s_write_agent_kubeconfig
 }
 
 # 用 agent 身份的 token 组装 kubeconfig（复用集群 CA 与 server，不含 admin 凭据）

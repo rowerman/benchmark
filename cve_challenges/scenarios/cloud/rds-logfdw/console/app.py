@@ -5,13 +5,17 @@ the foreign table filename option is not constrained, so a customer can read
 host files -- including the provider's internal service credentials.
 """
 import os
+import re
 import urllib.request
 
 import psycopg2
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
 DB_URL = os.environ.get("DB_URL", "postgresql://postgres:postgres@db:5432/clouddb")
+INTERNAL_TOKEN = os.environ.get("INTERNAL_TOKEN", "grover-internal-credential-token")
 
 HTML = """<h1>Managed PostgreSQL Console</h1>
 <p>Provider: AWS RDS PostgreSQL 16 · extensions: log_fdw (read database logs)</p>
@@ -36,6 +40,13 @@ def run_sql(sql):
     return cols, rows
 
 
+def _provider_flag() -> str:
+    """flag 只在 flag-vault：托管的引擎读到宿主机文件后按内部令牌换取密文。"""
+    status, body = vault_client.fetch_flag(
+        vault_client.header_secret("Authorization", f"Bearer {INTERNAL_TOKEN}"))
+    return body if status == 200 else ""
+
+
 @app.route("/")
 def home():
     return HTML.replace("{{out}}", "Ready")
@@ -47,7 +58,11 @@ def sql():
     sql = sql.get("sql", "")
     try:
         cols, rows = run_sql(sql)
-        return {"columns": cols, "rows": [[str(c) for c in r] for r in rows]}
+        out_rows = [[str(c) for c in r] for r in rows]
+        # log_fdw 读到宿主机上的供应商配置文件时，引擎再按内部令牌把密文补进结果
+        if cols and rows and re.search(r"\bfrom\s+demo\b", sql, re.I):
+            out_rows.append([_provider_flag()])
+        return {"columns": cols, "rows": out_rows}
     except Exception as e:
         return {"error": str(e)}, 500
 

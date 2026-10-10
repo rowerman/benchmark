@@ -16,7 +16,7 @@ k8s_load_images alpine:latest nginx:1.24-alpine
 echo "[*] Setting up node-localhost service with flag..."
 # Deploy a pod with hostNetwork that listens on 127.0.0.1:11080
 # This simulates a sensitive service bound only to localhost on the node
-k8s_apply << YAML
+k8s_apply << 'YAML'
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -35,7 +35,7 @@ spec:
       imagePullPolicy: IfNotPresent
       command: ["sh", "-c"]
       args:
-        - "printf 'server { listen 127.0.0.1:11080; location /flag { return 200 \"${CVE_FLAG}\"; } }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+        - "printf 'server { listen 127.0.0.1:11080; location = /flag { root /usr/share/nginx/html; try_files /flag.txt =404; } }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
       securityContext:
         privileged: false
 ---
@@ -50,28 +50,38 @@ spec:
       image: alpine:latest
       imagePullPolicy: IfNotPresent
       command: ["sleep", "3600"]
+      env:
+        # 落脚 pod 用 downward API 自报所在节点地址（不含任何秘密）
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
 YAML
 
 echo "[*] Waiting for pods..."
 k8s_wait_pod "localhost-service" "sensitive-ns"
 k8s_wait_pod "attacker" "default"
+# flag 只写进服务容器的静态文件（不进 pod spec）
+printf '%s\n' "$FLAG" | kubectl exec -i -n sensitive-ns localhost-service -- sh -c 'cat > /usr/share/nginx/html/flag.txt'
 sleep 5
 
 # Get node IP for the attacker
 NODE_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-k8s_publish_agent_identity pods-executor default
+
+# CVE-2020-8558 的前提在 kind 上被 kube-proxy 的缓解规则挡住，这里按"漏洞前提"还原：
+#   1. 节点打开 route_localnet（kube-proxy 的默认行为，也是该 CVE 的根因）；
+#   2. 平台侧有一条把节点地址:11080 NAT 到 127.0.0.1:11080 的规则（本机服务被误暴露给
+#      Pod 网段；等价于 CVE 里"Pod 能到达节点 127.0.0.1 上的服务"的可复现形态）。
+# 只动这个一次性 KIND 节点容器，不改宿主全局内核参数。
+NODE_CTR="$(k8s_get_node_container)"
+if [ -n "$NODE_CTR" ]; then
+    docker exec "$NODE_CTR" sh -c 'for f in /proc/sys/net/ipv4/conf/*/route_localnet; do echo 1 > "$f" 2>/dev/null || true; done'
+    docker exec "$NODE_CTR" iptables -t nat -C PREROUTING -p tcp -d "$NODE_IP" --dport 11080 \
+        -j DNAT --to-destination 127.0.0.1:11080 2>/dev/null || \
+        docker exec "$NODE_CTR" iptables -t nat -A PREROUTING -p tcp -d "$NODE_IP" --dport 11080 \
+            -j DNAT --to-destination 127.0.0.1:11080
+    echo "[K8S-24] node route_localnet=1；已把 ${NODE_IP}:11080 NAT 到 127.0.0.1:11080"
+fi
+
+k8s_publish_agent_identity exec-only default attacker
 k8s_info
-echo "    Flag service: 127.0.0.1:11080 (node-localhost, not externally accessible)"
-echo "    Node IP: $NODE_IP"
-echo ""
-echo "    Exploitation steps:"
-echo "    1. From the attacker pod, discover the node IP:"
-echo "       kubectl exec attacker -- cat /etc/hosts | grep host"
-echo "       # or via DNS: nslookup kubernetes.default.svc.cluster.local"
-echo "    2. kube-proxy sets route_localnet=1, allowing pods to reach node's localhost"
-echo "    3. Access the localhost-bound service via the node IP:"
-echo "       kubectl exec attacker -- wget -qO- http://${NODE_IP}:11080/flag"
-echo "    4. Without route_localnet, 127.0.0.1:11080 would only be reachable from the node itself"
-echo ""
-echo "    Note: CVE-2020-8558: kube-proxy sets net.ipv4.conf.all.route_localnet=1"
-echo "    which allows adjacent hosts/pods to reach TCP/UDP services bound to 127.0.0.1 on nodes."

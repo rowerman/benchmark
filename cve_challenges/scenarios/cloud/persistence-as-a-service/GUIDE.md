@@ -10,6 +10,8 @@
 | 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10642 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | victim-resource 经 flag-vault 交付（network-source：受保护资源内网地址（密钥轮换校验通过）） |
 
 ## 场景概述
 攻击者在托管自动化服务注册一个恶意 runbook，脚本以服务身份周期性
@@ -32,9 +34,17 @@ as-a-service）。
    → 把凭据与 flag 外发到攻击者收集端点。
 2. 触发凭据轮换（`POST /rotate`）并同步受保护资源的新密钥。
 3. 等待 runbook 下一轮执行（每 5s）——它自动用新凭据再次读到 flag。
+4. 终端服务 victim-resource 向 flag-vault 出示受保护资源内网地址（密钥轮换校验通过），换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-31-persistence}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 victim-resource 向 flag-vault 出示「受保护资源内网地址（密钥轮换校验通过）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-31-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-31 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-31 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

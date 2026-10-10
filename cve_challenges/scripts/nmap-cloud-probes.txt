@@ -17,11 +17,12 @@ ports 10670
 match ec2-imds m|^HTTP/1\.[01] \d\d\d .*\r\n.*Server: EC2ws|s p/Amazon EC2 Instance Metadata Service/ i/IMDS v1-v2 simulator/
 
 # --------------------------------------------------------------------------
-# S3-compatible object storage (cloud-01 s3-proxy) -- JSON listing marker
+# S3-compatible object storage (cloud-01 s3-proxy / cloud-08 的两个 aux 入口)
+# -- JSON listing marker
 # --------------------------------------------------------------------------
 Probe TCP S3-JSON q|GET / HTTP/1.0\r\n\r\n|
 rarity 5
-ports 10671
+ports 10671,10704,10708
 match s3-storage m|"objects"\s*:| p/S3-compatible Object Storage/ i/DARWIN S3 simulator API/
 
 # --------------------------------------------------------------------------

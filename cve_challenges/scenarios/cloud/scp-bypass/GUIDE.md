@@ -7,9 +7,11 @@
 | ID | CLOUD-10 |
 | 名称 | SCP Bypass via Legacy API Version |
 | 技术/CVE | N/A (SCP enforcement gap) |
-| 难度 | L2 |
+| 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10615 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | iam 经 flag-vault 交付（sigv4：scp-bypass-user 的长期密钥签名） |
 
 ## 场景概述
 服务控制策略（SCP）限制了 AssumeRole AdminRole。旧版 API 版本
@@ -29,9 +31,17 @@
 1. 用默认版本 AssumeRole AdminRole——被 SCP 拒绝。
 2. 在请求中加入旧版参数 `Version=2010-05-08` 重试。
 3. 旧版路径未执行 SCP 校验，成功获得 AdminRole 凭据与 flag。
+4. 终端服务 iam 向 flag-vault 出示scp-bypass-user 的长期密钥签名，换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-10-...}`（AdminRole 可访问资源）
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 iam 向 flag-vault 出示「scp-bypass-user 的长期密钥签名」（校验模式 `sigv4`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-10-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-10 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-10 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

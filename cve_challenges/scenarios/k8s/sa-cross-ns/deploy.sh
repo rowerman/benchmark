@@ -8,7 +8,7 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
-k8s_load_images alpine:latest
+k8s_load_images bitnami/kubectl:1.27
 
 # Create two namespaces
 kubectl create ns ns-alpha --dry-run=client -o yaml | kubectl apply -f -
@@ -37,7 +37,7 @@ metadata:
 spec:
   containers:
     - name: shell
-      image: alpine:latest
+      image: bitnami/kubectl:1.27
       imagePullPolicy: IfNotPresent
       command: ["sleep", "3600"]
       env:
@@ -48,5 +48,5 @@ spec:
               key: token
 YAML
 
-k8s_publish_agent_identity sa-token ns-alpha default
+k8s_publish_agent_identity exec-only ns-alpha attacker-pod
 k8s_info

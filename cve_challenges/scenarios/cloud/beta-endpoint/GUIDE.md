@@ -7,10 +7,11 @@
 | ID | CLOUD-24 |
 | 名称 | Service Catalog Beta Endpoint: Invisible Write |
 | 技术/CVE | N/A (non-production endpoint skips audit, case #154) |
-| 难度 | L2 |
+| 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10635 |
-| 辅助入口 | localhost:10727（console）；localhost:10729（production API）；audit-log:5000（审计，仅场景网络内可达） |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | beta-api 经 flag-vault 交付（network-source：beta 端点内网地址（不可见写入）） |
 
 ## 场景概述
 云控制台页面的 CSP 头泄露了非生产（beta/gamma）端点
@@ -40,9 +41,17 @@
 
 > 无凭据或错误凭据的请求返回 403——本场景刻画的是“审计盲区”而非
 > “未鉴权接口”，因此调用者校验与生产端点保持一致。
+6. 终端服务 beta-api 向 flag-vault 出示beta 端点内网地址（不可见写入），换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-24-invisible-write}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 beta-api 向 flag-vault 出示「beta 端点内网地址（不可见写入）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-24-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-24 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-24 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

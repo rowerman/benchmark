@@ -8,12 +8,18 @@ echo "[CLOUD-02] CAP_NET_RAW -> Metadata MITM"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
+# kind 默认 CNI 是点对点 veth（pod 之间没有共享二层），CAP_NET_RAW 的 ARP 劫持
+# 在这上面物理上做不出来；换 Calico 后 pod 挂到 cni0 网桥下，二层可达恢复，
+# 同时 NetworkPolicy 也才真正生效（"只有 victim 能访问 IMDS"才是真的）。
+k8s_install_calico
 k8s_load_images python:3.11-slim
 
 NODE_NAME=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
-IMDS_FLAG="${CVE_FLAG:-flag{cloud-02-step1-netraw\}}"
+# flag 只落在这条 Secret 里：pod spec / 容器 env / 日志里都不出现明文
+k8s_create_k8s_secret imds-flag default
 
-# The simulated IMDS is reachable through a Service and only from victim pods.
+# The simulated IMDS 是 headless Service（DNS 直接解析到 pod IP），
+# 于是 victim → IMDS 走的是同网段二层直连，正好是 CAP_NET_RAW 能劫持的形态。
 kubectl apply -f - << YAML
 apiVersion: v1
 kind: Pod
@@ -37,20 +43,30 @@ spec:
                       self.send_response(200)
                       self.send_header('Content-Type','application/json')
                       self.end_headers()
-                      creds = {"Code":"Success","AccessKeyId":"AKIACLOUD02EXAMPLE","SecretAccessKey":"cloud02-imds-secret","Token":"cloud02-session","Expiration":"2026-12-31T00:00:00Z","Flag":os.environ["FLAG"]}
+                      try:
+                          flag = open("/flag/flag").read().strip()
+                      except OSError:
+                          flag = ""
+                      creds = {"Code":"Success","AccessKeyId":"AKIACLOUD02EXAMPLE","SecretAccessKey":"cloud02-imds-secret","Token":"cloud02-session","Expiration":"2026-12-31T00:00:00Z","Flag":flag}
                       self.wfile.write(json.dumps(creds).encode())
                   else:
                       self.send_response(200); self.end_headers(); self.wfile.write(b"metadata\n")
           HTTPServer(('0.0.0.0',5000),M).serve_forever()
-      env:
-        - name: FLAG
-          value: "${IMDS_FLAG}"
+      volumeMounts:
+        - name: flag
+          mountPath: /flag
+          readOnly: true
+  volumes:
+    - name: flag
+      secret:
+        secretName: imds-flag
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: metadata
 spec:
+  clusterIP: None
   selector:
     app: metadata
   ports:
@@ -116,7 +132,7 @@ spec:
       image: python:3.11-slim
       command: ["sh", "-c"]
       args:
-        - "apt-get update -qq && apt-get install -y -qq dsniff tcpdump iproute2 2>/dev/null; echo 'Tools ready: arpspoof, tcpdump, ip'; sleep infinity"
+        - "echo 'Tools ready: python raw socket (AF_PACKET)'; sleep infinity"
       securityContext:
         capabilities:
           add: ["NET_RAW"]
@@ -131,4 +147,4 @@ echo "    Metadata Service: metadata.default.svc.cluster.local:5000"
 echo "    Victim cache: kubectl exec victim -- cat /tmp/metadata-credentials.json"
 echo "    Exploit: use CAP_NET_RAW to observe/redirect victim -> metadata traffic"
 
-k8s_publish_agent_identity pods-executor default
+k8s_publish_agent_identity exec-only default attacker

@@ -1,23 +1,13 @@
 """Block-volume control plane with predictable resource IDs and a missing
 ownership check on AttachVolume (AttachMe lineage)."""
-import os
-
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-20-victim-volume}")
 _volumes = {
     "ocid.vol.1001": {"owner": "victim-tenant", "size": 8, "attached_to": None,
-                      "data": f"customer-records... flag={FLAG}"},
+                      "data": "customer-records..."},
 }
 _seq = 1002
 
@@ -67,7 +57,10 @@ def volume_data(vid):
     v = _volumes[vid]
     if not v["attached_to"]:
         return {"error": "volume not attached"}, 409
-    return {"volume_id": vid, "data": v["data"]}
+    # flag 只在 flag-vault：卷数据由存储后端在读取时补进交付内容
+    status, body = vault_client.fetch_flag()
+    data = f"{v['data']} flag={body}" if status == 200 else v["data"]
+    return {"volume_id": vid, "data": data}
 
 
 if __name__ == "__main__":

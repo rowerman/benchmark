@@ -58,5 +58,6 @@ YAML
 
 k8s_wait_pod "attacker-pod" "default"
 
-k8s_publish_agent_identity sa-token default attacker-sa
+# 入口只给"进落脚 pod"的权限；越权 SA 的 token 由 agent 自己在容器里取。
+k8s_publish_agent_identity exec-only default attacker-pod
 k8s_info

@@ -1,23 +1,19 @@
-import os
-
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-04-default}")
 ROLE_TOKEN = "stack-execution-role"
 PARAMETERS = {
-    "/secure/flag": FLAG,
     "/config/db-password": "SuperS3cretDB!",
 }
+
+
+def _secret_parameter() -> str:
+    """flag 只存在于 flag-vault；SSM 用内部执行角色令牌换取后转发给调用方。"""
+    status, body = vault_client.fetch_flag(
+        vault_client.header_secret("X-Execution-Role", ROLE_TOKEN))
+    return body if status == 200 else "AccessDenied"
 
 
 @app.get("/health")
@@ -29,10 +25,11 @@ def health():
 def parameter(name: str):
     if request.headers.get("X-Execution-Role") != ROLE_TOKEN:
         return {"error": "AccessDenied"}, 403
-    value = PARAMETERS.get("/" + name)
+    key = "/" + name
+    value = _secret_parameter() if key == "/secure/flag" else PARAMETERS.get(key)
     if value is None:
         return {"error": "ParameterNotFound"}, 404
-    return {"name": "/" + name, "value": value}
+    return {"name": key, "value": value}
 
 
 if __name__ == "__main__":

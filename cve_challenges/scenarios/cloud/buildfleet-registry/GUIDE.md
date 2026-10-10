@@ -10,6 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10629 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | 租户工作负载 经 flag-vault 交付（network-source：工作负载地址（拉镜像时下发密文，运行完即删）） |
 
 ## 场景概述
 供应商的托管构建服务在共享构建机上执行租户 Dockerfile 的 RUN 指令；
@@ -34,9 +36,17 @@
    python urllib 把 `/flag.txt` 外发到攻击者 `/exfil`。
 4. 触发受害者工作负载 `/pull`——它执行被覆盖的镜像内容，攻击者收到
    外发的 flag。
+5. 终端服务 租户工作负载 向 flag-vault 出示工作负载地址（拉镜像时下发密文，运行完即删），换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-18-victim-image}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 租户工作负载 向 flag-vault 出示「工作负载地址（拉镜像时下发密文，运行完即删）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-18-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-18 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-18 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

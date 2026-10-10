@@ -10,8 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | localhost:10500 |
-| 集群 | cve-k8s-09-registry |
-| 镜像仓库 | localhost:10500 (no TLS, on the kind network as `k8s-registry`) |
+| 入口身份 | pod-recycler default（可 get/list/delete pod 与读日志） |
+| 终点 | Secret registry-flag（default，后门以工作负载 SA 读取并打进日志） |
 
 ## 场景概述
 
@@ -94,11 +94,12 @@ bash teardown.sh
 
 ## Flag
 
-- Secret `registry-flag` in namespace `default` (readable by the default SA via the
-  pre-configured `registry-secret-reader` RoleBinding)
-- Flag format: `flag{k8s-09-*}`
-
-- Flag 位置：Secret `registry-flag` in namespace `default` (readable only by the workload SA)
+- 位置：Secret registry-flag（default，后门以工作负载 SA 读取并打进日志）。
+- 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
+  （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
+- 形态：`flag{k8s-09-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh k8s-09 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh k8s-09 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

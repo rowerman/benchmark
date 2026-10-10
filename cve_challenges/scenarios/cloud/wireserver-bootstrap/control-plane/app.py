@@ -9,18 +9,10 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
 TOKEN = os.environ.get("BOOTSTRAP_TOKEN", "token-abcdef")
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-17-node-secrets}")
 _ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 _ca_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, u"control-plane-ca")])
 _ca_cert = (
@@ -78,7 +70,10 @@ def node_secrets():
         return {"error": "not authenticated as a node"}, 403
     if not cn.startswith("system:node:"):
         return {"error": "not authenticated as a node"}, 403
-    return {"node": "k8s-agentpool-00000000-0", "secrets": [{"name": "flag", "data": FLAG}]}
+    # flag 只在 flag-vault：拿下节点身份后控制面再按本机地址取第二枚 flag
+    status, body = vault_client.fetch_flag(path="/flag2")
+    return {"node": "k8s-agentpool-00000000-0",
+            "secrets": [{"name": "flag", "data": body if status == 200 else ""}]}
 
 
 if __name__ == "__main__":

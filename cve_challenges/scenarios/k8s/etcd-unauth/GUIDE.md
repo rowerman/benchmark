@@ -10,7 +10,8 @@
 | 难度 | L3 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | localhost:11379 |
-| 集群 | cve-k8s-08-etcd |
+| 入口身份 | 无集群凭据（网络型起点） |
+| 终点 | 真实 etcd 原始存储值 /registry/secrets/kube-system/etcd-flag |
 
 ## 场景概述
 
@@ -128,7 +129,12 @@ ETCDCTL_API=3 etcdctl --endpoints=http://localhost:11379 get /registry/secrets/k
 
 ## Flag
 
-- Flag 位置：etcd key `/registry/secrets/kube-system/etcd-flag` (the cluster's real datastore)
+- 位置：真实 etcd 原始存储值 /registry/secrets/kube-system/etcd-flag。
+- 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
+  （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
+- 形态：`flag{k8s-08-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh k8s-08 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh k8s-08 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

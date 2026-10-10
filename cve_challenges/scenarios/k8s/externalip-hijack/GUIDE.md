@@ -7,11 +7,11 @@
 | ID | K8S-22 |
 | 名称 | Service ExternalIP Traffic Interception |
 | 技术/CVE | CVE-2020-8554 |
-| 难度 | L2 |
+| 难度 | L3 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
-| 集群 | cve-k8s-22-externalip |
-| 攻击面 | Service externalIPs → Traffic hijack → Credential discovery |
+| 入口身份 | sa-token attack-ns/attacker-sa |
+| 终点 | 受害者客户端请求头 X-Flag（被 externalIPs 改道截获） |
 
 ## 场景概述
 
@@ -83,11 +83,12 @@ bash teardown.sh
 
 ## Flag
 
-- **Primary**: `X-Flag` header in intercepted HTTP requests (sent by flag-client to the victim Service)
-- **Format**: `flag{k8s-22-<16-hex>}`
-
-> 攻击者的 attacker-sa 只有 attack-ns 内创建/读取 Service 的权限，无法读取
-> secure-ns 的 Secret；flag 只能通过流量劫持截获。
+- 位置：受害者客户端请求头 X-Flag（被 externalIPs 改道截获）。
+- 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
+  （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
+- 形态：`flag{k8s-22-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh k8s-22 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh k8s-22 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

@@ -6,17 +6,9 @@ import requests
 
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-28-allowlist-bypass}")
 NAT_URL = os.environ.get("NAT_URL", "")
 TRUSTED = [ipaddress.ip_network("168.63.0.10/32")]
 
@@ -31,7 +23,9 @@ def rules():
 def flag():
     src = request.remote_addr
     if any(ipaddress.ip_address(src) in n for n in TRUSTED):
-        return {"source": src, "trusted": True, "flag": FLAG}
+        # 放行后 flag 由 flag-vault 按本服务地址交付，容器里不留明文
+        status, body = vault_client.fetch_flag()
+        return {"source": src, "trusted": True, "flag": body if status == 200 else ""}
     return {"source": src, "trusted": False, "error": "source IP not in trusted service range"}, 403
 
 

@@ -41,3 +41,15 @@ services:
       - OIDC_JWKS_URL=http://saml-idp:5000/.well-known/jwks.json
     ports:
       - "10709:5000"
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
+
+  # flag 唯一终点：校验伪造的 SAML 断言（IdP 的 RS256 签名 + iss/aud/sub）
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-09
+      VAULT_MODE: jwt
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"jwks_url":"http://saml-idp:5000/.well-known/jwks.json","issuer":"corp-idp.example.com","audience":"https://signin.aws.amazon.com/saml","claims":{"sub":"admin@corp"},"hint":"SAML assertion signed by the federation IdP key"}'

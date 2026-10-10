@@ -25,5 +25,5 @@ spec:
         privileged: true
 YAML
 
-k8s_publish_agent_identity pods-executor default
+k8s_publish_agent_identity exec-only default privileged-pod
 k8s_info

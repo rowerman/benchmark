@@ -10,6 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10608 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | ci-runner 经 flag-vault 交付（header-secret：流水线工作负载令牌） |
 
 ## 场景概述
 攻击者可以向 CI 运行器提交恶意工作流/仓库内容，管道脚本存在 shell
@@ -29,9 +31,17 @@
 1. 向 git-server 提交恶意 workflow/脚本，触发 ci-runner 执行。
 2. 在注入的 shell 命令中读取 CI 环境变量/Secret 以及短期工作负载身份材料。
 3. 携带 `X-Workload-Token` 请求受保护的云 artifact API，读取跨租户构建产物与 flag。
+4. 终端服务 ci-runner 向 flag-vault 出示流水线工作负载令牌，换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-05-pipeline}`（runner 环境）
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 ci-runner 向 flag-vault 出示「流水线工作负载令牌」（校验模式 `header-secret`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-05-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-05 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-05 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

@@ -12,9 +12,21 @@ services:
       - "10632:5000"
     environment:
       - SIGNING_SECRET=shared-signing-secret
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     networks:
       c32-net:
         ipv4_address: 10.32.0.20
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-21
+      VAULT_MODE: jwt
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"hmac_secret":"shared-signing-secret","claims":{"tenant":"tenant-a"},"hint":"本租户令牌（HS256）才换取得到目录密文"}'
+    networks:
+      c32-net:
   attacker:
     profiles: [debug]
     build: ./attacker

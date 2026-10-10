@@ -7,10 +7,11 @@
 | ID | CLOUD-23 |
 | 名称 | IAM Enumeration 2.0: Unlogged AccessDenied Oracle |
 | 技术/CVE | N/A (uncovered service error oracle, case #134/#137) |
-| 难度 | L2 |
+| 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10634 |
-| 辅助入口 | localhost:10723（STS）；audit-log:5000（审计，仅场景网络内可达） |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | audit-log 经 flag-vault 交付（network-source：审计服务内网地址（零审计条目的过滤查询）） |
 
 ## 场景概述
 CloudTrail 并不覆盖所有服务：调用不支持的 API 不产生任何审计事件，
@@ -43,9 +44,17 @@ CloudTrail 并不覆盖所有服务：调用不支持的 API 不产生任何审�
 > 审计 Flag 的判定条件是「指定端点没有任何审计条目」，而不是「审计日志
 > 整体为空」。因此先探测 `/api/supported` 不会打掉 Flag——它只是对照组，
 > 说明被覆盖的 API 会留痕。
+4. 终端服务 audit-log 向 flag-vault 出示审计服务内网地址（零审计条目的过滤查询），换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-23-zero-audit-enum}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 audit-log 向 flag-vault 出示「审计服务内网地址（零审计条目的过滤查询）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-23-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-23 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-23 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

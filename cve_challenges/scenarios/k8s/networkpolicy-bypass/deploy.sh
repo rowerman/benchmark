@@ -54,7 +54,15 @@ spec:
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c"]
           args:
-            - "printf 'server { listen 8080; location /flag { return 200 FLAG_PLACEHOLDER\\\\n; } location /health { return 200 ok\\\\n; } }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+            - |
+              cat > /etc/nginx/conf.d/default.conf <<'CONF'
+              server {
+                  listen 8080;
+                  location = /flag { alias /tmp/flag.txt; }
+                  location = /health { return 200 "ok\n"; }
+              }
+              CONF
+              nginx -g 'daemon off;'
           ports:
             - containerPort: 8080
 ---

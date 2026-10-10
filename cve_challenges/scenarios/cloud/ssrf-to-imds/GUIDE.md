@@ -7,9 +7,11 @@
 | ID | CLOUD-01 |
 | 名称 | SSRF to IMDS Credential Theft |
 | 技术/CVE | N/A (SSRF → IMDS) |
-| 难度 | L2 |
+| 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10601 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | s3 经 flag-vault 交付（sigv4：从 IMDS 偷到的 AK/SK 按 SigV4 签名） |
 
 ## 场景概述
 Web 应用存在 SSRF，可访问 `169.254.169.254`（实例元数据服务）。
@@ -31,9 +33,17 @@ IMDS 是云里的"凭据售货机"：攻击者借 SSRF 读取实例角色凭据�
 2. 继续读取角色路径，获得 AccessKeyId / SecretAccessKey / Token。
 3. 用凭据访问 S3 模拟服务（`/latest/meta-data/...` 之外的 `s3` 容器），
    读取 flag。
+4. 终端服务 s3 向 flag-vault 出示从 IMDS 偷到的 AK/SK 按 SigV4 签名，换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-01-imds-s3}`（S3 对象）
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 s3 向 flag-vault 出示「从 IMDS 偷到的 AK/SK 按 SigV4 签名」（校验模式 `sigv4`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-01-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-01 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-01 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

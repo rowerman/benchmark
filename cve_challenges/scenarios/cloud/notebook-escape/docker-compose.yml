@@ -18,3 +18,12 @@ services:
     build: ./k8s-api
     environment:
       - SA_TOKEN=eyJhbGciOiJub25lIn0.eyJzdWIiOiJicmlkZ2UifQ.
+  # flag 唯一终点：只能从宿主机层面进入本容器读 /vault/flag（0600 root）
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-06
+      VAULT_MODE: header-secret
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"header":"X-Provider-Internal","values":["not-issued-to-any-client"],"hint":"本场景的密文只能经宿主机/容器层读到"}'

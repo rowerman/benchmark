@@ -10,7 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
-| 集群 | cve-k8s-07-kubelet |
+| 入口身份 | node-reader（只读 nodes，无集群凭据） |
+| 终点 | 节点上的容器内 /flag.txt（经 kubelet 匿名 /run 读取） |
 
 ## 场景概述
 
@@ -114,7 +115,12 @@ kubectl describe node | grep -A5 Kubelet
 
 ## Flag
 
-- Flag 位置：Flag is a plaintext pod environment variable on `flag-holder` (visible in the kubelet `/pods` pod spec)
+- 位置：节点上的容器内 /flag.txt（经 kubelet 匿名 /run 读取）。
+- 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
+  （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
+- 形态：`flag{k8s-07-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh k8s-07 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh k8s-07 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

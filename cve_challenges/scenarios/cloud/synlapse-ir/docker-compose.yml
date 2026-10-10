@@ -14,6 +14,16 @@ services:
     networks:
       c26-net:
         ipv4_address: 10.26.0.20
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-15
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.26.0.20/32"],"hint":"供应商密钥库只对共享集成运行时地址开放"}'
+    networks:
+      c26-net:
   tenant-b:
     build: ./tenant-b
     networks:

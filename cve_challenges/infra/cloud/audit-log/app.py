@@ -3,9 +3,23 @@ import os
 
 from flask import Flask, request
 
+try:
+    import vault_client
+except ImportError:
+    # 只有把 flag 迁到 flag-vault 的场景才挂载这个客户端
+    vault_client = None
+
 app = Flask(__name__)
-FLAG = os.environ.get("FLAG")
 _logs = []
+
+
+def _flag() -> str:
+    """flag 只在 flag-vault：本服务以内部地址身份换取，容器里不留明文。"""
+    fallback = os.environ.get("FLAG", "")
+    if vault_client is None:
+        return fallback
+    status, body = vault_client.fetch_flag()
+    return body if status == 200 else fallback
 
 
 @app.route("/health")
@@ -35,8 +49,10 @@ def get_logs():
     # The flag proves that a specific endpoint left no trace: it is returned
     # only for a filtered query whose endpoint has zero audit entries, so
     # audited calls (for example the covered control-plane API) cannot destroy it.
-    if FLAG and path and not logs:
-        body["flag"] = FLAG
+    if path and not logs:
+        flag = _flag()
+        if flag:
+            body["flag"] = flag
     return body
 
 

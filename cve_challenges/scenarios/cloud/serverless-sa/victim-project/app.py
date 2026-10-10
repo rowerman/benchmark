@@ -3,24 +3,20 @@ import os
 
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
 TOKEN = os.environ.get("DEFAULT_SA_TOKEN", "default-compute-sa-token")
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-30-victim-project}")
 @app.route("/api/projects/victim/secrets")
 def secrets():
     auth = request.headers.get("Authorization", "")
     if auth != f"Bearer {TOKEN}":
         return {"error": "unauthorized"}, 403
-    return {"project": "victim-project", "secrets": [{"name": "api-key", "value": FLAG}]}
+    # flag 只在 flag-vault：项目服务把默认服务账号令牌转交 vault 校验后取回
+    status, body = vault_client.fetch_flag(
+        vault_client.header_secret("Authorization", f"Bearer {TOKEN}"))
+    return {"project": "victim-project",
+            "secrets": [{"name": "api-key", "value": body if status == 200 else ""}]}
 
 
 if __name__ == "__main__":

@@ -27,6 +27,16 @@ services:
     networks:
       c25-net:
         ipv4_address: 10.25.0.10
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-14
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.25.0.20/32"],"hint":"引擎补丁让 provider 角色在数据库主机上执行，密文只对数据库主机地址开放"}'
+    networks:
+      c25-net:
 networks:
   c25-net:
     driver: bridge

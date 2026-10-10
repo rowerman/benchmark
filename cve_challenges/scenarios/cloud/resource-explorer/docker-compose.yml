@@ -5,11 +5,25 @@ services:
       - "10636:5000"
     environment:
       - RESOURCE_READER_ARN=arn:aws:iam::111122223333:user/attacker
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     networks:
       c36-net:
         ipv4_address: 10.36.0.10
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-25
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.36.0.10/32"],"hint":"资源索引的密文只交付给资源浏览器服务"}'
+    networks:
+      c36-net:
   audit-log:
     build: ../../../infra/cloud/audit-log
+    ports:
+      - "10725:5000"
     networks:
       c36-net:
         ipv4_address: 10.36.0.20

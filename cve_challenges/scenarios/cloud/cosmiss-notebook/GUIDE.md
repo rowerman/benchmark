@@ -10,6 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10623 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | nb-b 经 flag-vault 交付（network-source：笔记本运行时地址（flag 落成 /flag.txt 后即删）） |
 
 ## 场景概述
 供应商的多租户 notebook 前端会验证签名的租户 token，但路由层没有把
@@ -32,9 +34,17 @@ token 中的 tenant 与 forwardingId 对应 notebook 的属主绑定。攻击者
 2. 携带 tenant-a token 用该 ID 调用执行端点（服务端只验签、不校验 token tenant 与 notebook 属主）：
    `GET /notebook/<fwd>/exec?code=print(open('/flag.txt').read())`
 3. 返回 victim 租户 notebook 中的 flag。
+4. 终端服务 nb-b 向 flag-vault 出示笔记本运行时地址（flag 落成 /flag.txt 后即删），换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-12-nb-b}`（位于 nb-b 容器的 `/flag.txt`）
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 nb-b 向 flag-vault 出示「笔记本运行时地址（flag 落成 /flag.txt 后即删）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-12-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-12 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-12 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

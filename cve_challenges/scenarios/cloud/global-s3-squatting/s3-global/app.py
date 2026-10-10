@@ -1,22 +1,15 @@
 """Global S3 Namespace — first-come-first-served bucket names, cross-tenant risk."""
-import os, json
+import json
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-11-step2-squatting}")
+DELIVERY_TOKEN = "s3-global-delivery"
 _buckets = {}  # Global namespace — all tenants share this
 
 # Victim tenant's data (pre-created, simulating CF auto-creation that references a bucket)
-_buckets["prod-assets-2024"] = {"owner": "victim-tenant", "objects": {"flag.txt": FLAG, "config.json": '{"db":"prod-db-01"}'}}
+_buckets["prod-assets-2024"] = {"owner": "victim-tenant", "objects": {"flag.txt": None, "config.json": '{"db":"prod-db-01"}'}}
 _buckets["prod-logs-2024"] = {"owner": "victim-tenant", "objects": {"access.log": "192.168.1.1 - admin login"}}
 
 @app.route("/health")
@@ -40,6 +33,11 @@ def bucket(name):
 @app.route("/buckets/<bucket>/<key>", methods=["GET"])
 def get_object(bucket, key):
     if bucket not in _buckets: return "NotFound", 404
+    if key == "flag.txt" and _buckets[bucket]["objects"].get(key, "") is None:
+        # flag 只在 flag-vault：按供应商内部交付令牌取回，宿主机与其它容器都碰不到
+        status, body = vault_client.fetch_flag(
+            vault_client.header_secret("X-Storage-Internal-Token", DELIVERY_TOKEN))
+        return (body, 200) if status == 200 else ("NotFound", 404)
     if key in _buckets[bucket]["objects"]: return _buckets[bucket]["objects"][key]
     return "NotFound", 404
 

@@ -10,6 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10633 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | omi-agent 经 flag-vault 交付（network-source：中间件代理内网地址（未鉴权通道拿到 root 后取）） |
 
 ## 场景概述
 供应商在租户 VM 上静默安装的 OMI 中间件（模拟管理端口 5986）不做任何
@@ -29,13 +31,21 @@
 - 无鉴权管理端口的利用
 
 ## 利用步骤
+
 1. 扫描内部 VM，发现 vm-b 的 5986 端口开放且 banner 显示 OMI Agent。
-2. 直接 POST `/wsman/exec`（无需任何凭据）执行
-   `cat /root/flag.txt`。
+2. 直接 POST `/wsman/exec`（无需任何凭据）执行命令：先确认 root 身份，再从中间件容器里
+   向供应商密钥库取密文（该密钥库只对 omi-agent 的地址开放）：
+   `id; python3 -c "import urllib.request;print(urllib.request.urlopen('http://flag-vault:5000/flag').read().decode())"`
 3. 以 root 拿到 VM 上的 flag。
 
 ## Flag
-`flag{cloud-22-vm-root}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 omi-agent 向 flag-vault 出示「中间件代理内网地址（未鉴权通道拿到 root 后取）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-22-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-22 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-22 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

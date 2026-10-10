@@ -12,6 +12,8 @@ services:
     build: ./internal-registry
     environment:
       - VICTIM_IMAGE=echo 'victim app running'; id
+    ports:
+      - "10718:5000"
     networks:
       c29-net:
         ipv4_address: 10.29.0.20
@@ -21,9 +23,23 @@ services:
     environment:
       - REGISTRY_URL=http://internal-registry:5000
       - IMAGE_NAME=victim-app:latest
+    ports:
+      - "10719:5000"
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     networks:
       c29-net:
         ipv4_address: 10.29.0.30
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-18
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.29.0.30/32"],"hint":"工作负载密文只随租户工作负载本身交付"}'
+    networks:
+      c29-net:
   attacker:
     profiles: [debug]
     build: ./attacker

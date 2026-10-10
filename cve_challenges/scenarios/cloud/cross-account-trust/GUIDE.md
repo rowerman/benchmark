@@ -10,6 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10612 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | s3 经 flag-vault 交付（session-creds：AssumeRole 得到的三段式临时凭据） |
 
 ## 场景概述
 目标账号的 IAM 角色信任策略写了 `"Principal": "*"`（或过宽的
@@ -34,9 +36,17 @@
 3. 用返回的三段式临时凭据（AccessKeyId / SecretAccessKey /
    SessionToken）请求 S3 的 `/flag.txt`。S3 会向 IAM 校验会话有效性
    与角色权限；匿名、伪造或权限不足的凭据一律返回 403。
+4. 终端服务 s3 向 flag-vault 出示AssumeRole 得到的三段式临时凭据，换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-08-...}`（S3 对象）
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 s3 向 flag-vault 出示「AssumeRole 得到的三段式临时凭据」（校验模式 `session-creds`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-08-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-08 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-08 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

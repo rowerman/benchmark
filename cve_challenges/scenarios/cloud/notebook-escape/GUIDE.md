@@ -10,6 +10,8 @@
 | 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10609 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | flag-vault 容器内 /vault/flag（经宿主机容器层直接读取） |
 
 ## 场景概述
 托管 AI notebook 可执行任意代码（产品特性），但沙箱存在逃逸路径
@@ -26,10 +28,13 @@
 - Notebook 代码执行；Docker socket 逃逸；SA token 与 K8s API
 
 ## 利用步骤
-1. 在 notebook 中执行代码，探测 Docker socket（`/var/run/docker.sock`）。
-2. 利用 socket 创建特权容器/挂载宿主路径，逃逸到节点。
-3. 读取 `/var/run/secrets/kubernetes.io/serviceaccount/token`，调用
-   K8s API 读取 Secret/flag。
+
+1. 在 notebook 里执行代码，探测挂载进来的 `/var/run/docker.sock`。
+2. 用这个 socket 与宿主机的 docker daemon 对话（`GET /containers/json`），列出租户之外的容器。
+3. 找到 `flag-vault` 容器，经 `POST /containers/<id>/exec` + `POST /exec/<id>/start` 以 root 执行
+   `cat /vault/flag`。
+4. 密文只存在于该容器内的 0600 root 文件里，宿主机与其它容器都拿不到——读到它即证明已完成
+   容器逃逸。
 
 ## Flag
 `flag{cloud-06-step2-...}`（集群 Secret）

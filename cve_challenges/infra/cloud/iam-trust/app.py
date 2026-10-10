@@ -28,6 +28,12 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from flask import Flask, request
 
+try:
+    import vault_client
+except ImportError:
+    # 只有把 flag 迁到 flag-vault 的场景才挂载这个客户端
+    vault_client = None
+
 app = Flask(__name__)
 
 # ---------------------------------------------------------------------------
@@ -40,7 +46,6 @@ ACCOUNT_ID = os.environ.get("IAM_ACCOUNT_ID", "000000000000")
 OIDC_JWKS_URL = os.environ.get("OIDC_JWKS_URL", "")
 # Optional: load OIDC public key PEM directly
 OIDC_PUBLIC_KEY_FILE = os.environ.get("OIDC_PUBLIC_KEY_FILE", "")
-FLAG = os.environ.get("FLAG", "")
 
 # ---------------------------------------------------------------------------
 # Load config
@@ -255,8 +260,15 @@ def _elem(tag: str, text: str = "") -> Element:
     return e
 
 
-def _flag_elem() -> Element | None:
-    return _elem("Flag", FLAG) if FLAG else None
+def _append_flag(result: list[Element], proof: dict | None) -> None:
+    """flag 只在 flag-vault：把调用方出示的凭据转交 vault 换取后附在响应里。"""
+    if vault_client is None or proof is None:
+        text = os.environ.get("FLAG", "")
+    else:
+        status, body = vault_client.fetch_flag(proof)
+        text = body if status == 200 else ""
+    if text:
+        result.append(_elem("Flag", text))
 
 
 # ---------------------------------------------------------------------------
@@ -532,8 +544,7 @@ def _handle_assume_role(params: dict):
     SubElement(creds_elem, "Expiration").text = creds["Expiration"]
 
     result = [assumed_role_elem, creds_elem]
-    if _flag_elem() is not None:
-        result.append(_flag_elem())
+    _append_flag(result, vault_client.sigv4_headers(ak, sk) if (vault_client and ak) else None)
     xml = _xml_response("AssumeRole", result)
     return (xml, 200, {"Content-Type": "application/xml"})
 
@@ -599,8 +610,7 @@ def _handle_assume_role_web_identity(params: dict):
     provider.text = issuer
 
     result = [assumed_role_elem, creds_elem, sub_from_token, audience, provider]
-    if _flag_elem() is not None:
-        result.append(_flag_elem())
+    _append_flag(result, vault_client.bearer(token_str) if vault_client else None)
     xml = _xml_response("AssumeRoleWithWebIdentity", result)
     return (xml, 200, {"Content-Type": "application/xml"})
 

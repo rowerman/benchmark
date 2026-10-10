@@ -15,20 +15,18 @@ import os
 import subprocess
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
 
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-03-step2-lambda}")
 IAM_AK = os.environ.get("IAM_ACCESS_KEY_ID", "AKIALAMBDAEXAMPLE")
 IAM_SK = os.environ.get("IAM_SECRET_KEY", "lambda-iam-secret-key")
+
+
+def _role_flag() -> str:
+    """flag 只在 flag-vault：函数以执行角色凭据签名换取，容器里不留明文。"""
+    status, body = vault_client.fetch_flag(vault_client.sigv4_headers(IAM_AK, IAM_SK))
+    return body if status == 200 else ""
 
 
 @app.route("/health")
@@ -56,9 +54,12 @@ def run():
         f.write(code)
         tmpname = f.name
     try:
+        # 执行环境把控制面 flag 交给函数运行时（值取自 flag-vault，不在容器里）
+        env = os.environ.copy()
+        env["FLAG"] = _role_flag()
         result = subprocess.check_output(
             f"python3 {tmpname} 2>&1; echo '---DONE---'",
-            shell=True, timeout=10, stderr=subprocess.STDOUT)
+            shell=True, timeout=10, stderr=subprocess.STDOUT, env=env)
         return result.decode(errors="replace"), 200
     except subprocess.TimeoutExpired:
         return "Execution timed out", 504

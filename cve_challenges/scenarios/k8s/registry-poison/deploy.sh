@@ -78,7 +78,8 @@ YAML
 
 k8s_wait_pods_label "app=registry-target" "default"
 
-k8s_publish_agent_identity none 
+# 入口：能触发 Pod 滚动重建并读日志（registry 投毒本身还需要网络可达的 registry）
+k8s_publish_agent_identity pod-recycler default
 k8s_info
 echo "    Registry: localhost:10500 (no TLS, on kind network as 'k8s-registry')"
 echo "    Flag Secret: registry-flag in default namespace (readable only by the workload SA)"

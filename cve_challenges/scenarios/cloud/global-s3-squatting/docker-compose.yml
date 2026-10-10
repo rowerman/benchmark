@@ -3,6 +3,17 @@ services:
     build: ./s3-global
     ports:
       - "10621:5000"
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
+  # flag 唯一终点：只认 s3-global 持有的供应商内部交付令牌
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-11
+      VAULT_MODE: header-secret
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"header":"X-Storage-Internal-Token","values":["s3-global-delivery"],"hint":"对象存储内部交付令牌"}'
   tenant-a:
     build:
       context: ./tenant-a

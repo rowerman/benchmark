@@ -7,7 +7,7 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
-k8s_load_images ghcr.io/helm/tiller:v2.17.0
+k8s_load_images ghcr.io/helm/tiller:v2.17.0 nginx:1.24-alpine
 
 # Create Tiller ServiceAccount and ClusterRoleBinding
 kubectl create serviceaccount tiller -n kube-system
@@ -49,15 +49,23 @@ metadata:
   name: tiller-deploy
   namespace: kube-system
 spec:
+  type: NodePort
   selector:
     app: tiller
   ports:
     - port: 44134
       targetPort: 44134
+      nodePort: 30434
 YAML
 
 k8s_create_k8s_secret "helm-flag" "kube-system"
 
-k8s_publish_agent_identity pods-executor kube-system
+# Tiller 起来之后入口才可用
+k8s_wait_pods_label "app=tiller" "kube-system"
+
+# Tiller 走 NodePort 暴露，入口只给 nodes 读权限（无 pod 操作），
+# 避免"进 kube-system 的 pod 直接翻 Secret"这条捷径。
+k8s_publish_agent_identity node-reader default
 k8s_info
-echo "[+] Tiller at tiller-deploy.kube-system:44134 (no auth)"
+echo "[+] Tiller gRPC: 127.0.0.1:10434（NodePort 30434，无鉴权）"
+echo "    连通性自检：ETCDCTL_API 无关；用 helm v2 客户端 --host 127.0.0.1:10434"

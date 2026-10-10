@@ -61,10 +61,10 @@ spec:
     - name: attacker
       image: python:3.11-slim
       command: ["sleep", "infinity"]
-      env:
-        - name: STEP1_FLAG
-          value: "$FLAG1"
 YAML
+kubectl wait --for=condition=Ready pod/attacker -n tenant-a --timeout=120s
+# step1 的 flag 放进落脚 pod 的文件里（不进 pod spec）
+printf '%s\n' "$FLAG1" | kubectl exec -i -n tenant-a attacker -- sh -c 'cat > /step1_flag.txt && chmod 600 /step1_flag.txt'
 
 # Deploy target pod in tenant-b with flag secret
 kubectl apply -f - << 'YAML'
@@ -85,9 +85,6 @@ spec:
   containers:
     - name: target
       image: nginx:1.24-alpine
-      env:
-        - name: FLAG
-          value: "$FLAG2"
 YAML
 
 echo "[+] K8S-32 Ready"
@@ -95,4 +92,5 @@ echo "    Attacker pod (tenant-a): kubectl exec -it -n tenant-a attacker -- sh"
 echo "    Target flag: kubectl get secret -n tenant-b target-flag -o jsonpath='{.data.flag}' | base64 -d"
 echo "    Exploit: Use broad SA token to access tenant-b resources"
 
-k8s_publish_agent_identity sa-token tenant-a broad-sa
+k8s_publish_agent_identity exec-only tenant-a attacker
+k8s_info

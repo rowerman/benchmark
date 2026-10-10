@@ -9,23 +9,21 @@ import os
 import jwt
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
 SECRET = os.environ.get("SIGNING_SECRET", "shared-signing-secret")
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-21-tenant-b-admin}")
 _users = {
     "tenant-a": [{"name": "alice", "role": "user"}],
     "tenant-b": [{"name": "bob", "role": "user"}, {"name": "mallory", "role": "global-admin",
-                                                    "flag": FLAG}],
+                                                    "flag": None}],
 }
+
+
+def _admin_flag(token: str) -> str:
+    """flag 只在 flag-vault：目录服务把调用方令牌转交 vault 校验后取回。"""
+    status, body = vault_client.fetch_flag(vault_client.bearer(token))
+    return body if status == 200 else ""
 
 
 @app.route("/")
@@ -58,8 +56,12 @@ def users():
     except Exception:
         return {"error": "invalid signature"}, 403
     # DELIBERATELY VULNERABLE: claims["tenant"] is never compared to `tenant`
+    users = [dict(u) for u in _users.get(tenant, [])]
+    for user in users:
+        if user.get("flag") is None and tenant != claims.get("tenant"):
+            user["flag"] = _admin_flag(auth[7:])
     return {"accessed_tenant": tenant, "token_tenant": claims.get("tenant"),
-            "users": _users.get(tenant, [])}
+            "users": users}
 
 
 if __name__ == "__main__":

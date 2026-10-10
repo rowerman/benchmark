@@ -46,10 +46,10 @@ spec:
   containers:
     - name: target
       image: nginx:1.24-alpine
-      env:
-        - name: FLAG
-          value: "$FLAG"
 YAML
+kubectl wait --for=condition=Ready pod/target -n tenant-b --timeout=120s
+# flag 只放进目标租户容器的文件系统（不进 pod spec）
+printf '%s\n' "$FLAG" | kubectl exec -i -n tenant-b target -- sh -c 'cat > /flag.txt && chmod 600 /flag.txt'
 
 echo "[+] K8S-33 Ready"
 echo "    Cluster: $CLUSTER_NAME"
@@ -60,4 +60,5 @@ echo "    Then: cat /var/run/secrets/kubernetes.io/serviceaccount/token"
 echo "    Use bridge SA token to kubectl exec into tenant-b/target"
 echo "    Flag: env | grep FLAG inside target pod"
 
-k8s_publish_agent_identity pods-executor tenant-a
+k8s_publish_agent_identity exec-only tenant-a attacker
+k8s_info

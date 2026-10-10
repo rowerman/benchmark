@@ -24,6 +24,8 @@ services:
     environment:
       - IAM_ACCESS_KEY_ID=AKIALAMBDAEXAMPLE
       - IAM_SECRET_KEY=lambda-iam-secret-key
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     networks:
       - cloud-net
     healthcheck:
@@ -57,6 +59,18 @@ services:
     depends_on:
       iam:
         condition: service_healthy
+
+  # flag 唯一终点：只认 Lambda 执行角色凭据的 SigV4 签名
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-03
+      VAULT_MODE: sigv4
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"access_key":"AKIALAMBDAEXAMPLE","secret_key":"lambda-iam-secret-key","hint":"SigV4 with the Lambda execution role credentials"}'
+    networks:
+      - cloud-net
 
 networks:
   cloud-net:

@@ -3,9 +3,21 @@ services:
     build: ./control-api
     ports:
       - "10631:5000"
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     networks:
       c31-net:
         ipv4_address: 10.31.0.10
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-20
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.31.0.10/32"],"hint":"卷数据只交付给块存储控制面"}'
+    networks:
+      c31-net:
   attacker-instance:
     build: ./attacker-instance
     environment:

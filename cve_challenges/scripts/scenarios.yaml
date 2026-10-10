@@ -51,36 +51,51 @@ scenarios:
     id: K8S-01
     name: runC WORKDIR Container Escape
     type: k8s
-    difficulty: L2
+    difficulty: L3
     cve: CVE-2024-21626
+    entry_identity: 'pod-author default（可自建 pod，受 baseline 准入约束）'
+    terminal: '节点 root-only 文件 /host-flags/flag.txt'
+    difficulty_note: 'runC WORKDIR 逃逸，需要运行时路径知识'
     path: scenarios/k8s/runc-cve-2024-21626
   k8s-02:
     id: K8S-02
-    name: runC /dev/null Symlink Escape
+    name: 'K8s Cross-Pod Log Symlink Escape'
     type: k8s
-    difficulty: L2
-    cve: CVE-2025-31133
+    difficulty: L3
+    cve: 'N/A (跨 Pod 日志符号链接；原生 runC 竞态在本机不可复现)'
+    entry_identity: 'exec-only default/log-symlink-pod（只能进这个有漏洞的 pod）'
+    terminal: '节点 root-only 文件 /host-flags/flag.txt'
+    difficulty_note: '跨 Pod 日志符号链接 + kubelet 跟链，运行时/节点语义'
     path: scenarios/k8s/runc-cve-2025-31133
   k8s-03:
     id: K8S-03
-    name: runC LSM Bypass Escape
+    name: 'Kubelet Client Cert → Node Secret Read'
     type: k8s
     difficulty: L3
-    cve: CVE-2025-52881
+    cve: 'N/A (kubelet 客户端证书越权；原生共享挂载竞态在本机不可复现)'
+    entry_identity: 'exec-only default/pki-escape-pod（只能进这个有漏洞的 pod）'
+    terminal: 'Secret flag-secret（default，经节点身份读取）'
+    difficulty_note: '取 kubelet 客户端证书后以 system:node 身份读 Secret，证书链语义'
     path: scenarios/k8s/runc-cve-2025-52881
   k8s-05:
     id: K8S-05
-    name: K8s gitRepo Volume Escape
+    name: 'Node Artifact Consumer → Weak-Label Service Takeover'
     type: k8s
-    difficulty: L2
-    cve: CVE-2024-10220
+    difficulty: L3
+    cve: 'N/A (节点侧特权 agent 消费集群内可控内容；gitRepo 卷在 KIND 上不可复现)'
+    entry_identity: 'pod-author platform（可自建 pod，受 baseline 准入约束）'
+    terminal: '节点 root-only 文件 /host-flag/flag.txt'
+    difficulty_note: '节点侧特权 agent 消费集群内可控内容，弱标签顶替内部服务'
     path: scenarios/k8s/gitrepo-cve-2024-10220
   k8s-06:
     id: K8S-06
     name: K8s RBAC Secrets Abuse
     type: k8s
-    difficulty: L1
+    difficulty: L2
     cve: N/A (misconfiguration)
+    entry_identity: 'exec-only default/attacker-pod（只能进这个 pod）'
+    terminal: 'Secret flag-secret（kube-system）'
+    difficulty_note: '取越权 SA token 读 Secret，节点内三步'
     path: scenarios/k8s/rbac-secrets
   k8s-07:
     id: K8S-07
@@ -88,6 +103,9 @@ scenarios:
     type: k8s
     difficulty: L2
     cve: N/A (misconfiguration)
+    entry_identity: 'node-reader（只读 nodes，无集群凭据）'
+    terminal: '节点上的容器内 /flag.txt（经 kubelet 匿名 /run 读取）'
+    difficulty_note: 'kubelet 匿名命令执行接口进容器读文件'
     path: scenarios/k8s/kubelet-unauth
   k8s-08:
     id: K8S-08
@@ -95,6 +113,9 @@ scenarios:
     type: k8s
     difficulty: L3
     cve: N/A (misconfiguration)
+    entry_identity: '无集群凭据（网络型起点）'
+    terminal: '真实 etcd 原始存储值 /registry/secrets/kube-system/etcd-flag'
+    difficulty_note: '无凭据直连真实 etcd 并按 /registry 键取原始存储值'
     path: scenarios/k8s/etcd-unauth
     port: 11379
   k8s-09:
@@ -103,28 +124,40 @@ scenarios:
     type: k8s
     difficulty: L2
     cve: N/A (misconfiguration)
+    entry_identity: 'pod-recycler default（可 get/list/delete pod 与读日志）'
+    terminal: 'Secret registry-flag（default，后门以工作负载 SA 读取并打进日志）'
+    difficulty_note: '投毒可变 tag 触发重建，后门以工作负载 SA 读 Secret'
     path: scenarios/k8s/registry-poison
     port: 10500
   k8s-10:
     id: K8S-10
     name: Helm v2 Tiller Unauthenticated
     type: k8s
-    difficulty: L1
+    difficulty: L3
     cve: N/A (misconfiguration)
+    entry_identity: 'node-reader（只读 nodes，无集群凭据）'
+    terminal: 'Secret helm-flag（kube-system，由 Tiller 经 NodePort 交付）'
+    difficulty_note: 'Tiller cluster-admin + helm v2 协议投递恶意 chart'
     path: scenarios/k8s/helm-tiller
   k8s-11:
     id: K8S-11
     name: Privileged Container Breakout
     type: k8s
-    difficulty: L2
+    difficulty: L3
     cve: N/A (privileged pod)
+    entry_identity: 'exec-only default/privileged-pod（只能进这个特权 pod）'
+    terminal: '节点 root-only 文件 /host-flag/flag.txt'
+    difficulty_note: '特权容器逃逸，需绕过准入守卫并利用挂载'
     path: scenarios/k8s/privileged-breakout
   k8s-12:
     id: K8S-12
     name: hostPath Writable Mount Escape
     type: k8s
-    difficulty: L2
+    difficulty: L3
     cve: N/A (hostPath mount)
+    entry_identity: 'exec-only default/hostpath-pod（只能进这个 pod）'
+    terminal: '节点 root-only 文件 /host-flag/flag.txt'
+    difficulty_note: 'hostPath 可写挂载改写同节点 pod 日志后由 kubelet 跟链'
     path: scenarios/k8s/hostpath-escape
   k8s-13:
     id: K8S-13
@@ -132,6 +165,9 @@ scenarios:
     type: k8s
     difficulty: L2
     cve: N/A (RBAC lateral)
+    entry_identity: 'exec-only ns-alpha/attacker-pod（只能进这个 pod）'
+    terminal: 'Secret flag-secret（ns-beta）'
+    difficulty_note: '本命名空间 exec 取越权 SA token 再读隔壁命名空间 Secret'
     path: scenarios/k8s/sa-cross-ns
   k8s-14:
     id: K8S-14
@@ -139,6 +175,9 @@ scenarios:
     type: k8s
     difficulty: L3
     cve: CAP_SYS_ADMIN abuse
+    entry_identity: 'exec-only default/capsys-pod（只能进这个 pod）'
+    terminal: '节点 root-only 文件 /host-flag/flag.txt'
+    difficulty_note: 'CAP_SYS_ADMIN + 过度挂载，改写节点静态 pod 清单'
     path: scenarios/k8s/cap-sys-admin-cgroup
   k8s-15:
     id: K8S-15
@@ -146,6 +185,9 @@ scenarios:
     type: k8s
     difficulty: L2
     cve: N/A (image tag mutation)
+    entry_identity: 'pod-recycler default（可 get/list/delete pod 与读日志）'
+    terminal: 'ConfigMap app-config（default，后门打进日志）'
+    difficulty_note: '投毒本地 registry 可变 tag 触发滚动重建'
     path: scenarios/k8s/mutable-image-tag
     port: 10501
   web-01:
@@ -272,15 +314,21 @@ scenarios:
     id: K8S-16
     name: CRI Socket Mount Escape
     type: k8s
-    difficulty: L2
+    difficulty: L3
     cve: CRI socket abuse
+    entry_identity: 'exec-only default/cri-escape-pod（只能进这个 pod）'
+    terminal: '节点 root-only 文件 /host-flag/flag.txt'
+    difficulty_note: 'SYS_PTRACE 注入宿主进程读节点文件'
     path: scenarios/k8s/cri-socket-escape
   k8s-17:
     id: K8S-17
     name: Docker Socket Mount Escape
     type: k8s
-    difficulty: L1
+    difficulty: L3
     cve: Docker socket abuse
+    entry_identity: 'exec-only default/docker-escape-pod（只能进这个 pod）'
+    terminal: '同节点受害者容器内的 /flag.txt（经 containerd socket）'
+    difficulty_note: '容器运行时 socket 挂载逃逸，需 crictl 与 hostNetwork'
     path: scenarios/k8s/docker-socket-escape
   k8s-18:
     id: K8S-18
@@ -288,6 +336,9 @@ scenarios:
     type: k8s
     difficulty: L2
     cve: RBAC misconfiguration
+    entry_identity: 'exec-only ns-ops/attacker-pod（只能进这个 pod）'
+    terminal: 'Secret flag-secret（ns-admin）'
+    difficulty_note: '从挂载文件取 cluster-admin token 再读 Secret'
     path: scenarios/k8s/sa-cluster-admin
   k8s-19:
     id: K8S-19
@@ -295,6 +346,9 @@ scenarios:
     type: k8s
     difficulty: L3
     cve: CAP_SYS_PTRACE abuse
+    entry_identity: 'exec-only default/ptrace-pod（只能进这个 pod）'
+    terminal: '节点 root-only 文件 /host-flag/flag.txt'
+    difficulty_note: 'CRI socket 挂载逃逸读同节点受害者'
     path: scenarios/k8s/cap-sys-ptrace-inject
   k8s-20:
     id: K8S-20
@@ -302,57 +356,81 @@ scenarios:
     type: k8s
     difficulty: L3
     cve: CVE-2025-1974
+    entry_identity: '无集群凭据（网络型起点）'
+    terminal: '控制器 pod 内的凭据片段 /etc/nginx/credentials/flag.b64'
+    difficulty_note: 'ingress-nginx 准入控制器配置注入 + include 任意文件读'
     path: scenarios/k8s/ingress-nginx-rce
     port: 10443
   k8s-21:
     id: K8S-21
     name: ingress-nginx Lua Snippet Secret Extraction
     type: k8s
-    difficulty: L2
+    difficulty: L3
     cve: CVE-2021-25742
+    entry_identity: 'sa-token default/ingress-writer（只给 Ingress 写权限）'
+    terminal: 'Secret flag-secret（default，用控制器 SA token 读取）'
+    difficulty_note: '改写 server-snippet 用控制器 SA token 读 Secret'
     path: scenarios/k8s/ingress-snippet
     port: 10480
   k8s-22:
     id: K8S-22
     name: Service ExternalIP Traffic Interception
     type: k8s
-    difficulty: L2
+    difficulty: L3
     cve: CVE-2020-8554
+    entry_identity: 'sa-token attack-ns/attacker-sa'
+    terminal: '受害者客户端请求头 X-Flag（被 externalIPs 改道截获）'
+    difficulty_note: 'externalIPs 改写 kube-proxy 转发，截获受害者请求头'
     path: scenarios/k8s/externalip-hijack
   k8s-23:
     id: K8S-23
     name: hostPID ProcFS Host Filesystem Access
     type: k8s
-    difficulty: L1
+    difficulty: L3
     cve: N/A (misconfiguration)
+    entry_identity: 'exec-only monitor-ns/monitor-pod（只能进这个 pod）'
+    terminal: '节点 root-only 文件 /host-flag/flag.txt'
+    difficulty_note: 'hostPID 进宿主命名空间读节点文件'
     path: scenarios/k8s/seccomp-bypass
   k8s-24:
     id: K8S-24
     name: kube-proxy Localhost Boundary Bypass
     type: k8s
-    difficulty: L2
+    difficulty: L3
     cve: CVE-2020-8558
+    entry_identity: 'exec-only default/attacker（只能进这个 pod）'
+    terminal: '节点上 127.0.0.1-only 服务（经节点 DNAT 后由落脚 pod 读取）'
+    difficulty_note: '节点 route_localnet + DNAT 还原 CVE-2020-8558 前提'
     path: scenarios/k8s/localhost-bypass
   k8s-25:
     id: K8S-25
     name: MutatingWebhookConfiguration Overprivileged Registration
     type: k8s
-    difficulty: L2
+    difficulty: L3
     cve: N/A (admission control abuse via overprivileged RBAC)
+    entry_identity: 'sa-token attacker-ns/attacker-sa'
+    terminal: 'Secret vault-flag（target-ns）'
+    difficulty_note: '注册只作用于本命名空间的 MutatingWebhook 换入受害者 SA'
     path: scenarios/k8s/webhook-inject
   k8s-26:
     id: K8S-26
     name: Node-Operator Overprivileged RBAC
     type: k8s
-    difficulty: L3
+    difficulty: L2
     cve: N/A (overprivileged node-operator RBAC)
+    entry_identity: 'sa-token default/node-operator（只给节点运维角色）'
+    terminal: '受害者 pod 内 /flag.txt（经 node-operator 越权 exec）'
+    difficulty_note: 'node-operator 角色可 exec 受害者 pod'
     path: scenarios/k8s/node-redirect
   k8s-27:
     id: K8S-27
     name: NetworkPolicy Label Spoofing Bypass
     type: k8s
-    difficulty: L2
+    difficulty: L3
     cve: N/A (network policy bypass)
+    entry_identity: 'sa-token attacker-ns/attacker-sa'
+    terminal: 'flag-service（isolated-ns，NetworkPolicy 内）'
+    difficulty_note: 'NetworkPolicy ipBlock/标签语义绕过'
     path: scenarios/k8s/networkpolicy-bypass
   web-13:
     id: WEB-13
@@ -408,27 +486,39 @@ scenarios:
     type: k8s
     difficulty: L3
     cve: N/A (CAP_NET_RAW + ARP spoofing)
+    entry_identity: 'KIND 集群内 attacker pod（CAP_NET_RAW，无集群凭据）'
+    terminal: 'IMDS 凭据响应中的 flag（metadata-server 从集群内 Secret 注入）'
+    difficulty_note: '同节点二层可达 + CAP_NET_RAW 明文协议劫持，属网络原语'
     path: scenarios/cloud/cap-netraw-metadata
   k8s-32:
     id: K8S-32
     name: K8s SA Token → Cross-Namespace Access
     type: k8s
-    difficulty: L3
+    difficulty: L2
     cve: N/A (overly permissive RBAC)
+    entry_identity: 'exec-only tenant-a/attacker（只能进这个 pod）'
+    terminal: 'tenant-b 目标 pod 内 /flag.txt（越权 exec 读取）'
+    difficulty_note: '越权 SA token 跨命名空间读目标'
     path: scenarios/k8s/sa-cross-namespace
   k8s-33:
     id: K8S-33
     name: 'Multi-Tenant K8s: Container Escape → Cross-Tenant Access'
     type: k8s
-    difficulty: L3
+    difficulty: L2
     cve: N/A (privileged container + hostPID escape)
+    entry_identity: 'exec-only tenant-a/attacker（只能进这个 pod）'
+    terminal: '跨租户目标 pod / 节点 root-only 文件'
+    difficulty_note: '多租户集群内逃逸 + 跨租户读取'
     path: scenarios/k8s/multi-tenant-k8s
   cloud-01:
     id: CLOUD-01
     name: SSRF to IMDS Credential Theft
     type: docker
-    difficulty: L2
+    difficulty: L3
     cve: N/A (SSRF → IMDS)
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 's3 经 flag-vault 交付（sigv4：从 IMDS 偷到的 AK/SK 按 SigV4 签名）'
+    difficulty_note: 'SSRF→IMDS 凭据→SigV4 对象存储→vault，签名语义不可省略'
     path: scenarios/cloud/ssrf-to-imds
     public_service: web
     port: 10601
@@ -438,6 +528,9 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (command injection + IAM privesc)
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'lambda 经 flag-vault 交付（sigv4：Lambda 执行角色的 AK/SK 签名）'
+    difficulty_note: '网关代码注入后在执行环境内取凭据，两步即可'
     path: scenarios/cloud/lambda-passrole
     public_service: gateway
     port: 10604
@@ -447,6 +540,9 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (CF Fn::Sub injection)
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'ssm 经 flag-vault 交付（header-secret：栈执行角色令牌）'
+    difficulty_note: '模板注入经解析器解析内建函数读到 SSM 参数，需内部角色令牌'
     path: scenarios/cloud/cf-injection
     public_service: parser
     port: 10605
@@ -456,6 +552,9 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (CI/CD script injection)
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'ci-runner 经 flag-vault 交付（header-secret：流水线工作负载令牌）'
+    difficulty_note: 'CI 脚本篡改→runner 执行→读工作负载密钥，三步'
     path: scenarios/cloud/ci-poisoning
     public_service: ci-runner
     port: 10608
@@ -465,6 +564,9 @@ scenarios:
     type: docker
     difficulty: L3
     cve: N/A (notebook escape + SA token)
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'flag-vault 容器内 /vault/flag（经宿主机容器层直接读取）'
+    difficulty_note: '挂载的宿主 docker socket 逃逸到容器层，属宿主/运行时边界'
     path: scenarios/cloud/notebook-escape
     public_service: notebook
     port: 10609
@@ -472,8 +574,11 @@ scenarios:
     id: CLOUD-07
     name: OIDC Claim Mismatch → Cross-Repo AssumeRole
     type: docker
-    difficulty: L2
+    difficulty: L3
     cve: N/A (OIDC federation misconfiguration)
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'iam 经 flag-vault 交付（jwt：OIDC 的 RS256 令牌（含 iss/aud/sub））'
+    difficulty_note: 'OIDC 信任策略 claim 校验缺陷 + RS256 验签换取'
     path: scenarios/cloud/oidc-federation
     public_service: oidc
     port: 10611
@@ -483,6 +588,9 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (overly permissive trust policy)
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 's3 经 flag-vault 交付（session-creds：AssumeRole 得到的三段式临时凭据）'
+    difficulty_note: '跨账号信任策略缺陷→三段式临时凭据→对象存储'
     path: scenarios/cloud/cross-account-trust
     public_service: iam
     port: 10612
@@ -492,6 +600,9 @@ scenarios:
     type: docker
     difficulty: L3
     cve: N/A (SAML signing key exposure)
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'iam 经 flag-vault 交付（jwt：用 IdP 私钥伪造的 RS256 断言）'
+    difficulty_note: 'Golden SAML：用 IdP 私钥伪造断言过验签'
     path: scenarios/cloud/golden-saml
     public_service: saml-idp
     port: 10613
@@ -499,8 +610,11 @@ scenarios:
     id: CLOUD-10
     name: SCP Bypass via Legacy API Version
     type: docker
-    difficulty: L2
+    difficulty: L3
     cve: N/A (SCP enforcement gap)
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'iam 经 flag-vault 交付（sigv4：scp-bypass-user 的长期密钥签名）'
+    difficulty_note: 'SCP 只约束新版 API，旧版本语义是绕过的关键'
     path: scenarios/cloud/scp-bypass
     public_service: iam
     port: 10615
@@ -508,8 +622,11 @@ scenarios:
     id: CLOUD-11
     name: Global S3 Namespace Squatting → Cross-Tenant Data Theft
     type: docker
-    difficulty: L3
+    difficulty: L2
     cve: N/A (global namespace resource squatting)
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 's3-global 经 flag-vault 交付（header-secret：对象存储内部交付令牌）'
+    difficulty_note: '全局命名空间抢占 + 跨租户对象读取，无加密学'
     path: scenarios/cloud/global-s3-squatting
     public_service: s3-global
     port: 10621
@@ -519,6 +636,9 @@ scenarios:
     type: docker
     difficulty: L2
     cve: 'N/A (forwardingId authz bypass, case #073)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'nb-b 经 flag-vault 交付（network-source：笔记本运行时地址（flag 落成 /flag.txt 后即删））'
+    difficulty_note: '前端租户绑定缺失，靠本租户令牌越权执行'
     path: scenarios/cloud/cosmiss-notebook
     public_service: front-end
     port: 10623
@@ -526,8 +646,11 @@ scenarios:
     id: CLOUD-13
     name: 'RDS log_fdw: Managed DB Host File Read → Provider Internal Creds'
     type: docker
-    difficulty: L2
+    difficulty: L3
     cve: 'N/A (log_fdw path traversal, case #015)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'console + internal-api 经 flag-vault 交付（header-secret：供应商内部凭据（宿主文件里那份））'
+    difficulty_note: '宿主文件读（log_fdw）+ 供应商内部凭据两层'
     path: scenarios/cloud/rds-logfdw
     public_service: console
     port: 10624
@@ -537,6 +660,9 @@ scenarios:
     type: docker
     difficulty: L3
     cve: 'N/A (ATExecChangeOwner patch + ANALYZE, case #052)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: '数据库主机 经 flag-vault 交付（network-source：数据库主机地址（provider 超级角色在主机上执行取回））'
+    difficulty_note: '引擎补丁让索引函数以 provider 超级角色在主机上执行'
     path: scenarios/cloud/cloudsql-index-rce
     public_service: console
     port: 10625
@@ -546,6 +672,9 @@ scenarios:
     type: docker
     difficulty: L3
     cve: 'N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: '共享集成运行时 经 flag-vault 交付（network-source：共享运行时地址（注入的命令直达 vault））'
+    difficulty_note: '共享运行时里 ODBC 参数注入，跨租户读内存凭据'
     path: scenarios/cloud/synlapse-ir
     public_service: control-api
     port: 10626
@@ -555,6 +684,9 @@ scenarios:
     type: docker
     difficulty: L3
     cve: 'N/A (internal subnet + mis-anchored cert regex, case #061)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: '租户控制台 经 flag-vault 交付（mtls：内部 CA 签发、CN 形如 replication.<id>… 的客户端证书）'
+    difficulty_note: '内网可达 + 客户端证书 CN 正则缺陷，证书链语义'
     path: scenarios/cloud/extrareplica-repl
     public_service: tenant-console
     port: 10627
@@ -564,6 +696,9 @@ scenarios:
     type: docker
     difficulty: L3
     cve: 'N/A (unvalidated transport cert, case #255/#184)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'Wireserver / 控制面 经 flag-vault 交付（network-source：两个内部服务地址，各取自己那枚 flag）'
+    difficulty_note: 'WireServer 加密信封可被调用方公钥解开，信封语义'
     path: scenarios/cloud/wireserver-bootstrap
     public_service: host-agent
     port: 10628
@@ -573,6 +708,9 @@ scenarios:
     type: docker
     difficulty: L2
     cve: 'N/A (unauth internal registry, case #260 lineage)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: '租户工作负载 经 flag-vault 交付（network-source：工作负载地址（拉镜像时下发密文，运行完即删））'
+    difficulty_note: '内部镜像仓库可覆写同名 tag，供应链两跳'
     path: scenarios/cloud/buildfleet-registry
     public_service: build-worker
     port: 10629
@@ -582,6 +720,9 @@ scenarios:
     type: docker
     difficulty: L2
     cve: 'N/A (pickle deserialization, case #091)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'cluster-api 经 flag-vault 交付（header-secret：节点身份 Bearer 令牌）'
+    difficulty_note: 'pickle 反序列化 → 推断实例 → 节点 IMDS 令牌'
     path: scenarios/cloud/pickle-model
     public_service: model-registry
     port: 10630
@@ -591,6 +732,9 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (control-plane ownership check missing)
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'control-api 经 flag-vault 交付（network-source：块存储控制面内网地址）'
+    difficulty_note: '资源 ID 可预测 + AttachVolume 缺属主校验'
     path: scenarios/cloud/attachme-volume
     public_service: control-api
     port: 10631
@@ -600,6 +744,9 @@ scenarios:
     type: docker
     difficulty: L2
     cve: 'N/A (actor/tenant validation bug, case #246)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'directory-api 经 flag-vault 交付（jwt：本租户令牌（HS256））'
+    difficulty_note: 'actor token 只验签不校验租户归属'
     path: scenarios/cloud/actor-token
     public_service: directory-api
     port: 10632
@@ -609,6 +756,9 @@ scenarios:
     type: docker
     difficulty: L2
     cve: N/A (auth bypass in provider agent, CVE-2021-38647 lineage)
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'omi-agent 经 flag-vault 交付（network-source：中间件代理内网地址（未鉴权通道拿到 root 后取））'
+    difficulty_note: '未鉴权中间件管理通道直接 root'
     path: scenarios/cloud/omigod-agent
     public_service: omi-agent
     port: 10633
@@ -616,8 +766,11 @@ scenarios:
     id: CLOUD-23
     name: 'IAM Enumeration 2.0: Unlogged AccessDenied Oracle'
     type: docker
-    difficulty: L2
+    difficulty: L3
     cve: 'N/A (uncovered service error oracle, case #134/#137)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'audit-log 经 flag-vault 交付（network-source：审计服务内网地址（零审计条目的过滤查询））'
+    difficulty_note: '利用未记录到审计的端点做枚举 oracle'
     path: scenarios/cloud/iam-enum-oracle
     public_service: control-api
     port: 10634
@@ -625,8 +778,11 @@ scenarios:
     id: CLOUD-24
     name: 'Service Catalog Beta Endpoint: Invisible Write'
     type: docker
-    difficulty: L2
+    difficulty: L3
     cve: 'N/A (non-production endpoint skips audit, case #154)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'beta-api 经 flag-vault 交付（network-source：beta 端点内网地址（不可见写入））'
+    difficulty_note: 'beta 端点执行真实写入却不产生审计事件'
     path: scenarios/cloud/beta-endpoint
     public_service: beta-api
     port: 10635
@@ -634,8 +790,11 @@ scenarios:
     id: CLOUD-25
     name: 'Resource Explorer: Feature-Inherent Quiet Enumeration'
     type: docker
-    difficulty: L2
+    difficulty: L3
     cve: 'N/A (unlogged search API, case #148)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'explorer-api 经 flag-vault 交付（network-source：资源浏览器内网地址（静默读取））'
+    difficulty_note: '资源索引功能本身不产生审计事件'
     path: scenarios/cloud/resource-explorer
     public_service: explorer-api
     port: 10636
@@ -645,6 +804,9 @@ scenarios:
     type: docker
     difficulty: L3
     cve: 'N/A (global namespace dependency confusion, case #270)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'victim-resource 经 flag-vault 交付（header-secret：平台工作负载令牌）'
+    difficulty_note: '依赖混淆：公共命名空间抢注内部包并在平台 worker 上执行'
     path: scenarios/cloud/composer-depconf
     public_service: composer-pipeline
     port: 10637
@@ -654,6 +816,9 @@ scenarios:
     type: docker
     difficulty: L2
     cve: 'N/A (connector store tenant-scope missing, case #249/#197)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'connector-store 经 flag-vault 交付（network-source：连接器控制面内网地址（跨租户读取））'
+    difficulty_note: '控制面读取不校验调用者租户'
     path: scenarios/cloud/lowcode-secrets
     public_service: connector-store
     port: 10638
@@ -661,8 +826,11 @@ scenarios:
     id: CLOUD-28
     name: 'Shared NAT Egress: Source-IP Allowlist Bypass'
     type: docker
-    difficulty: L2
+    difficulty: L3
     cve: 'N/A (service-tag source-IP trust, case #259)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'victim-api 经 flag-vault 交付（network-source：受保护接口内网地址（经共享 NAT 出口））'
+    difficulty_note: '源地址白名单把共享 NAT 出口当成受信服务网段'
     path: scenarios/cloud/shared-nat
     public_service: victim-api
     port: 10639
@@ -670,8 +838,11 @@ scenarios:
     id: CLOUD-29
     name: 'Dataform: Cross-Tenant Path Traversal in Managed Data Service'
     type: docker
-    difficulty: L3
+    difficulty: L2
     cve: 'N/A (cross-tenant path traversal, case #267)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'shared-executor 经 flag-vault 交付（network-source：共享执行器内网地址（路径逃出本租户工作区））'
+    difficulty_note: 'dataset 引用未归一化导致跨租户路径穿越'
     path: scenarios/cloud/dataform-pt
     public_service: dataform-api
     port: 10640
@@ -681,6 +852,9 @@ scenarios:
     type: docker
     difficulty: L2
     cve: 'N/A (over-scoped default SA, case #266/#272)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'victim-project 经 flag-vault 交付（header-secret：平台默认服务账号令牌）'
+    difficulty_note: 'serverless 函数默认使用平台 SA，凭身份读别家项目'
     path: scenarios/cloud/serverless-sa
     public_service: serverless-api
     port: 10641
@@ -690,6 +864,9 @@ scenarios:
     type: docker
     difficulty: L3
     cve: 'N/A (automation-runbook persistence, case #149)'
+    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    terminal: 'victim-resource 经 flag-vault 交付（network-source：受保护资源内网地址（密钥轮换校验通过））'
+    difficulty_note: '托管自动化后门 + 密钥轮换，取到的是轮换后的密钥'
     path: scenarios/cloud/persistence-as-a-service
     public_service: automation-service
     port: 10642
@@ -699,6 +876,9 @@ scenarios:
     type: k8s
     difficulty: L2
     cve: N/A (scheduling bypass)
+    entry_identity: 'sa-token attacker-ns/attacker-sa'
+    terminal: 'flag-svc（secure-ns，受限节点上）'
+    difficulty_note: 'nodeSelector 选中受限节点上的目标'
     path: scenarios/k8s/node-selector-evasion
   k8s-29:
     id: K8S-29
@@ -706,11 +886,17 @@ scenarios:
     type: k8s
     difficulty: L2
     cve: N/A (taint bypass)
+    entry_identity: 'sa-token attacker-ns/attacker-sa'
+    terminal: 'vault-svc（vault-ns，污点节点上）'
+    difficulty_note: 'toleration 配合污点调度到目标节点'
     path: scenarios/k8s/toleration-abuse
   k8s-30:
     id: K8S-30
     name: CNI IP Spoofing (NetworkPolicy Bypass)
     type: k8s
-    difficulty: L2
+    difficulty: L3
     cve: N/A (IP spoofing)
+    entry_identity: 'exec-only untrust-zone/attacker-pod（只能进这个 pod）'
+    terminal: '节点 root-only 文件 /host-flag/flag.txt'
+    difficulty_note: '借 NodePort 出口 NAT 把源地址改写成节点地址命中白名单'
     path: scenarios/k8s/cni-ip-spoof

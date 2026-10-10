@@ -7,26 +7,25 @@ import os
 
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-25-flag-store}")
 RESOURCE_READER_ARN = os.environ.get(
     "RESOURCE_READER_ARN", "arn:aws:iam::111122223333:user/attacker")
+
+
+def _store_secret() -> str:
+    """flag 只在 flag-vault：资源浏览器按内部地址身份取回后交付。"""
+    status, body = vault_client.fetch_flag()
+    return body if status == 200 else ""
+
 
 _resources = [
     {"id": "i-001", "type": "instance", "name": "web-prod"},
     {"id": "b-001", "type": "bucket", "name": "logs-2024"},
     {"id": "db-001", "type": "database", "name": "prod-db"},
     {"id": "r-001", "type": "role", "name": "DataPipelineRole"},
-    {"id": "s-001", "type": "flag-store", "name": "flag-store", "secret": FLAG},
+    {"id": "s-001", "type": "flag-store", "name": "flag-store", "secret": _store_secret},
 ]
 
 
@@ -59,7 +58,10 @@ def resource(rid):
         return {"error": "AccessDenied"}, 403
     for r in _resources:
         if r["id"] == rid:
-            return r
+            item = dict(r)
+            if callable(item.get("secret")):
+                item["secret"] = item["secret"]()
+            return item
     return "NotFound", 404
 
 

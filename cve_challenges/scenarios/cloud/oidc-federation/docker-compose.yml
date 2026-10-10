@@ -30,12 +30,24 @@ services:
       - IAM_ROLES_FILE=/app/roles/default.yaml
     ports:
       - "10707:5000"
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  # flag 唯一终点：校验 OIDC 的 RS256 签名与 iss/aud/sub
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-07
+      VAULT_MODE: jwt
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"jwks_url":"http://oidc:5000/.well-known/jwks.json","issuer":"https://token.actions.githubusercontent.com","audience":"sts.amazonaws.com","claims":{"sub":"repo:demo-org/demo-repo:ref:refs/heads/main"},"hint":"OIDC JWT from the repository identity provider"}'
 
   # socat proxies — expose internal services to host for nmap detection
   oidc-proxy:

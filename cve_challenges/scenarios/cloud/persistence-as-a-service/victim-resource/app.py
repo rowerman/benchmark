@@ -1,19 +1,10 @@
 """Protected resource -- only the current rotated secret may read it."""
-import os
 
 from flask import Flask, request
 
+import vault_client
+
 app = Flask(__name__)
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-31-persistence}")
 _valid = {"secret-v1"}
 
 
@@ -22,7 +13,9 @@ def flag():
     auth = request.headers.get("Authorization", "")
     if auth.removeprefix("Bearer ") not in _valid:
         return {"error": "stale or invalid secret"}, 403
-    return {"flag": FLAG}
+    # flag 只在 flag-vault：密钥校验通过后由平台按本服务地址交付
+    status, body = vault_client.fetch_flag()
+    return {"flag": body if status == 200 else ""}
 
 
 @app.route("/activate", methods=["POST"])

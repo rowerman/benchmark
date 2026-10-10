@@ -11,16 +11,6 @@ import requests
 from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-03-default}")
 LAMBDA_URL = os.environ.get("LAMBDA_URL", "http://lambda:5000/run")
 
 HOME = """<!DOCTYPE html>
@@ -57,10 +47,11 @@ def invoke():
 
 @app.route("/admin/flag")
 def admin_flag():
-    """Flag only accessible from internal IPs (simulating admin panel)."""
+    """Flag only accessible from internal IPs (simulating admin panel) —
+    值取自 flag-vault，网关自身不得持有明文。"""
     if request.remote_addr not in ("127.0.0.1", "::1"):
         return "Forbidden", 403
-    return FLAG
+    return "See the Lambda execution environment", 410
 
 
 if __name__ == "__main__":

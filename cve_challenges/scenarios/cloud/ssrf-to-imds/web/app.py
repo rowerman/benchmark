@@ -5,28 +5,17 @@ Features:
 - GET / — main page with fetch form
 - GET /fetch?url=<URL> — server-side URL fetcher (SSRF vector)
   Fetches any URL from the server side, including internal services.
-- Flag is stored at /flag.txt (readable by the app) and in FLAG env var.
 
 The SSRF vulnerability allows an attacker to reach the IMDS service
-at 169.254.169.254 and steal temporary IAM credentials.
+at 169.254.169.254 and steal temporary IAM credentials. Flag 不在本服务里，
+只能用偷到的凭据去 s3 换（s3 再向 flag-vault 出示 SigV4 签名）。
 """
-import os
 from urllib.parse import urlsplit, urlunsplit
 import requests
 from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
 
-def _read_flag(path, env_name, default):
-    """读取运行时注入的 flag 文件；本地直跑时退回环境变量与默认值。"""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read().strip()
-    except OSError:
-        return os.environ.get(env_name, default)
-
-
-FLAG = _read_flag("/run/flag", "FLAG", "flag{cloud-01-default}")
 HOME_PAGE = """<!DOCTYPE html>
 <html>
 <head><title>Cloud Dashboard</title></head>
@@ -74,15 +63,6 @@ def fetch():
         return "Timeout fetching URL", 504
     except Exception as e:
         return f"Error: {e}", 500
-
-
-@app.route("/flag")
-def flag():
-    """Returns the flag — only accessible from localhost."""
-    if request.remote_addr not in ("127.0.0.1", "::1", "localhost"):
-        return "Access denied — localhost only", 403
-    return FLAG
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

@@ -7,10 +7,11 @@
 | ID | K8S-16 |
 | 名称 | CRI Socket Mount Escape |
 | 技术/CVE | CRI socket abuse |
-| 难度 | L2 |
+| 难度 | L3 |
 | 交付方式 | KIND / Kubernetes |
 | 入口 | KIND 集群内入口（无固定宿主端口） |
-| 集群 | cve-k8s-16-cri-socket |
+| 入口身份 | exec-only default/cri-escape-pod（只能进这个 pod） |
+| 终点 | 节点 root-only 文件 /host-flag/flag.txt |
 
 ## 场景概述
 
@@ -121,7 +122,12 @@ kubectl exec cri-escape-pod -- ctr --address /run/containerd/containerd.sock run
 
 ## Flag
 
-- Flag 位置：`/host-flag/flag.txt` on the KIND node (not mounted into the pod; reachable only after escape)
+- 位置：节点 root-only 文件 /host-flag/flag.txt。
+- 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
+  （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
+- 形态：`flag{k8s-16-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh k8s-16 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh k8s-16 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

@@ -10,6 +10,8 @@
 | 难度 | L2 |
 | 交付方式 | Docker Compose |
 | 入口 | localhost:10632 |
+| 入口身份 | 宿主侧黑盒起点（无云凭据，需自行派生） |
+| 终点 | directory-api 经 flag-vault 交付（jwt：本租户令牌（HS256）） |
 
 ## 场景概述
 目录 API 只校验 JWT 签名，从不检查 token 声明的租户与被访问的租户
@@ -29,9 +31,17 @@
 1. 从身份服务为 `tenant-a` 获取签名 token。
 2. 携带该 token 请求 `GET /api/users?tenant=tenant-b`。
 3. 服务端仅验签、不比对 token 租户，返回 tenant-b 的用户列表与 flag。
+4. 终端服务 directory-api 向 flag-vault 出示本租户令牌（HS256），换成 flag 后回给调用方——明文只在这一步出现。
+
 
 ## Flag
-`flag{cloud-21-tenant-b-admin}`
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 directory-api 向 flag-vault 出示「本租户令牌（HS256）」（校验模式 `jwt`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{cloud-21-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-21 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-21 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

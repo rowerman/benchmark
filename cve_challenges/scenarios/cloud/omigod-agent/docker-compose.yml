@@ -17,6 +17,16 @@ services:
     networks:
       c33-net:
         ipv4_address: 10.33.0.30
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: cloud-22
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.33.0.30/32"],"hint":"供应商密钥库只对中间件代理所在地址开放"}'
+    networks:
+      c33-net:
   attacker:
     profiles: [debug]
     build: ./attacker
