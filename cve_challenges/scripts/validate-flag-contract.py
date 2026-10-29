@@ -33,14 +33,14 @@ def main() -> int:
         text = compose.read_text(encoding="utf-8")
         # Flag 不再经 compose 变量注入：由 start-scenario.sh 调 inject-flags.py 写进容器内文件，
         # 投递表是 scripts/flag-sinks.yaml。compose 里出现 CVE_FLAG 反而说明有残留通道。
-        migrated = scenario_id.startswith("cloud-")
-        if migrated and "${CVE_FLAG" in text:
+        injected = bool(entry.get("public_service"))
+        if injected and "${CVE_FLAG" in text:
             errors.append(f"{scenario_id}: Compose still references CVE_FLAG (flag must be injected at runtime)")
-        if not migrated and "${CVE_FLAG" not in text:
+        if not injected and "${CVE_FLAG" not in text:
             errors.append(f"{scenario_id}: Compose has no CVE_FLAG reference")
         for value in unbound_flags(text):
             errors.append(f"{compose.relative_to(ROOT)}: unbound Flag {value}")
-        if migrated and scenario_id not in SINKS:
+        if injected and scenario_id not in SINKS:
             errors.append(f"{scenario_id}: no flag sink declared in scripts/flag-sinks.yaml")
 
     for script in sorted((ROOT / "chains").glob("*/deploy.sh")):

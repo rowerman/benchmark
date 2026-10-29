@@ -46,7 +46,7 @@ def main() -> int:
 
     checked = 0
     for sid, entry in sorted(REGISTRY.items()):
-        if entry.get("type") != "docker" or not sid.startswith("cloud-"):
+        if entry.get("type") != "docker" or not entry.get("public_service"):
             continue
         compose = ROOT / entry["path"] / "docker-compose.yml"
         if not compose.is_file():
@@ -70,11 +70,11 @@ def main() -> int:
             errors.append(f"{sid}: public_service {public_service} does not publish {entry['port']}")
 
     if errors:
-        print(f"FAIL: {len(errors)} 处暴露面问题（检查了 {checked} 个 Docker 云场景）")
+        print(f"FAIL: {len(errors)} 处暴露面问题（检查了 {checked} 个 Docker 云服务场景）")
         for item in errors:
             print("  -", item)
         return 1
-    print(f"OK: {checked} 个 Docker 云场景的宿主暴露面与登记一致")
+    print(f"OK: {checked} 个 Docker 云服务场景的宿主暴露面与登记一致")
     return 0
 
 

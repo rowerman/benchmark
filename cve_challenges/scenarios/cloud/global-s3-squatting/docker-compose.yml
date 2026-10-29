@@ -10,7 +10,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: cloud-11
+      VAULT_SCENARIO: cloud-01
       VAULT_MODE: header-secret
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"header":"X-Storage-Internal-Token","values":["s3-global-delivery"],"hint":"对象存储内部交付令牌"}'

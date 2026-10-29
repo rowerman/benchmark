@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run one or more host-side cloud black-box cases.
+"""Run one or more host-side cloud-service black-box cases.
 
 用法：run.py <scenario-id> [<expected-flag>]...
 验收侧显式传入本轮 flag；不给时退化为从 start-scenario.sh 的输出里取（需 CVE_SHOW_FLAGS=1）。

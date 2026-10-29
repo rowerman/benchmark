@@ -24,7 +24,7 @@ cd cve_challenges
 python scripts/validate-structure.py
 python scripts/validate-flag-contract.py
 
-# Feature-driven nmap service identification for Docker cloud scenarios
+# Feature-driven nmap service identification for Docker cloud-service scenarios
 bash scripts/setup-cloud-nmap.sh             # once: merge probes (iptables needs root)
 bash scripts/validate-cloud-nmap.sh          # 30 cloud main ports, no Werkzeug/unknown
 ```
@@ -42,8 +42,8 @@ cve_challenges/
   scenarios/
     web/      # 18 scenarios
     db/       # 9 scenarios
-    cloud/    # 31 scenarios (30 Docker Compose + 1 KIND)
-    k8s/      # 31 Kubernetes/KIND scenarios
+    cloud/    # 2 public-cloud scenarios
+    k8s/      # 60 private-cloud scenarios (28 Docker Compose + 32 KIND)
   infra/
     cloud/    # shared provider simulators; not deployable scenarios
   chains/     # 37 multi-scenario attack paths
@@ -61,8 +61,13 @@ the scenario, attack path, exploitation steps, flag capture, and remediation.
 When adding a scenario, add its guide in the same change and run
 `python scripts/validate-structure.py` before committing.
 
-Cloud scenarios can share provider simulators in `infra/cloud`; those helpers
+Cloud-service scenarios can share provider simulators in `infra/cloud`; those helpers
 must not be registered as standalone scenarios.
+
+`scenarios/cloud/` is exclusively public cloud (`cloud-01..cloud-02`).
+`scenarios/k8s/` is the private-cloud domain (`k8s-01..k8s-60`), regardless
+of whether a scenario is delivered with Docker Compose or KIND. See
+`../SCENARIO_ID_MIGRATION.md` for the old cloud IDs, new IDs, and paths.
 
 `../BENCHMARK_GUIDE_CLOUD_K8S.md` integrates every cloud and k8s `GUIDE.md`
 plus the registry view; regenerate it with

@@ -1,0 +1,59 @@
+# K8S-04 SSRF → 私有云实例元数据凭据窃取
+
+## 场景信息
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-04 |
+| 名称 | SSRF to Instance Metadata Credential Theft |
+| 技术/CVE | N/A (SSRF → IMDS) |
+| 难度 | L3 |
+| 交付方式 | Docker Compose |
+| 入口 | localhost:10601 |
+| 入口身份 | 宿主侧黑盒起点（无私有云凭据，需自行派生） |
+| 终点 | private-object-store 经 flag-vault 交付（sigv4：从 IMDS 偷到的 AK/SK 按 SigV4 签名） |
+
+## 场景概述
+Web 应用存在 SSRF，可访问私有云 IaaS 实例的 `169.254.169.254` 元数据服务。
+该服务会向实例下发平台角色临时凭据；攻击者借用这些凭据访问私有对象存储，
+从而越过工作负载身份边界。
+
+## 教材锚点
+- 案例：IMDS 与 SSRF（Ch4 Technique 1，如 #019/#036 系列）
+- 平面：数据面（web）→ 控制面凭据；失败边界：网络/身份
+- 六镜头：MAGIC（IMDS 自动为实例注入角色凭据）；DETECTION（IMDS
+  访问通常不产生租户审计）
+
+## 前置知识
+- SSRF 原理；IMDS 169.254.169.254 与实例角色；临时凭据使用
+
+## 利用步骤
+1. 在 `/fetch?url=` 输入 `http://169.254.169.254/latest/meta-data/iam/security-credentials/`
+   获取角色名。
+2. 继续读取角色路径，获得 AccessKeyId / SecretAccessKey / Token。
+3. 用凭据访问私有对象存储模拟服务（`/latest/meta-data/...` 之外的 `s3` 容器，
+   即 S3-compatible object storage），读取 flag。
+4. 终端服务 s3 向 flag-vault 出示从 IMDS 偷到的 AK/SK 按 SigV4 签名，换成 flag 后回给调用方——明文只在这一步出现。
+
+
+## Flag
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 s3 向 flag-vault 出示「从 IMDS 偷到的 AK/SK 按 SigV4 签名」（校验模式 `sigv4`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-04-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-04 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-04 <flag>`（参考利用）。
+
+## 此场景利用了哪些知识
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Docker Compose web service, instance metadata, and private object storage |
+| 侦察与前置条件 | SSRF URL behavior and IMDS role/credential paths |
+| 核心漏洞与利用 | Use SSRF to query 169.254.169.254 and obtain temporary credentials |
+| 权限、横向或影响 | Instance-role credential theft and private object-storage access |
+| 验证 | Use the credentials to read the object-storage flag |
+
+## 修复建议
+SSRF 出口白名单；IMDSv2 + 令牌（TOFU）；网络层阻止应用访问链路本地地址。

@@ -1,4 +1,4 @@
-name: Lambda Injection to Invisible Recon to Cross-Account
+name: Serverless Injection to Invisible Recon to Cross-Project
 chain_id: Chain-33
 steps: 3
 domains:
@@ -17,17 +17,17 @@ runtime:
       format: response
 nodes:
 - step: 1
-  scenario: cloud-03
-  description: Lambda 代码注入 → 泄露 IAM 凭据
+  scenario: k8s-34
+  description: 无服务器函数代码注入 → 泄露 IAM 凭据
   flag: flag{c33-step1-lambda}
   next_hint: 环境变量中有 IAM AK/SK
 - step: 2
-  scenario: cloud-23
+  scenario: k8s-53
   description: IAM 枚举 oracle → 无日志发现目标角色
   flag: flag{c33-step2-enum}
-  next_hint: 枚举到可跨账号假设的角色
+  next_hint: 枚举到可跨项目假设的角色
 - step: 3
-  scenario: cloud-08
-  description: AssumeRole → 跨账号访问 → 最终 flag
+  scenario: k8s-39
+  description: AssumeRole → 跨项目访问 → 最终 flag
   flag: flag{c33-step3-final}
   next_hint: null

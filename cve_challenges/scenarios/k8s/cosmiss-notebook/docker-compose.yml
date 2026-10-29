@@ -1,0 +1,47 @@
+services:
+  front-end:
+    build: ./front-end
+    ports:
+      - "10623:5000"
+    environment:
+      - SIGNING_SECRET=cosmiss-front-secret-2026-shared-key
+    networks:
+      c23-net:
+        ipv4_address: 10.23.0.10
+  nb-a:
+    build: ./nb-a
+    networks:
+      c23-net:
+        ipv4_address: 10.23.0.20
+  nb-b:
+    build:
+      context: ./nb-b
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
+    networks:
+      c23-net:
+        ipv4_address: 10.23.0.30
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: k8s-42
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.23.0.30/32"],"hint":"租户笔记本的密钥只交付给笔记本运行时地址"}'
+    networks:
+      c23-net:
+  attacker:
+    profiles: [debug]
+    build: ./attacker
+    environment:
+      - FRONT_URL=http://front-end:5000
+    networks:
+      c23-net:
+        ipv4_address: 10.23.0.40
+networks:
+  c23-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.23.0.0/24

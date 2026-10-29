@@ -13,9 +13,9 @@ cve_challenges/
 ├── scenarios/                 # 可独立运行的单场景，GUIDE.md 是场景事实来源
 │   ├── web/                   # Web 应用与 Web 漏洞
 │   ├── db/                    # 数据库与数据库配置/注入问题
-│   ├── cloud/                 # 公有云服务模拟场景（通常为 Docker Compose）
-│   └── k8s/                   # KIND 集群、容器逃逸与 Kubernetes 配置场景
-├── infra/cloud/               # 云场景共用的 OIDC、IMDS、IAM、审计等模拟器；不是独立注册场景
+│   ├── cloud/                 # 公有云场景（2 个 Docker Compose 场景）
+│   └── k8s/                   # 私有云场景总类（28 Docker Compose + 32 KIND）
+├── infra/cloud/               # 云服务场景共用的 OIDC、IMDS、IAM、审计等模拟器；不是独立注册场景
 ├── chains/                    # 多步骤攻击链；每个目录通常含 chain.yaml、deploy.sh、teardown.sh
 │   └── _runtime/              # 云攻击链的共享部署运行时与 Chain Console
 ├── scripts/
@@ -38,6 +38,8 @@ cve_challenges/
 ```
 
 每个已注册场景必须位于注册表的 `path`，并包含非空 `GUIDE.md`。Docker 场景必须提供 `docker-compose.yml`/`.yaml`（部分 Kubernetes 场景还会带 registry compose）；Kubernetes 场景必须提供 `deploy.sh`，通常配套 `teardown.sh` 和 `kind-config.yaml`。新增或移动场景时，应同步修改注册表和 GUIDE，并运行结构校验。
+
+`scenarios/cloud/` 只表示公有云，当前为 `cloud-01..cloud-02`；`scenarios/k8s/` 表示私有云总类，当前为 `k8s-01..k8s-60`，其中交付方式可以是 Docker Compose 或 KIND，目录域与交付方式相互独立。迁移映射见根目录 `SCENARIO_ID_MIGRATION.md`。
 
 ## 启动方式
 
@@ -83,7 +85,7 @@ python3 scripts/validate-cloud-entrypoints.py --strict-probes
 bash scripts/setup-cloud-nmap.sh            # 一次性：合并 probe（iptables 需 root）
 bash scripts/validate-cloud-nmap.sh         # 30 个 Docker cloud 主端口特征识别回归
 bash scripts/validate-all.sh                 # 默认验证 Docker 场景
-bash scripts/validate-all.sh k8s             # 仅验证 Kubernetes 场景
+bash scripts/validate-all.sh k8s             # 验证全部 60 个私有云场景
 bash scripts/validate-all.sh all             # 验证全部非 optional 场景
 ./scripts/verify-flag.sh 'flag{captured-value}'
 ```

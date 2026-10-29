@@ -1,0 +1,49 @@
+services:
+  victim-api:
+    build: ./victim-api
+    ports:
+      - "10639:5000"
+    environment:
+      - NAT_URL=http://shared-nat:5000
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
+    networks:
+      c39-trust:
+        ipv4_address: 168.63.0.20
+  shared-nat:
+    build: ../../../infra/cloud/shared-nat
+    networks:
+      c39-trust:
+        ipv4_address: 168.63.0.10
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: k8s-57
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["168.63.0.20/32"],"hint":"只交付给受保护业务接口所在内网地址"}'
+    networks:
+      c39-trust:
+      c39-public:
+        ipv4_address: 10.39.1.10
+  attacker:
+    profiles: [debug]
+    build: ./attacker
+    environment:
+      - NAT_URL=http://shared-nat:5000
+      - VICTIM_URL=http://victim-api:5000
+    networks:
+      c39-public:
+        ipv4_address: 10.39.1.20
+networks:
+  c39-trust:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 168.63.0.0/24
+  c39-public:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.39.1.0/24

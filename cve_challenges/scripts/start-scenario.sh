@@ -56,19 +56,22 @@ with open('$SCRIPT_DIR/scenarios.yaml') as f:
 print(data['scenarios']['$SCENARIO_ID']['type'])
 ")
 
+INJECTED=$(python3 -c "
+import yaml
+with open('$SCRIPT_DIR/flag-sinks.yaml') as f:
+    data = yaml.safe_load(f)
+print('1' if '$SCENARIO_ID' in data['sinks'] else '0')
+")
+
 case "$TYPE" in
   docker)
     cd "$SCENARIO_PATH"
     echo "[+] Starting Docker Compose..."
-    # 非 cloud 场景（web/db）沿用旧的卷挂载约定：仍写场景目录下的 flag.txt。
-    # cloud 场景已改为运行时注入，不在这里落盘。
-    case "$SCENARIO_ID" in
-      cloud-*) ;;
-      *)
-        if [ "$FLAG_COUNT" -eq 1 ] && [ -f flag.txt ]; then echo "$FLAG" > flag.txt; fi
-        for f in */flag.txt; do [ -f "$f" ] && echo "$FLAG" > "$f"; done 2>/dev/null || true
-        ;;
-    esac
+    # 未声明注入表的 web/db 场景沿用旧卷挂载约定；配置了 flag-sinks 的场景不落宿主磁盘。
+    if [ "$INJECTED" = "0" ]; then
+      if [ "$FLAG_COUNT" -eq 1 ] && [ -f flag.txt ]; then echo "$FLAG" > flag.txt; fi
+      for f in */flag.txt; do [ -f "$f" ] && echo "$FLAG" > "$f"; done 2>/dev/null || true
+    fi
     if [ -f docker-compose.yml ] || [ -f docker-compose.yaml ]; then
       # 先创建容器（不启动）→ 经 stdin/tar 把 flag 注入容器内 → 再启动，
       # 这样应用启动时就能读到 flag，而宿主机上不留任何明文副本。

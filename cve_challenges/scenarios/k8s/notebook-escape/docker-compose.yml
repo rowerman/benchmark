@@ -1,0 +1,29 @@
+services:
+  notebook:
+    build:
+      context: ./notebook
+    ports:
+      - "10609:5000"
+    environment:
+      - K8S_API_URL=http://k8s-api:5000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+  k8s-api:
+    build: ./k8s-api
+    environment:
+      - SA_TOKEN=eyJhbGciOiJub25lIn0.eyJzdWIiOiJicmlkZ2UifQ.
+  # flag 唯一终点：只能从宿主机层面进入本容器读 /vault/flag（0600 root）
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: k8s-37
+      VAULT_MODE: header-secret
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"header":"X-Provider-Internal","values":["not-issued-to-any-client"],"hint":"本场景的密文只能经宿主机/容器层读到"}'

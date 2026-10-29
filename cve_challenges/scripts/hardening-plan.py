@@ -23,8 +23,7 @@ def main() -> int:
             continue
         if scope == "k8s" and not scenario_id.startswith("k8s-"):
             continue
-        kind = "k8s" if scenario_id == "cloud-02" else entry["type"]
-        print(f"{scenario_id}\t{kind}\t{entry['path']}")
+        print(f"{scenario_id}\t{entry['type']}\t{entry['path']}")
     return 0
 
 

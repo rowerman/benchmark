@@ -29,7 +29,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: cloud-26
+      VAULT_SCENARIO: cloud-02
       VAULT_MODE: network-source
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"cidrs":["10.37.0.40/32"],"hint":"平台密钥库只对托管数据平台工作负载地址开放"}'

@@ -1,10 +1,10 @@
-# CLOUD-26 CloudImposer：托管数据平台依赖混淆
+# CLOUD-02 CloudImposer：托管数据平台依赖混淆
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-26 |
+| ID | CLOUD-02 |
 | 名称 | CloudImposer: Dependency Confusion in Managed Data Platform |
 | 技术/CVE | N/A (global namespace dependency confusion, case #270) |
 | 难度 | L3 |
@@ -39,9 +39,9 @@
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 victim-resource 向 flag-vault 出示「平台工作负载令牌」（校验模式 `header-secret`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-26-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-26 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-26 <flag>`（参考利用）。
+- 形态：`flag{cloud-02-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-02 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-02 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

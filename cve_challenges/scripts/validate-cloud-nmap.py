@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Feature-driven nmap regression for Docker cloud scenarios.
+"""Feature-driven nmap regression for Docker cloud-service scenarios.
 
 Starts each requested scenario, runs nmap -sV with the merged project probe
 database against its registered (and protocol-auxiliary) ports, and asserts
@@ -86,7 +86,7 @@ def restore_env(original: bytes | None, env_file: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("scenarios", nargs="*", help="cloud-XX ids; default: all 30")
+    parser.add_argument("scenarios", nargs="*", help="scenario IDs; default: all Docker cloud-service scenarios")
     parser.add_argument("--datadir", required=True, help="merged nmap data directory")
     parser.add_argument("--running-only", action="store_true",
                         help="scan already-running scenarios (no start/stop)")
@@ -106,7 +106,8 @@ def main() -> int:
     aux = identities.get("aux", [])
     requested = [s.lower() for s in args.scenarios] or sorted(
         sid for sid, entry in registry.items()
-        if entry.get("type") == "docker" and sid.startswith("cloud-") and sid in main_by_id)
+        if entry.get("type") == "docker" and entry.get("public_service") and sid in main_by_id
+    )
     unknown = [s for s in requested if s not in main_by_id]
     if unknown:
         print(f"unknown scenarios: {', '.join(unknown)}", file=sys.stderr)

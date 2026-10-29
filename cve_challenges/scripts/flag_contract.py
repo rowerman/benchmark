@@ -9,8 +9,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 MULTI_FLAG_SCENARIOS = {
-    "cloud-13": 2,
-    "cloud-17": 2,
+    "k8s-43": 2,
+    "k8s-47": 2,
     "k8s-32": 2,
 }
 

@@ -1,0 +1,43 @@
+services:
+  vm-a:
+    build: ./vm-a
+    networks:
+      c33-net:
+        ipv4_address: 10.33.0.10
+  vm-b:
+    build: ./vm-b
+    networks:
+      c33-net:
+        ipv4_address: 10.33.0.20
+  omi-agent:
+    build:
+      context: ./omi-agent
+    ports:
+      - "10633:5986"
+    networks:
+      c33-net:
+        ipv4_address: 10.33.0.30
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: k8s-52
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.33.0.30/32"],"hint":"供应商密钥库只对中间件代理所在地址开放"}'
+    networks:
+      c33-net:
+  attacker:
+    profiles: [debug]
+    build: ./attacker
+    environment:
+      - AGENT_URL=http://omi-agent:5986
+    networks:
+      c33-net:
+        ipv4_address: 10.33.0.40
+networks:
+  c33-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.33.0.0/24

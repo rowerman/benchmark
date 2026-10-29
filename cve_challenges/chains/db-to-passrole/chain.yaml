@@ -1,4 +1,4 @@
-name: Managed DB Escape to Lambda PassRole to Cross-Account
+name: Managed DB Escape to Serverless PassRole to Cross-Project
 chain_id: Chain-48
 steps: 3
 domains:
@@ -17,17 +17,17 @@ runtime:
       format: response
 nodes:
 - step: 1
-  scenario: cloud-14
+  scenario: k8s-44
   description: 引擎补丁 → 宿主 RCE → 拿到 IAM 凭据
   flag: flag{c48-step1-db}
   next_hint: 凭据有 iam:PassRole 权限
 - step: 2
-  scenario: cloud-03
-  description: Lambda 注入 → PassRole → 特权执行
+  scenario: k8s-34
+  description: 无服务器函数注入 → PassRole → 特权执行
   flag: flag{c48-step2-lambda}
-  next_hint: 使用凭据跨账号访问
+  next_hint: 使用凭据跨项目访问
 - step: 3
-  scenario: cloud-08
-  description: Cross-Account → 最终 flag
+  scenario: k8s-39
+  description: Cross-Project → 最终 flag
   flag: flag{c48-step3-final}
   next_hint: null

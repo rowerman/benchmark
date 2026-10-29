@@ -1,4 +1,4 @@
-name: CF Injection to Global S3 to SCP Bypass
+name: IaC Injection to Global S3 to Tenant Policy Bypass
 chain_id: Chain-41
 steps: 3
 domains:
@@ -17,17 +17,17 @@ runtime:
       format: response
 nodes:
 - step: 1
-  scenario: cloud-04
-  description: CF Fn::Sub → SSM 参数泄露
+  scenario: k8s-35
+  description: IaC Fn::Sub → 内部密钥库参数泄露
   flag: flag{c41-step1-cf}
   next_hint: 泄露参数包含 S3 桶名预测公式
 - step: 2
-  scenario: cloud-11
+  scenario: cloud-01
   description: 全局命名空间抢占 → 读取影子资源
   flag: flag{c41-step2-s3}
-  next_hint: 枚举发现可绕过 SCP 的旧版 API
+  next_hint: 枚举发现可绕过租户策略的旧版 API
 - step: 3
-  scenario: cloud-10
-  description: SCP Bypass → 限制绕过
+  scenario: k8s-41
+  description: 租户策略绕过 → 限制绕过
   flag: flag{c41-step3-final}
   next_hint: null

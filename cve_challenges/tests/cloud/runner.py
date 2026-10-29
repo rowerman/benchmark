@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Host-side black-box runner for Docker cloud scenarios."""
+"""Host-side black-box runner for Docker cloud-service scenarios."""
 
 from __future__ import annotations
 
@@ -13,30 +13,13 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[2]
 START = ROOT / "scripts" / "start-scenario.sh"
 STOP = ROOT / "scripts" / "stop-scenario.sh"
-SCENARIO_DIRS = {
-    "cloud-01": "ssrf-to-imds", "cloud-11": "global-s3-squatting",
-    "cloud-03": "lambda-passrole", "cloud-04": "cf-injection",
-    "cloud-05": "ci-poisoning", "cloud-12": "cosmiss-notebook",
-    "cloud-07": "oidc-federation", "cloud-08": "cross-account-trust",
-    "cloud-09": "golden-saml", "cloud-10": "scp-bypass",
-    "cloud-13": "rds-logfdw",
-    "cloud-14": "cloudsql-index-rce",
-    "cloud-06": "notebook-escape", "cloud-18": "buildfleet-registry",
-    "cloud-19": "pickle-model", "cloud-26": "composer-depconf",
-    "cloud-31": "persistence-as-a-service",
-    "cloud-15": "synlapse-ir", "cloud-23": "iam-enum-oracle",
-    "cloud-16": "extrareplica-repl", "cloud-17": "wireserver-bootstrap",
-    "cloud-24": "beta-endpoint", "cloud-29": "dataform-pt",
-    "cloud-20": "attachme-volume", "cloud-21": "actor-token",
-    "cloud-22": "omigod-agent", "cloud-25": "resource-explorer",
-    "cloud-27": "lowcode-secrets", "cloud-28": "shared-nat",
-    "cloud-30": "serverless-sa",
-    "cloud-31": "persistence-as-a-service",
-}
-FLAG_COUNTS = {"cloud-13": 2, "cloud-17": 2}
+REGISTRY = ROOT / "scripts" / "scenarios.yaml"
+FLAG_COUNTS = {"k8s-43": 2, "k8s-47": 2}
 NON_HTTP_PORTS = {10627}
 
 
@@ -116,7 +99,8 @@ def stop(scenario: str) -> None:
 
 def run_case(scenario: str, port: int, case, expected_flag: str = "") -> None:
     started = False
-    scenario_path = ROOT / "scenarios" / "cloud" / SCENARIO_DIRS[scenario]
+    registry = yaml.safe_load(REGISTRY.read_text(encoding="utf-8"))["scenarios"]
+    scenario_path = ROOT / registry[scenario]["path"]
     compose_env = scenario_path / ".env"
     original_env = compose_env.read_bytes() if compose_env.exists() else None
     try:

@@ -31,63 +31,63 @@ ORACLE_PORTS=(
 )
 
 # ============================================================
-# Cloud scenarios — public service ports (Docker -p published)
+# Cloud-service scenarios — public service ports (Docker -p published)
 # ============================================================
 CLOUD_WEB_PORTS=(
-  10601   # cloud-01 ssrf-to-imds
-  10604   # cloud-03 lambda-passrole
-  10605   # cloud-04 cf-injection
-  10608   # cloud-05 ci-poisoning
-  10609   # cloud-06 notebook-escape
-  10611   # cloud-07 oidc-federation
-  10612   # cloud-08 cross-account-trust
-  10613   # cloud-09 golden-saml
-  10615   # cloud-10 scp-bypass
-  10621   # cloud-11 global-s3-squatting
-  10623   # cloud-12 cosmiss-notebook
-  10624   # cloud-13 rds-logfdw
-  10625   # cloud-14 cloudsql-index-rce
-  10626   # cloud-15 synlapse-ir
-  10627   # cloud-16 extrareplica-repl
-  10628   # cloud-17 wireserver-bootstrap
-  10629   # cloud-18 buildfleet-registry
-  10630   # cloud-19 pickle-model
-  10631   # cloud-20 attachme-volume
-  10632   # cloud-21 actor-token
-  10633   # cloud-22 omigod-agent
-  10634   # cloud-23 iam-enum-oracle
-  10635   # cloud-24 beta-endpoint
-  10636   # cloud-25 resource-explorer
-  10637   # cloud-26 composer-depconf
-  10638   # cloud-27 lowcode-secrets
-  10639   # cloud-28 shared-nat
-  10640   # cloud-29 dataform-pt
-  10641   # cloud-30 serverless-sa
-  10642   # cloud-31 persistence-as-a-service
+  10601   # k8s-04 ssrf-to-imds
+  10604   # k8s-34 lambda-passrole
+  10605   # k8s-35 cf-injection
+  10608   # k8s-36 ci-poisoning
+  10609   # k8s-37 notebook-escape
+  10611   # k8s-38 oidc-federation
+  10612   # k8s-39 cross-account-trust
+  10613   # k8s-40 golden-saml
+  10615   # k8s-41 scp-bypass
+  10621   # cloud-01 global-s3-squatting
+  10623   # k8s-42 cosmiss-notebook
+  10624   # k8s-43 rds-logfdw
+  10625   # k8s-44 cloudsql-index-rce
+  10626   # k8s-45 synlapse-ir
+  10627   # k8s-46 extrareplica-repl
+  10628   # k8s-47 wireserver-bootstrap
+  10629   # k8s-48 buildfleet-registry
+  10630   # k8s-49 pickle-model
+  10631   # k8s-50 attachme-volume
+  10632   # k8s-51 actor-token
+  10633   # k8s-52 omigod-agent
+  10634   # k8s-53 iam-enum-oracle
+  10635   # k8s-54 beta-endpoint
+  10636   # k8s-55 resource-explorer
+  10637   # cloud-02 composer-depconf
+  10638   # k8s-56 lowcode-secrets
+  10639   # k8s-57 shared-nat
+  10640   # k8s-58 dataform-pt
+  10641   # k8s-59 serverless-sa
+  10642   # k8s-60 persistence-as-a-service
 )
 
 # ============================================================
-# Cloud scenarios — internal service socat proxy ports
+# Cloud-service scenarios — internal service socat proxy ports
 # ============================================================
 CLOUD_PROXY_PORTS=(
-  10670   # CLOUD-01 IMDS proxy
-  10671   # CLOUD-01 S3 proxy
+  10670   # K8S-04 IMDS proxy
+  10671   # K8S-04 S3 proxy
   10703   # OIDC IdP proxy
   10704   # S3 simulator proxy
   10705   # Lambda simulator proxy
-  10706   # cloud-06 k8s-api
-  10707   # cloud-07 IAM / cloud-09 SAML IdP proxy (reused)
-  10708   # cloud-08 S3
-  10709   # cloud-09 IAM/STS
-  10716   # cloud-16 internal CA
-  10718   # cloud-18 internal registry
-  10719   # cloud-18 tenant puller
-  10720   # cloud-19 inference
-  10721   # cloud-19 cluster API
-  10722   # cloud-17 control-plane / cloud-19 node IMDS (reused)
-  10723   # cloud-23 STS oracle
-  10724   # cloud-23 audit log
-  10726   # cloud-26 package registry
+  10706   # k8s-37 k8s-api
+  10707   # k8s-38 IAM / k8s-40 SAML IdP proxy (reused)
+  10708   # k8s-39 S3
+  10709   # k8s-40 IAM/STS
+  10716   # k8s-46 internal CA
+  10718   # k8s-48 internal registry
+  10719   # k8s-48 tenant puller
+  10720   # k8s-49 inference
+  10721   # k8s-49 cluster API
+  10722   # k8s-47 control-plane / k8s-49 node IMDS (reused)
+  10723   # k8s-53 STS oracle
+  10724   # k8s-53 audit log
+  10726   # cloud-02 package registry
 )
 
 # ============================================================

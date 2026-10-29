@@ -1,6 +1,6 @@
 #!/bin/bash
 # Full-scenario validation: start each scenario, verify it, stop it.
-# Usage: ./validate-all.sh [docker|cloud|k8s|vagrant|all]
+# Usage: ./validate-all.sh [docker|cloud|k8s|all]
 # Default: docker (only scenarios deployable without Vagrant)
 
 set -euo pipefail
@@ -19,7 +19,9 @@ import yaml
 d = yaml.safe_load(open('$SCRIPT_DIR/scenarios.yaml'))
 for sid, s in sorted(d['scenarios'].items()):
     t = s['type']
-    if '$FILTER' == 'all' or t == '$FILTER' or ('$FILTER' == 'cloud' and t == 'docker' and sid.lower().startswith('cloud-')):
+    path = s['path']
+    domain_match = '$FILTER' in ('cloud', 'k8s') and path.startswith('scenarios/' + '$FILTER' + '/')
+    if '$FILTER' == 'all' or t == '$FILTER' or domain_match:
         if not s.get('optional'):
             print(sid)
 " 2>/dev/null); do
@@ -48,7 +50,7 @@ for sid, s in sorted(d['scenarios'].items()):
     fi
 done
 
-if [ "$FILTER" = "cloud" ]; then
+if [ "$FILTER" = "cloud" ] || [ "$FILTER" = "k8s" ]; then
     python3 "$SCRIPT_DIR/validate-cloud-entrypoints.py" | tee -a "$LOG"
 fi
 

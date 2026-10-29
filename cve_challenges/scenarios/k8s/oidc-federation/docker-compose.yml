@@ -1,0 +1,66 @@
+services:
+  attacker:
+    profiles: [debug]
+    build:
+      context: ./attacker
+    environment:
+      - OIDC_URL=http://oidc:5000
+      - IAM_URL=http://iam:5000
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  oidc:
+    build:
+      context: ../../../infra/cloud/oidc-idp
+    ports:
+      - "10611:5000"
+    environment:
+      - OIDC_ISSUER=https://token.actions.githubusercontent.com
+      - OIDC_TOKEN_TTL=3600
+
+  iam:
+    build:
+      context: ../../../infra/cloud/iam-trust
+    environment:
+      - OIDC_JWKS_URL=http://oidc:5000/.well-known/jwks.json
+      - IAM_ROLES_FILE=/app/roles/default.yaml
+    ports:
+      - "10707:5000"
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # flag 唯一终点：校验 OIDC 的 RS256 签名与 iss/aud/sub
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: k8s-38
+      VAULT_MODE: jwt
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"jwks_url":"http://oidc:5000/.well-known/jwks.json","issuer":"https://token.actions.githubusercontent.com","audience":"sts.amazonaws.com","claims":{"sub":"repo:demo-org/demo-repo:ref:refs/heads/main"},"hint":"OIDC JWT from the repository identity provider"}'
+
+  # socat proxies — expose internal services to host for nmap detection
+  oidc-proxy:
+    image: alpine/socat:latest
+    ports:
+      - "10703:10703"
+    command: "TCP-LISTEN:10703,fork,reuseaddr TCP:oidc:5000"
+    depends_on:
+      - oidc
+
+  iam-proxy:
+    image: alpine/socat:latest
+    command: "TCP-LISTEN:10702,fork,reuseaddr TCP:iam:5000"
+    depends_on:
+      iam:
+        condition: service_healthy

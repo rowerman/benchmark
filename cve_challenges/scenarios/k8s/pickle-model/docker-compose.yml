@@ -1,0 +1,64 @@
+services:
+  model-registry:
+    build: ./model-registry
+    ports:
+      - "10630:5000"
+    networks:
+      c30-net:
+        ipv4_address: 169.254.0.10
+  inference:
+    build: ./inference
+    environment:
+      - REGISTRY_URL=http://model-registry:5000
+    ports:
+      - "10720:5000"
+    networks:
+      c30-net:
+        ipv4_address: 169.254.0.20
+  node-imds:
+    build: ./node-imds
+    environment:
+      - ROLE_NAME=eks-node-role
+      - ACCESS_KEY=AKIANODEEXAMPLE
+      - SECRET_KEY=node-secret-key
+      - SESSION_TOKEN=node-session-token
+    networks:
+      c30-net:
+        ipv4_address: 169.254.169.254
+  cluster-api:
+    build: ./cluster-api
+    environment:
+      - NODE_TOKEN=node-session-token
+    ports:
+      - "10721:5000"
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
+    networks:
+      c30-net:
+        ipv4_address: 169.254.0.40
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: k8s-49
+      VAULT_MODE: header-secret
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"header":"Authorization","values":["Bearer node-session-token"],"hint":"节点身份令牌才能读集群密文"}'
+    networks:
+      c30-net:
+  attacker:
+    profiles: [debug]
+    build: ./attacker
+    environment:
+      - REGISTRY_URL=http://model-registry:5000
+      - INFER_URL=http://inference:5000
+      - CLUSTER_URL=http://cluster-api:5000
+    networks:
+      c30-net:
+        ipv4_address: 169.254.0.50
+networks:
+  c30-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 169.254.0.0/16

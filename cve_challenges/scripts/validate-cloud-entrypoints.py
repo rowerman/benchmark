@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the public entrypoint contract for Docker cloud scenarios."""
+"""Validate the public entrypoint contract for Docker cloud-service scenarios."""
 from pathlib import Path
 import re
 import sys
@@ -33,7 +33,7 @@ def main() -> int:
     probe_text = PROBES.read_text(encoding="utf-8")
     registered_ports: set[str] = set()
     for key, entry in scenarios.items():
-        if entry.get("type") != "docker" or not key.startswith("cloud-"):
+        if entry.get("type") != "docker" or not entry.get("public_service"):
             continue
         compose = ROOT / entry["path"] / "docker-compose.yml"
         data = yaml.safe_load(compose.read_text(encoding="utf-8")) or {}
@@ -60,26 +60,31 @@ def main() -> int:
             errors.append(f"{key}: GUIDE.md documents localhost:{port} but the compose never publishes it")
 
         # Fallback flag literals must carry the scenario's own number.
-        number = key.split("-", 1)[1]
+        domain, number = key.split("-", 1)
         for path in sorted((ROOT / entry["path"]).rglob("*")):
             if not path.is_file() or "__pycache__" in path.parts:
                 continue
             if path.name != "Dockerfile" and not path.name.startswith("Dockerfile.") \
                     and path.name not in {"docker-compose.yml", "docker-compose.yaml"}:
                 continue
-            for literal in re.findall(r"flag\{cloud-(\d+)", path.read_text(encoding="utf-8")):
-                if literal.lstrip("0") != number.lstrip("0"):
-                    errors.append(f"{key}: {path.relative_to(ROOT)} fallback flag references cloud-{literal}, expected cloud-{number}")
+            for literal_domain, literal_number in re.findall(
+                r"flag\{(cloud|k8s)-(\d+)", path.read_text(encoding="utf-8")
+            ):
+                if (literal_domain, literal_number.lstrip("0")) != (domain, number.lstrip("0")):
+                    errors.append(
+                        f"{key}: {path.relative_to(ROOT)} fallback flag references "
+                        f"{literal_domain}-{literal_number}, expected {key}"
+                    )
     if "--strict-probes" in sys.argv:
         identities = yaml.safe_load(IDENTITIES.read_text(encoding="utf-8"))
         manifest_main = {str(item["port"]): item for item in identities["main"]}
         for port in sorted(registered_ports):
             if port not in manifest_main:
-                errors.append(f"cloud port {port}: missing entry in cloud-service-identities.yaml")
+                errors.append(f"cloud-service port {port}: missing entry in cloud-service-identities.yaml")
         for port in sorted(registered_ports):
             standard = re.search(rf"^#\s*standard-protocol:\s*{re.escape(port)}\s*$", probe_text, re.MULTILINE)
             if not standard and not any(re.search(rf"^ports\s+.*\b{re.escape(port)}\b", line) for line in probe_text.splitlines()):
-                errors.append(f"cloud port {port}: no explicit custom probe; declare standard protocol or add a port-bound probe")
+                errors.append(f"cloud-service port {port}: no explicit custom probe; declare standard protocol or add a port-bound probe")
         for item in identities.get("aux", []):
             port = int(item["port"])
             if item.get("probe") == "manual":
@@ -88,10 +93,10 @@ def main() -> int:
             if not standard and not any(re.search(rf"^ports\s+.*\b{re.escape(str(port))}\b", line) for line in probe_text.splitlines()):
                 errors.append(f"aux port {port} ({item['id']}): no probe rule or standard-protocol declaration")
     if errors:
-        print("Cloud entrypoint validation failed:")
+        print("Cloud-service entrypoint validation failed:")
         print("\n".join(f"- {error}" for error in errors))
         return 1
-    print("Cloud entrypoint contract valid: all Docker cloud ports target non-attacker services")
+    print("Cloud-service entrypoint contract valid: all Docker cloud ports target non-attacker services")
     return 0
 
 

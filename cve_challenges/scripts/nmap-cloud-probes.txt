@@ -17,7 +17,7 @@ ports 10670
 match ec2-imds m|^HTTP/1\.[01] \d\d\d .*\r\n.*Server: EC2ws|s p/Amazon EC2 Instance Metadata Service/ i/IMDS v1-v2 simulator/
 
 # --------------------------------------------------------------------------
-# S3-compatible object storage (cloud-01 s3-proxy / cloud-08 的两个 aux 入口)
+# S3-compatible object storage (k8s-04 s3-proxy / k8s-39 的两个 aux 入口)
 # -- JSON listing marker
 # --------------------------------------------------------------------------
 Probe TCP S3-JSON q|GET / HTTP/1.0\r\n\r\n|
@@ -40,14 +40,14 @@ match oidc-discovery m|"jwks_uri"\s*:|s p/OpenID Connect Identity Provider/ i/OI
 
 # --------------------------------------------------------------------------
 # AWS STS / IAM Query API (iam-trust simulator, XML responses)
-# Ports: cloud-08 public IAM, cloud-10 legacy IAM, cloud-09 IAM proxy.
+# Ports: k8s-39 public IAM, k8s-41 legacy IAM, k8s-40 IAM proxy.
 # --------------------------------------------------------------------------
 Probe TCP STS-Query q|POST / HTTP/1.0\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 43\r\n\r\nAction=GetCallerIdentity&Version=2011-06-15|
 rarity 5
 ports 10612,10615,10709
 match aws-sts m/<(?:AssumeRole|GetCallerIdentity|Error)Response>/s p/AWS Security Token Service/ i/STS API simulator/
 
-# 10707 is reused: IAM/STS (cloud-07) or the SAML IdP proxy (cloud-09).
+# 10707 is reused: IAM/STS (k8s-38) or the SAML IdP proxy (k8s-40).
 Probe TCP STS-Query-10707 q|POST / HTTP/1.0\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 43\r\n\r\nAction=GetCallerIdentity&Version=2011-06-15|
 rarity 5
 ports 10707

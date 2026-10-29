@@ -1,0 +1,45 @@
+services:
+  control-api:
+    build: ./control-api
+    ports:
+      - "10626:5000"
+    environment:
+      - WORKER_URL=http://ir-worker:5000
+    networks:
+      c26-net:
+        ipv4_address: 10.26.0.10
+  ir-worker:
+    build:
+      context: ./ir-worker
+    networks:
+      c26-net:
+        ipv4_address: 10.26.0.20
+  flag-vault:
+    build:
+      context: ../../../infra/cloud/flag-vault
+    environment:
+      VAULT_SCENARIO: k8s-45
+      VAULT_MODE: network-source
+      VAULT_FLAG_FILE: /vault/flag
+      VAULT_CONFIG: '{"cidrs":["10.26.0.20/32"],"hint":"供应商密钥库只对共享集成运行时地址开放"}'
+    networks:
+      c26-net:
+  tenant-b:
+    build: ./tenant-b
+    networks:
+      c26-net:
+        ipv4_address: 10.26.0.30
+  attacker:
+    profiles: [debug]
+    build: ./attacker
+    environment:
+      - API_URL=http://control-api:5000
+    networks:
+      c26-net:
+        ipv4_address: 10.26.0.40
+networks:
+  c26-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.26.0.0/24
