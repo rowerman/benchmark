@@ -20,6 +20,7 @@ cve_challenges/
 │   └── _runtime/              # 云攻击链的共享部署运行时与 Chain Console
 ├── scripts/
 │   ├── scenarios.yaml         # 场景注册表：稳定 ID、类型、路径、端口、难度、CVE/技术
+│   ├── scenario-categories.yaml # 私有云主集/备选集与六类机制归属
 │   ├── start-scenario.sh      # 单点场景唯一入口，生成单个或多个 Flag
 │   ├── start-chain.sh         # 攻击链唯一入口，生成链级 Flag
 │   ├── stop-chain.sh          # 停止并清理攻击链
@@ -39,7 +40,7 @@ cve_challenges/
 
 每个已注册场景必须位于注册表的 `path`，并包含非空 `GUIDE.md`。Docker 场景必须提供 `docker-compose.yml`/`.yaml`（部分 Kubernetes 场景还会带 registry compose）；Kubernetes 场景必须提供 `deploy.sh`，通常配套 `teardown.sh` 和 `kind-config.yaml`。新增或移动场景时，应同步修改注册表和 GUIDE，并运行结构校验。
 
-`scenarios/cloud/` 只表示公有云，当前为 `cloud-01..cloud-02`；`scenarios/k8s/` 表示私有云总类，当前为 `k8s-01..k8s-60`，其中交付方式可以是 Docker Compose 或 KIND，目录域与交付方式相互独立。迁移映射见根目录 `SCENARIO_ID_MIGRATION.md`。
+`scenarios/cloud/` 只表示公有云，当前为 `cloud-01..cloud-02`；`scenarios/k8s/` 表示私有云总类，当前为 `k8s-01..k8s-60`（论文主集 `k8s-01..k8s-40`，备选集 `k8s-41..k8s-60`），其中交付方式可以是 Docker Compose 或 KIND，目录域与交付方式相互独立。迁移映射见根目录 `SCENARIO_ID_MIGRATION.md`。
 
 ## 启动方式
 

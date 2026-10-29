@@ -18,7 +18,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-41
+      VAULT_SCENARIO: k8s-07
       VAULT_MODE: sigv4
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"access_key":"AKIASCBPASSEXAMPLE","secret_key":"scp-bypass-secret","hint":"SigV4 with the IAM user secret key"}'

@@ -23,7 +23,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-37
+      VAULT_SCENARIO: k8s-25
       VAULT_MODE: header-secret
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"header":"X-Provider-Internal","values":["not-issued-to-any-client"],"hint":"本场景的密文只能经宿主机/容器层读到"}'

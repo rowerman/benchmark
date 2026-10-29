@@ -10,7 +10,7 @@ description: >
 
 nodes:
   - step: 1
-    scenario: k8s-23
+    scenario: k8s-22
     name: "hostPID ProcFS Host Filesystem Read"
     technique: hostPID /proc escape
     description: >

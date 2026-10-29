@@ -1,10 +1,10 @@
-# K8S-50 可预测卷 ID + 属主校验缺失
+# K8S-52 可预测卷 ID + 属主校验缺失
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-50 |
+| ID | K8S-52 |
 | 名称 | Predictable Volume ID + Missing Ownership Check |
 | 技术/CVE | N/A (control-plane ownership check missing) |
 | 难度 | L2 |
@@ -40,9 +40,9 @@
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 control-api 向 flag-vault 出示「块存储控制面内网地址」（校验模式 `network-source`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{k8s-50-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py k8s-50 <flag>`（gate）+
-  `python3 tests/cloud/run.py k8s-50 <flag>`（参考利用）。
+- 形态：`flag{k8s-52-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-52 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-52 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

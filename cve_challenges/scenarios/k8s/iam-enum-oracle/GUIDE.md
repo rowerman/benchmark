@@ -1,10 +1,10 @@
-# K8S-53 IAM 枚举 2.0 → 无审计 AccessDenied Oracle
+# K8S-55 IAM 枚举 2.0 → 无审计 AccessDenied Oracle
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-53 |
+| ID | K8S-55 |
 | 名称 | IAM Enumeration 2.0: Unlogged AccessDenied Oracle |
 | 技术/CVE | N/A (uncovered service error oracle, case #134/#137) |
 | 难度 | L3 |
@@ -49,9 +49,9 @@
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 audit-log 向 flag-vault 出示「审计服务内网地址（零审计条目的过滤查询）」（校验模式 `network-source`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{k8s-53-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py k8s-53 <flag>`（gate）+
-  `python3 tests/cloud/run.py k8s-53 <flag>`（参考利用）。
+- 形态：`flag{k8s-55-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-55 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-55 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

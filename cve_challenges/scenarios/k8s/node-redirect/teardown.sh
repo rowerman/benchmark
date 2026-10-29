@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-26"
-CLUSTER_NAME="cve-k8s-26-node-redirect"
+K8S_ID="k8s-03"
+CLUSTER_NAME="cve-k8s-03-node-redirect"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init

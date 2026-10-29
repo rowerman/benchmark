@@ -342,7 +342,7 @@ def cloud_31(base: str, flag: str) -> None:
         if flag in body:
             return
         if time.monotonic() > deadline:
-            raise AssertionError(f"k8s-60 flag not collected within 30s: {body}")
+            raise AssertionError(f"k8s-37 flag not collected within 30s: {body}")
         time.sleep(1)
 
 
@@ -481,21 +481,21 @@ def cloud_26(base: str, flag: str) -> None:
 
 
 CASES = {
-    "k8s-37": (10609, cloud_06), "k8s-48": (10629, cloud_18),
-    "k8s-49": (10630, cloud_19), "cloud-02": (10637, cloud_26),
-    "k8s-43": (10624, cloud_13),
-    "k8s-44": (10625, cloud_14),
-    "k8s-34": (10604, cloud_03), "k8s-35": (10605, cloud_04),
-    "k8s-36": (10608, cloud_05), "k8s-42": (10623, cloud_12),
-    "k8s-45": (10626, cloud_15), "k8s-53": (10634, cloud_23),
-    "k8s-54": (10635, cloud_24), "k8s-58": (10640, cloud_29),
-    "k8s-04": (10601, cloud_01), "cloud-01": (10621, cloud_11),
-    "k8s-50": (10631, cloud_20), "k8s-51": (10632, cloud_21),
-    "k8s-52": (10633, cloud_22), "k8s-55": (10636, cloud_25),
-    "k8s-56": (10638, cloud_27), "k8s-57": (10639, cloud_28),
-    "k8s-59": (10641, cloud_30),
-    "k8s-38": (10611, cloud_07), "k8s-39": (10612, cloud_08),
-    "k8s-40": (10613, cloud_09), "k8s-41": (10615, cloud_10),
-    "k8s-46": (10627, cloud_16), "k8s-47": (10628, cloud_17),
-    "k8s-60": (10642, cloud_31),
+    "k8s-25": (10609, cloud_06), "k8s-40": (10629, cloud_18),
+    "k8s-27": (10630, cloud_19), "cloud-02": (10637, cloud_26),
+    "k8s-33": (10624, cloud_13),
+    "k8s-34": (10625, cloud_14),
+    "k8s-47": (10604, cloud_03), "k8s-13": (10605, cloud_04),
+    "k8s-48": (10608, cloud_05), "k8s-50": (10623, cloud_12),
+    "k8s-35": (10626, cloud_15), "k8s-55": (10634, cloud_23),
+    "k8s-56": (10635, cloud_24), "k8s-59": (10640, cloud_29),
+    "k8s-41": (10601, cloud_01), "cloud-01": (10621, cloud_11),
+    "k8s-52": (10631, cloud_20), "k8s-53": (10632, cloud_21),
+    "k8s-54": (10633, cloud_22), "k8s-57": (10636, cloud_25),
+    "k8s-36": (10638, cloud_27), "k8s-58": (10639, cloud_28),
+    "k8s-60": (10641, cloud_30),
+    "k8s-49": (10611, cloud_07), "k8s-05": (10612, cloud_08),
+    "k8s-06": (10613, cloud_09), "k8s-07": (10615, cloud_10),
+    "k8s-51": (10627, cloud_16), "k8s-26": (10628, cloud_17),
+    "k8s-37": (10642, cloud_31),
 }

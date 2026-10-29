@@ -1,5 +1,5 @@
 main:
-- id: k8s-04
+- id: k8s-41
   port: 10601
   archetype: ec2-console
   product: Cloud Dashboard (SSRF to IMDS)
@@ -7,7 +7,7 @@ main:
   marker: Cloud Dashboard
   exposure: public
   auth: required
-- id: k8s-34
+- id: k8s-47
   port: 10604
   archetype: lambda-gateway
   product: Lambda Invocation API
@@ -15,7 +15,7 @@ main:
   marker: Lambda Invocation API
   exposure: public
   auth: required
-- id: k8s-35
+- id: k8s-13
   port: 10605
   archetype: cloudformation-parser
   product: CloudFormation Template Parser
@@ -23,7 +23,7 @@ main:
   marker: CloudFormation
   exposure: public
   auth: required
-- id: k8s-36
+- id: k8s-48
   port: 10608
   archetype: ci-runner
   product: CI Pipeline Runner
@@ -31,7 +31,7 @@ main:
   marker: CI/CD
   exposure: public
   auth: required
-- id: k8s-37
+- id: k8s-25
   port: 10609
   archetype: ai-notebook
   product: AI Notebook
@@ -39,7 +39,7 @@ main:
   marker: AI Notebook
   exposure: public
   auth: required
-- id: k8s-38
+- id: k8s-49
   port: 10611
   archetype: oidc-idp
   product: OpenID Connect Identity Provider
@@ -47,7 +47,7 @@ main:
   marker: /.well-known/openid-configuration
   exposure: public
   auth: required
-- id: k8s-39
+- id: k8s-05
   port: 10612
   archetype: iam-sts
   product: AWS Security Token Service
@@ -55,7 +55,7 @@ main:
   marker: AssumeRoleResponse
   exposure: public
   auth: required
-- id: k8s-40
+- id: k8s-06
   port: 10613
   archetype: saml-idp
   product: SAML Identity Provider
@@ -63,7 +63,7 @@ main:
   marker: saml-metadata.xml
   exposure: public
   auth: required
-- id: k8s-41
+- id: k8s-07
   port: 10615
   archetype: iam-sts
   product: AWS Security Token Service
@@ -79,7 +79,7 @@ main:
   marker: buckets
   exposure: public
   auth: required
-- id: k8s-42
+- id: k8s-50
   port: 10623
   archetype: managed-notebook
   product: Managed Notebooks Frontend
@@ -87,7 +87,7 @@ main:
   marker: Managed Notebooks
   exposure: public
   auth: required
-- id: k8s-43
+- id: k8s-33
   port: 10624
   archetype: rds-console
   product: Managed PostgreSQL Console
@@ -95,7 +95,7 @@ main:
   marker: Managed PostgreSQL Console
   exposure: public
   auth: required
-- id: k8s-44
+- id: k8s-34
   port: 10625
   archetype: cloudsql-console
   product: Cloud SQL Console
@@ -103,7 +103,7 @@ main:
   marker: Cloud SQL Console
   exposure: public
   auth: required
-- id: k8s-45
+- id: k8s-35
   port: 10626
   archetype: analytics-control-plane
   product: Analytics Control Plane
@@ -111,7 +111,7 @@ main:
   marker: Analytics Control Plane
   exposure: public
   auth: required
-- id: k8s-46
+- id: k8s-51
   port: 10627
   archetype: tenant-console
   product: Managed Data Platform Tenant Console
@@ -119,7 +119,7 @@ main:
   marker: ExtraReplica
   exposure: public
   auth: required
-- id: k8s-47
+- id: k8s-26
   port: 10628
   archetype: azure-host-agent
   product: Azure Host Agent (WireServer)
@@ -127,7 +127,7 @@ main:
   marker: /machine/
   exposure: public
   auth: required
-- id: k8s-48
+- id: k8s-40
   port: 10629
   archetype: build-fleet
   product: Managed Build Fleet
@@ -135,7 +135,7 @@ main:
   marker: Managed Build Fleet
   exposure: public
   auth: required
-- id: k8s-49
+- id: k8s-27
   port: 10630
   archetype: model-registry
   product: Model Registry
@@ -143,7 +143,7 @@ main:
   marker: Model Registry
   exposure: public
   auth: required
-- id: k8s-50
+- id: k8s-52
   port: 10631
   archetype: block-storage-cp
   product: Block Storage Control Plane
@@ -151,7 +151,7 @@ main:
   marker: Block Storage Control Plane
   exposure: public
   auth: required
-- id: k8s-51
+- id: k8s-53
   port: 10632
   archetype: directory-api
   product: Directory API
@@ -159,7 +159,7 @@ main:
   marker: Directory API
   exposure: public
   auth: required
-- id: k8s-52
+- id: k8s-54
   port: 10633
   archetype: omi-agent
   product: OMI Agent (WSMan)
@@ -167,7 +167,7 @@ main:
   marker: OMI Agent
   exposure: public
   auth: required
-- id: k8s-53
+- id: k8s-55
   port: 10634
   archetype: iam-enum-cp
   product: IAM Enumeration Control Plane
@@ -175,7 +175,7 @@ main:
   marker: IAM Enumeration
   exposure: public
   auth: required
-- id: k8s-54
+- id: k8s-56
   port: 10635
   archetype: service-catalog-beta
   product: Service Catalog Beta API
@@ -183,7 +183,7 @@ main:
   marker: Service Catalog
   exposure: public
   auth: required
-- id: k8s-55
+- id: k8s-57
   port: 10636
   archetype: resource-explorer
   product: Resource Explorer
@@ -199,7 +199,7 @@ main:
   marker: Composer
   exposure: public
   auth: required
-- id: k8s-56
+- id: k8s-36
   port: 10638
   archetype: connector-store
   product: API Connections Store
@@ -207,7 +207,7 @@ main:
   marker: API Connections Store
   exposure: public
   auth: required
-- id: k8s-57
+- id: k8s-58
   port: 10639
   archetype: shared-nat-victim
   product: Shared NAT Victim API
@@ -215,7 +215,7 @@ main:
   marker: source-IP allowlist
   exposure: public
   auth: required
-- id: k8s-58
+- id: k8s-59
   port: 10640
   archetype: dataform
   product: Data Workflow Control Plane
@@ -223,7 +223,7 @@ main:
   marker: Data Workflow Control Plane
   exposure: public
   auth: required
-- id: k8s-59
+- id: k8s-60
   port: 10641
   archetype: serverless
   product: Serverless Functions API
@@ -231,7 +231,7 @@ main:
   marker: Serverless Functions
   exposure: public
   auth: required
-- id: k8s-60
+- id: k8s-37
   port: 10642
   archetype: automation
   product: Managed Automation API
@@ -240,126 +240,126 @@ main:
   exposure: public
   auth: required
 aux:
-- id: k8s-04-imds
+- id: k8s-41-imds
   port: 10670
-  scenario: k8s-04
+  scenario: k8s-41
   archetype: ec2-imds
   product: Amazon EC2 Instance Metadata Service
   probe: header
   marker: EC2ws
   exposure: internal
   auth: required
-- id: k8s-04-s3
+- id: k8s-41-s3
   port: 10671
-  scenario: k8s-04
+  scenario: k8s-41
   archetype: s3
   product: S3-compatible Object Storage
   probe: http-root
   marker: objects
   exposure: public
   auth: required
-- id: k8s-38-oidc
+- id: k8s-49-oidc
   port: 10703
-  scenario: k8s-38
+  scenario: k8s-49
   archetype: oidc-idp
   product: OpenID Connect Identity Provider
   probe: http-marker
   marker: jwks.json
   exposure: public
   auth: required
-- id: k8s-38/40-sts-or-saml
+- id: k8s-49/40-sts-or-saml
   port: 10707
-  scenario: k8s-38|k8s-40
+  scenario: k8s-49|k8s-06
   archetype: iam-sts|saml-idp
   product: AWS Security Token Service | SAML Identity Provider
   probe: xml|http-marker
   marker: dual
   exposure: public
   auth: required
-- id: k8s-40-sts
+- id: k8s-06-sts
   port: 10709
-  scenario: k8s-40
+  scenario: k8s-06
   archetype: iam-sts
   product: AWS Security Token Service
   probe: xml
   marker: AssumeRoleResponse
   exposure: public
   auth: required
-- id: k8s-46-ca
+- id: k8s-51-ca
   port: 10716
-  scenario: k8s-46
+  scenario: k8s-51
   archetype: internal-ca
   product: Internal Certificate Authority
   probe: manual
   marker: black-box only
   exposure: internal
   auth: required
-- id: k8s-48-registry
+- id: k8s-40-registry
   port: 10718
-  scenario: k8s-48
+  scenario: k8s-40
   archetype: container-registry
   product: Container Registry
   probe: manual
   marker: black-box only
   exposure: public
   auth: required
-- id: k8s-48-puller
+- id: k8s-40-puller
   port: 10719
-  scenario: k8s-48
+  scenario: k8s-40
   archetype: tenant-puller
   product: Tenant Puller
   probe: manual
   marker: black-box only
   exposure: public
   auth: required
-- id: k8s-49-inference
+- id: k8s-27-inference
   port: 10720
-  scenario: k8s-49
+  scenario: k8s-27
   archetype: inference
   product: Model Inference API
   probe: manual
   marker: black-box only
   exposure: public
   auth: required
-- id: k8s-49-cluster
+- id: k8s-27-cluster
   port: 10721
-  scenario: k8s-49
+  scenario: k8s-27
   archetype: cluster-api
   product: EKS-style Cluster API
   probe: manual
   marker: black-box only
   exposure: public
   auth: required
-- id: k8s-47/49-node-imds-or-cp
+- id: k8s-26/49-node-imds-or-cp
   port: 10722
-  scenario: k8s-47|k8s-49
+  scenario: k8s-26|k8s-27
   archetype: control-plane|node-imds
   product: Node Control Plane | Node IMDS
   probe: manual
   marker: dual
   exposure: public
   auth: required
-- id: k8s-53-sts
+- id: k8s-55-sts
   port: 10723
-  scenario: k8s-53
+  scenario: k8s-55
   archetype: sts-oracle
   product: STS AssumeRole Oracle
   probe: manual
   marker: black-box only
   exposure: public
   auth: required
-- id: k8s-53-audit
+- id: k8s-55-audit
   port: 10724
-  scenario: k8s-53
+  scenario: k8s-55
   archetype: audit-log
   product: CloudTrail-style Audit Log
   probe: manual
   marker: black-box only
   exposure: public
   auth: none
-- id: k8s-55-audit
+- id: k8s-57-audit
   port: 10725
-  scenario: k8s-55
+  scenario: k8s-57
   archetype: audit-log
   product: CloudTrail-style Audit Log
   probe: manual
@@ -375,45 +375,45 @@ aux:
   marker: black-box only
   exposure: public
   auth: required
-- id: k8s-54-console
+- id: k8s-56-console
   port: 10727
-  scenario: k8s-54
+  scenario: k8s-56
   archetype: cloud-console
   product: Service Catalog Console
   probe: manual
   marker: black-box only
   exposure: public
   auth: required
-- id: k8s-54-audit
+- id: k8s-56-audit
   port: 10728
-  scenario: k8s-54
+  scenario: k8s-56
   archetype: audit-log
   product: CloudTrail-style Audit Log
   probe: manual
   marker: black-box only
   exposure: public
   auth: none
-- id: k8s-54-prod
+- id: k8s-56-prod
   port: 10729
-  scenario: k8s-54
+  scenario: k8s-56
   archetype: service-catalog
   product: Service Catalog Production API
   probe: manual
   marker: black-box only
   exposure: public
   auth: required
-- id: k8s-39-s3-proxy
+- id: k8s-05-s3-proxy
   port: 10704
-  scenario: k8s-39
+  scenario: k8s-05
   archetype: s3
   product: S3-compatible Object Storage
   probe: http-root
   marker: objects
   exposure: public
   auth: required
-- id: k8s-39-s3-direct
+- id: k8s-05-s3-direct
   port: 10708
-  scenario: k8s-39
+  scenario: k8s-05
   archetype: s3
   product: S3-compatible Object Storage
   probe: http-root

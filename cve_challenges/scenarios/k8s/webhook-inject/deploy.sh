@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-25"
-CLUSTER_NAME="cve-k8s-25-webhook-inject"
+K8S_ID="k8s-02"
+CLUSTER_NAME="cve-k8s-02-webhook-inject"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[K8S-25] MutatingWebhookConfiguration Overprivileged Registration"
+echo "[K8S-02] MutatingWebhookConfiguration Overprivileged Registration"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready

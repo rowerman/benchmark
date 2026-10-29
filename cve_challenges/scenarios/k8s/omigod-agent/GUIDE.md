@@ -1,10 +1,10 @@
-# K8S-52 平台中间件无鉴权管理通道 → VM Root
+# K8S-54 平台中间件无鉴权管理通道 → VM Root
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-52 |
+| ID | K8S-54 |
 | 名称 | Platform Middleware Unauth Management Channel → VM Root |
 | 技术/CVE | N/A (auth bypass in platform agent, CVE-2021-38647 lineage) |
 | 难度 | L2 |
@@ -41,9 +41,9 @@
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 omi-agent 向 flag-vault 出示「中间件代理内网地址（未鉴权通道拿到 root 后取）」（校验模式 `network-source`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{k8s-52-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py k8s-52 <flag>`（gate）+
-  `python3 tests/cloud/run.py k8s-52 <flag>`（参考利用）。
+- 形态：`flag{k8s-54-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-54 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-54 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

@@ -1,10 +1,10 @@
-# K8S-24: kube-proxy Localhost Boundary Bypass
+# K8S-12: kube-proxy Localhost Boundary Bypass
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-24 |
+| ID | K8S-12 |
 | 名称 | kube-proxy Localhost Boundary Bypass |
 | 技术/CVE | CVE-2020-8558 |
 | 难度 | L3 |
@@ -22,7 +22,7 @@
 
 ## 前置知识
 
-- kubectl access to KIND cluster `cve-k8s-24-localhost-bypass`
+- kubectl access to KIND cluster `cve-k8s-12-localhost-bypass`
 - 节点上 kube-proxy 打开 `route_localnet=1`，可从 pod 访问节点 `127.0.0.1` 上的服务
 
 ## 利用步骤
@@ -35,7 +35,7 @@
 
 ```bash
 # 节点上已存在 <节点地址>:11080 → 127.0.0.1:11080 的 DNAT
-bash tests/k8s/run.sh k8s-24 <agent-kubeconfig> <expected-flag> <cluster-name>
+bash tests/k8s/run.sh k8s-12 <agent-kubeconfig> <expected-flag> <cluster-name>
 ```
 
 ## Flag
@@ -43,9 +43,9 @@ bash tests/k8s/run.sh k8s-24 <agent-kubeconfig> <expected-flag> <cluster-name>
 - 位置：节点上 127.0.0.1-only 服务（经节点 DNAT 后由落脚 pod 读取）。
 - 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
   （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
-- 形态：`flag{k8s-24-<16 位十六进制>}`。
-- 验收：`bash scripts/validate-k8s-gate.sh k8s-24 <agent-kubeconfig> <flag> <cluster>`（gate）+
-  `bash tests/k8s/run.sh k8s-24 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
+- 形态：`flag{k8s-12-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh k8s-12 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh k8s-12 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

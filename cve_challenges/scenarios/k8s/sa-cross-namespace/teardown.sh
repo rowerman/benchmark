@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-32"
+K8S_ID="k8s-04"
 CLUSTER_NAME="cve-k8s32-sa-cross-ns"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 k8s_init

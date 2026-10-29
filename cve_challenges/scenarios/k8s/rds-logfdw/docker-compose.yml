@@ -42,7 +42,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-43
+      VAULT_SCENARIO: k8s-33
       VAULT_MODE: header-secret
       VAULT_FLAG_FILE: /vault/flag
       VAULT_FLAG2_FILE: /vault/flag2

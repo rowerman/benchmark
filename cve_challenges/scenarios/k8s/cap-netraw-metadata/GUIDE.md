@@ -1,10 +1,10 @@
-# K8S-31 CAP_NET_RAW → 私有云元数据服务 MITM
+# K8S-23 CAP_NET_RAW → 私有云元数据服务 MITM
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-31 |
+| ID | K8S-23 |
 | 名称 | CAP_NET_RAW → Private-Cloud Metadata MITM |
 | 技术/CVE | N/A (CAP_NET_RAW + ARP spoofing) |
 | 难度 | L3 |
@@ -54,9 +54,9 @@ kubectl exec victim -- cat /tmp/metadata-credentials.json
 
 - 位置：集群内 Secret `imds-flag`（default），挂载进 `metadata-server` 的 `/flag/flag`；
   IMDS 的凭据响应里带出 flag。
-- 形态：`flag{k8s-31-<16 位十六进制>}`。
-- 验收：`bash scripts/validate-k8s-gate.sh k8s-31 <agent-kubeconfig> <flag> <cluster>`（gate）+
-  `bash tests/k8s/run.sh k8s-31 <agent-kubeconfig> <flag> <cluster>`（参考利用，当前受限）。
+- 形态：`flag{k8s-23-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh k8s-23 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh k8s-23 <agent-kubeconfig> <flag> <cluster>`（参考利用，当前受限）。
 
 ## 此场景利用了哪些知识
 

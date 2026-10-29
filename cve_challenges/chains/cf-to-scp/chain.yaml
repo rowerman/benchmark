@@ -17,7 +17,7 @@ runtime:
       format: response
 nodes:
 - step: 1
-  scenario: k8s-35
+  scenario: k8s-13
   description: IaC Fn::Sub → 内部密钥库参数泄露
   flag: flag{c41-step1-cf}
   next_hint: 泄露参数包含 S3 桶名预测公式
@@ -27,7 +27,7 @@ nodes:
   flag: flag{c41-step2-s3}
   next_hint: 枚举发现可绕过租户策略的旧版 API
 - step: 3
-  scenario: k8s-41
+  scenario: k8s-07
   description: 租户策略绕过 → 限制绕过
   flag: flag{c41-step3-final}
   next_hint: null

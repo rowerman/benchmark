@@ -19,7 +19,7 @@ def _read_flag(path, env_name, default):
         return os.environ.get(env_name, default)
 
 
-FLAG = _read_flag("/run/flag", "FLAG", "flag{k8s-40-golden-saml}")
+FLAG = _read_flag("/run/flag", "FLAG", "flag{k8s-06-golden-saml}")
 # Load keys
 _private_key = serialization.load_pem_private_key(
     (KEY_DIR / "private.pem").read_bytes(), password=None, backend=default_backend())

@@ -18,7 +18,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-60
+      VAULT_SCENARIO: k8s-37
       VAULT_MODE: network-source
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"cidrs":["10.42.0.20/32"],"hint":"受保护资源只对平台内网地址交付"}'

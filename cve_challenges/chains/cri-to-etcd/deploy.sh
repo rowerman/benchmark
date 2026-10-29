@@ -6,7 +6,7 @@ CLUSTER_NAME="cve-chain-cri-etcd"
 source "$SCRIPT_DIR/../../scripts/k8s-common.sh"
 
 echo "[Chain CRI-to-etcd] 3-step K8s attack chain"
-echo "  K8S-16 (CRI Socket) -> K8S-06 (secrets from node shell) -> K8S-08 (etcd)"
+echo "  K8S-44 (CRI Socket) -> K8S-01 (secrets from node shell) -> K8S-42 (etcd)"
 
 # Prepare flags
 FLAG_DIR="/home/kianabin/cve-flags/chain21"

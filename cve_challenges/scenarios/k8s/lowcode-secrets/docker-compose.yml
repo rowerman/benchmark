@@ -13,7 +13,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-56
+      VAULT_SCENARIO: k8s-36
       VAULT_MODE: network-source
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"cidrs":["10.38.0.10/32"],"hint":"flag 只交付给连接器控制面的内网地址"}'

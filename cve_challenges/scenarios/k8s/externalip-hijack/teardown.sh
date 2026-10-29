@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-22"
-CLUSTER_NAME="cve-k8s-22-externalip"
+K8S_ID="k8s-28"
+CLUSTER_NAME="cve-k8s-28-externalip"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init

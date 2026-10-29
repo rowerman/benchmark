@@ -22,12 +22,12 @@ nodes:
   flag: flag{c36-step1-s3}
   next_hint: 桶中 config 文件引用了 CloudFormation-compatible IaC 模板
 - step: 2
-  scenario: k8s-35
+  scenario: k8s-13
   description: IaC Fn::Sub 注入 → 内部密钥库参数泄露
   flag: flag{c36-step2-cf}
   next_hint: 泄露的参数包含 IAM 凭据
 - step: 3
-  scenario: k8s-39
+  scenario: k8s-05
   description: AssumeRole AdminRole → 最终 flag
   flag: flag{c36-step3-final}
   next_hint: null

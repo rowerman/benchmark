@@ -21,7 +21,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-51
+      VAULT_SCENARIO: k8s-53
       VAULT_MODE: jwt
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"hmac_secret":"shared-signing-secret","claims":{"tenant":"tenant-a"},"hint":"本租户令牌（HS256）才换取得到目录密文"}'

@@ -33,7 +33,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-54
+      VAULT_SCENARIO: k8s-56
       VAULT_MODE: network-source
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"cidrs":["10.35.0.30/32"],"hint":"只交付给服务目录 beta 端点"}'

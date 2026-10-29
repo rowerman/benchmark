@@ -56,7 +56,7 @@ def load_flag(path: str = FLAG_FILE) -> str:
 
 # 生产路径是注入文件；文件缺失时允许用环境变量（只用于组件自测）。
 FLAG = load_flag() or os.environ.get("VAULT_FLAG", "").strip()
-# 双 flag 场景（如 k8s-43/47）的第二枚 flag，走同一套校验
+# 双 flag 场景（如 k8s-33/47）的第二枚 flag，走同一套校验
 FLAG2 = load_flag(FLAG2_FILE)
 
 # ── SigV4 ─────────────────────────────────────────────────────────────────

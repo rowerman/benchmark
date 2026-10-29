@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-21"
-CLUSTER_NAME="cve-k8s-21-ingress-snippet"
+K8S_ID="k8s-11"
+CLUSTER_NAME="cve-k8s-11-ingress-snippet"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[K8S-21] CVE-2021-25742 ingress-nginx Lua Snippet Secret Extraction"
+echo "[K8S-11] CVE-2021-25742 ingress-nginx Lua Snippet Secret Extraction"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
@@ -25,7 +25,7 @@ for attempt in 1 2 3; do
   sleep 5
 done
 if ! grep -q "ingress-nginx-controller" "$SNIPPET_YAML" 2>/dev/null; then
-  echo "[K8S-21] ERROR: 无法下载 ingress-nginx 部署清单" >&2
+  echo "[K8S-11] ERROR: 无法下载 ingress-nginx 部署清单" >&2
   exit 1
 fi
 # Remove out-of-range hostPort 80/443 bindings; only NodePort 30080/30443 are exposed (10480/10443)

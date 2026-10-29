@@ -4,8 +4,8 @@
 # Usage (deploy.sh):
 #   #!/bin/bash
 #   set -euo pipefail
-#   K8S_ID="k8s-11"
-#   CLUSTER_NAME="cve-k8s-11-privileged"
+#   K8S_ID="k8s-18"
+#   CLUSTER_NAME="cve-k8s-18-privileged"
 #   source "$(dirname "$0")/../../scripts/k8s-common.sh"
 #
 #   k8s_init
@@ -18,8 +18,8 @@
 # Usage (teardown.sh):
 #   #!/bin/bash
 #   set -euo pipefail
-#   K8S_ID="k8s-11"
-#   CLUSTER_NAME="cve-k8s-11-privileged"
+#   K8S_ID="k8s-18"
+#   CLUSTER_NAME="cve-k8s-18-privileged"
 #   source "$(dirname "$0")/../../scripts/k8s-common.sh"
 #
 #   k8s_init

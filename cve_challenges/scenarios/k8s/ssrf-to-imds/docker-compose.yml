@@ -58,7 +58,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-04
+      VAULT_SCENARIO: k8s-41
       VAULT_MODE: sigv4
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"access_key":"AKIACLOUD01EXAMPLE","secret_key":"cloud01-imds-secret-key","hint":"SigV4 over the IMDS credential pair"}'

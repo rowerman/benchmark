@@ -1,10 +1,10 @@
-# K8S-55 Resource Explorer → 特性固有静默枚举
+# K8S-57 Resource Explorer → 特性固有静默枚举
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-55 |
+| ID | K8S-57 |
 | 名称 | Resource Explorer: Feature-Inherent Quiet Enumeration |
 | 技术/CVE | N/A (unlogged search API, case #148) |
 | 难度 | L3 |
@@ -42,9 +42,9 @@
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 explorer-api 向 flag-vault 出示「资源浏览器内网地址（静默读取）」（校验模式 `network-source`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{k8s-55-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py k8s-55 <flag>`（gate）+
-  `python3 tests/cloud/run.py k8s-55 <flag>`（参考利用）。
+- 形态：`flag{k8s-57-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-57 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-57 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

@@ -1,10 +1,10 @@
-# K8S-56 低代码连接器密钥 → 私有控制面外泄
+# K8S-36 低代码连接器密钥 → 私有控制面外泄
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-56 |
+| ID | K8S-36 |
 | 名称 | Low-Code Connector Secrets via Private Control Plane |
 | 技术/CVE | N/A (connector store tenant-scope missing, case #249/#197) |
 | 难度 | L2 |
@@ -40,9 +40,9 @@
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 connector-store 向 flag-vault 出示「连接器控制面内网地址（跨租户读取）」（校验模式 `network-source`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{k8s-56-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py k8s-56 <flag>`（gate）+
-  `python3 tests/cloud/run.py k8s-56 <flag>`（参考利用）。
+- 形态：`flag{k8s-36-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-36 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-36 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

@@ -392,7 +392,7 @@ def _redact_value(val: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# SCP evaluation (for K8S-41)
+# SCP evaluation (for K8S-07)
 # ---------------------------------------------------------------------------
 def _evaluate_scp(user: dict, action: str, resource: str, api_version: str = "") -> tuple[bool, str]:
     """Evaluate Service Control Policy.

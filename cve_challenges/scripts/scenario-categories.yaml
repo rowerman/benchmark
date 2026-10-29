@@ -1,0 +1,79 @@
+categories:
+  identity_trust:
+    label: 身份、授权与信任
+    scenarios:
+      - k8s-01
+      - k8s-02
+      - k8s-03
+      - k8s-04
+      - k8s-05
+      - k8s-06
+      - k8s-07
+      - k8s-41
+      - k8s-43
+      - k8s-45
+      - k8s-47
+      - k8s-49
+      - k8s-53
+      - k8s-55
+      - k8s-60
+  control_plane_exposure:
+    label: 控制面与组件暴露
+    scenarios:
+      - k8s-08
+      - k8s-09
+      - k8s-10
+      - k8s-11
+      - k8s-12
+      - k8s-13
+      - k8s-42
+  container_node_boundary:
+    label: 容器与节点边界
+    scenarios:
+      - k8s-14
+      - k8s-15
+      - k8s-16
+      - k8s-17
+      - k8s-18
+      - k8s-19
+      - k8s-20
+      - k8s-21
+      - k8s-22
+      - k8s-23
+      - k8s-24
+      - k8s-25
+      - k8s-26
+      - k8s-27
+      - k8s-44
+      - k8s-46
+      - k8s-54
+  network_scheduling:
+    label: 网络与调度
+    scenarios:
+      - k8s-28
+      - k8s-29
+      - k8s-30
+      - k8s-31
+      - k8s-32
+      - k8s-51
+      - k8s-58
+  managed_services_multitenancy:
+    label: 托管服务与多租户
+    scenarios:
+      - k8s-33
+      - k8s-34
+      - k8s-35
+      - k8s-36
+      - k8s-37
+      - k8s-50
+      - k8s-52
+      - k8s-56
+      - k8s-57
+      - k8s-59
+  supply_chain:
+    label: 供应链
+    scenarios:
+      - k8s-38
+      - k8s-39
+      - k8s-40
+      - k8s-48

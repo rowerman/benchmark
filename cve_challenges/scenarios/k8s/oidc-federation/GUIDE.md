@@ -1,10 +1,10 @@
-# K8S-38 OIDC Claim 错配 → 跨项目 AssumeRole
+# K8S-49 OIDC Claim 错配 → 跨项目 AssumeRole
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-38 |
+| ID | K8S-49 |
 | 名称 | OIDC Claim Mismatch → Cross-Project AssumeRole |
 | 技术/CVE | N/A (OIDC federation misconfiguration) |
 | 难度 | L3 |
@@ -40,9 +40,9 @@
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 iam 向 flag-vault 出示「OIDC 的 RS256 令牌（含 iss/aud/sub）」（校验模式 `jwt`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{k8s-38-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py k8s-38 <flag>`（gate）+
-  `python3 tests/cloud/run.py k8s-38 <flag>`（参考利用）。
+- 形态：`flag{k8s-49-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-49 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-49 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

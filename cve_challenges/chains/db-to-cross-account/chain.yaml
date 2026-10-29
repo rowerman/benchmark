@@ -17,17 +17,17 @@ runtime:
       format: response
 nodes:
 - step: 1
-  scenario: k8s-44
+  scenario: k8s-34
   description: 引擎补丁 → 索引函数以供应商角色执行 → 宿主 RCE
   flag: flag{c46-step1-db}
   next_hint: 宿主可访问 IMDS 端点
 - step: 2
-  scenario: k8s-04
+  scenario: k8s-41
   description: 从宿主访问 IMDS → 窃取实例凭据
   flag: flag{c46-step2-imds}
   next_hint: IMDS 凭据可用于 AssumeRole
 - step: 3
-  scenario: k8s-39
+  scenario: k8s-05
   description: 跨项目 AssumeRole → 最终 flag
   flag: flag{c46-step3-final}
   next_hint: null

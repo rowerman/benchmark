@@ -49,7 +49,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-40
+      VAULT_SCENARIO: k8s-06
       VAULT_MODE: jwt
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"jwks_url":"http://saml-idp:5000/.well-known/jwks.json","issuer":"corp-idp.example.com","audience":"https://signin.aws.amazon.com/saml","claims":{"sub":"admin@corp"},"hint":"SAML assertion signed by the federation IdP key"}'

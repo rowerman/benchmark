@@ -1,10 +1,10 @@
-# K8S-40 Golden SAML → 内部联邦信任根伪造
+# K8S-06 Golden SAML → 内部联邦信任根伪造
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-40 |
+| ID | K8S-06 |
 | 名称 | Golden SAML → Internal Federation Trust Root Compromise |
 | 技术/CVE | N/A (SAML signing key exposure) |
 | 难度 | L3 |
@@ -38,9 +38,9 @@
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 iam 向 flag-vault 出示「用 IdP 私钥伪造的 RS256 断言」（校验模式 `jwt`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{k8s-40-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py k8s-40 <flag>`（gate）+
-  `python3 tests/cloud/run.py k8s-40 <flag>`（参考利用）。
+- 形态：`flag{k8s-06-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-06 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-06 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

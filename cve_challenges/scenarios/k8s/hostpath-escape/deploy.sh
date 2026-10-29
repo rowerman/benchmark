@@ -1,8 +1,8 @@
 #!/bin/bash
-# K8S-12: hostPath Writable Mount Escape
+# K8S-19: hostPath Writable Mount Escape
 set -euo pipefail
-K8S_ID="k8s-12"
-CLUSTER_NAME="cve-k8s-12-hostpath"
+K8S_ID="k8s-19"
+CLUSTER_NAME="cve-k8s-19-hostpath"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init

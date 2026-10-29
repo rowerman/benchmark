@@ -11,6 +11,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "scripts" / "scenarios.yaml"
+CATEGORIES = ROOT / "scripts" / "scenario-categories.yaml"
 SCENARIOS_ROOT = ROOT / "scenarios"
 INFRA_ROOT = ROOT / "infra"
 CHAINS_ROOT = ROOT / "chains"
@@ -184,6 +185,30 @@ def main() -> None:
     errors: list[str] = []
     data = yaml.safe_load(REGISTRY.read_text(encoding="utf-8"))
     scenarios: dict[str, dict[str, object]] = data["scenarios"]
+    category_data = yaml.safe_load(CATEGORIES.read_text(encoding="utf-8"))
+    category_entries = category_data.get("categories", {})
+    k8s_ids = {sid for sid in scenarios if sid.startswith("k8s-")}
+    categorized: list[str] = []
+    for category, spec in category_entries.items():
+        if not isinstance(spec, dict) or not spec.get("label") or not isinstance(spec.get("scenarios"), list):
+            fail(errors, f"scenario-categories.yaml: malformed category {category!r}")
+            continue
+        categorized.extend(str(sid) for sid in spec["scenarios"])
+    duplicates = {sid for sid in categorized if categorized.count(sid) > 1}
+    if duplicates:
+        fail(errors, f"scenario-categories.yaml: duplicate scenario assignments: {sorted(duplicates)}")
+    if set(categorized) != k8s_ids:
+        fail(errors, "scenario-categories.yaml: assignments must cover every K8s scenario exactly once")
+    category_order = list(category_entries)
+    primary_order = [
+        sid
+        for category in category_order
+        for sid in category_entries[category]["scenarios"]
+        if int(str(sid).split("-")[1]) <= 40
+    ]
+    expected_primary = [f"k8s-{index:02d}" for index in range(1, 41)]
+    if primary_order != expected_primary:
+        fail(errors, "scenario-categories.yaml: main-set categories must group k8s-01..k8s-40 in order")
 
     if not SCENARIOS_ROOT.is_dir():
         fail(errors, "missing scenarios/ root")

@@ -29,7 +29,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-39
+      VAULT_SCENARIO: k8s-05
       VAULT_MODE: session-creds
       VAULT_FLAG_FILE: /vault/flag
       VAULT_IAM_URL: http://iam:5000

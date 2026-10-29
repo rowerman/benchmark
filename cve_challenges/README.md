@@ -54,6 +54,10 @@ The scenario registry at `scripts/scenarios.yaml` defines each stable ID,
 delivery type, path, port, difficulty, and CVE/technique. Lifecycle scripts use
 that registry rather than domain-specific hard-coded paths.
 
+`scripts/scenario-categories.yaml` assigns every private-cloud scenario to one
+of the six paper mechanism families and keeps `k8s-01..k8s-40` grouped as the
+paper main set.
+
 ## Documentation Contract
 
 Each registered single scenario must contain a non-empty `GUIDE.md` covering

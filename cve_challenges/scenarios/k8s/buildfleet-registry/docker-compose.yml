@@ -34,7 +34,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-48
+      VAULT_SCENARIO: k8s-40
       VAULT_MODE: network-source
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"cidrs":["10.29.0.30/32"],"hint":"工作负载密文只随租户工作负载本身交付"}'

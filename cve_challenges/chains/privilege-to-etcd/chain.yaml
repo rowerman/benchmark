@@ -2,9 +2,9 @@ name: "Privilege to etcd"
 id: chain-10
 steps: 3
 nodes:
-  - scenario: k8s-11
+  - scenario: k8s-18
     flag: "flag{chain10-step1-privileged}"
-  - scenario: k8s-06
+  - scenario: k8s-01
     flag: "flag{chain10-step2-rbac}"
-  - scenario: k8s-08
+  - scenario: k8s-42
     flag: "flag{chain10-step3-etcd-final}"

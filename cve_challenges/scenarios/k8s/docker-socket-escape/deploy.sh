@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-17"
-CLUSTER_NAME="cve-k8s-17-docker-sock"
+K8S_ID="k8s-21"
+CLUSTER_NAME="cve-k8s-21-docker-sock"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init

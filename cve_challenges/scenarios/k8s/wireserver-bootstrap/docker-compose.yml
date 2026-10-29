@@ -25,7 +25,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-47
+      VAULT_SCENARIO: k8s-26
       VAULT_MODE: network-source
       VAULT_FLAG_FILE: /vault/flag
       VAULT_FLAG2_FILE: /vault/flag2

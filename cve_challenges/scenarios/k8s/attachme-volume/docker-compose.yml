@@ -12,7 +12,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-50
+      VAULT_SCENARIO: k8s-52
       VAULT_MODE: network-source
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"cidrs":["10.31.0.10/32"],"hint":"卷数据只交付给块存储控制面"}'

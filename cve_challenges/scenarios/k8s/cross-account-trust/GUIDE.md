@@ -1,10 +1,10 @@
-# K8S-39 IAM 信任策略 Principal:* → 跨项目接管
+# K8S-05 IAM 信任策略 Principal:* → 跨项目接管
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-39 |
+| ID | K8S-05 |
 | 名称 | IAM Trust Policy Principal:* → Cross-Project Takeover |
 | 技术/CVE | N/A (overly permissive trust policy) |
 | 难度 | L2 |
@@ -43,9 +43,9 @@
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 s3 向 flag-vault 出示「AssumeRole 得到的三段式临时凭据」（校验模式 `session-creds`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{k8s-39-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py k8s-39 <flag>`（gate）+
-  `python3 tests/cloud/run.py k8s-39 <flag>`（参考利用）。
+- 形态：`flag{k8s-05-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py k8s-05 <flag>`（gate）+
+  `python3 tests/cloud/run.py k8s-05 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

@@ -10,7 +10,7 @@ description: >
 
 nodes:
   - step: 1
-    scenario: k8s-22
+    scenario: k8s-28
     name: "Service ExternalIP Traffic Interception"
     technique: CVE-2020-8554
     description: >
@@ -30,7 +30,7 @@ nodes:
     flag_location: "Credentials found in captured request data"
 
   - step: 3
-    scenario: k8s-13
+    scenario: k8s-43
     name: "Use Stolen SA Token"
     technique: Credential Reuse
     description: >
@@ -40,7 +40,7 @@ nodes:
     flag_location: "Secret flag-secret in ns-beta namespace (readable by secret-reader-sa)"
 
   - step: 4
-    scenario: k8s-06
+    scenario: k8s-01
     name: "RBAC Secrets Abuse"
     technique: ATT&CK T1552.007
     description: >

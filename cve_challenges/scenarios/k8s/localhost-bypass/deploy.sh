@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-24"
-CLUSTER_NAME="cve-k8s-24-localhost-bypass"
+K8S_ID="k8s-12"
+CLUSTER_NAME="cve-k8s-12-localhost-bypass"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[K8S-24] CVE-2020-8558 kube-proxy Localhost Boundary Bypass"
+echo "[K8S-12] CVE-2020-8558 kube-proxy Localhost Boundary Bypass"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
@@ -80,7 +80,7 @@ if [ -n "$NODE_CTR" ]; then
         -j DNAT --to-destination 127.0.0.1:11080 2>/dev/null || \
         docker exec "$NODE_CTR" iptables -t nat -A PREROUTING -p tcp -d "$NODE_IP" --dport 11080 \
             -j DNAT --to-destination 127.0.0.1:11080
-    echo "[K8S-24] node route_localnet=1；已把 ${NODE_IP}:11080 NAT 到 127.0.0.1:11080"
+    echo "[K8S-12] node route_localnet=1；已把 ${NODE_IP}:11080 NAT 到 127.0.0.1:11080"
 fi
 
 k8s_publish_agent_identity exec-only default attacker

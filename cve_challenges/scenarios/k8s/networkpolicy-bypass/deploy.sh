@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-27"
-CLUSTER_NAME="cve-k8s-27-netpol-bypass"
+K8S_ID="k8s-29"
+CLUSTER_NAME="cve-k8s-29-netpol-bypass"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[K8S-27] NetworkPolicy Bypass via Label Spoofing"
+echo "[K8S-29] NetworkPolicy Bypass via Label Spoofing"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready

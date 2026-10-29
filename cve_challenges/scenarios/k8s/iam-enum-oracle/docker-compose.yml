@@ -28,7 +28,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-53
+      VAULT_SCENARIO: k8s-55
       VAULT_MODE: network-source
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"cidrs":["10.34.0.30/32"],"hint":"只交付给审计服务所在内网地址"}'

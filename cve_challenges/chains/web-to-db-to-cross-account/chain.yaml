@@ -36,16 +36,16 @@ nodes:
     flag: "flag{c42-step2-db}"
     next_hint: "数据库是托管引擎且带供应商补丁缺陷"
   - step: 3
-    scenario: k8s-44
+    scenario: k8s-34
     description: "引擎补丁 → 索引函数以供应商角色执行 → 宿主 RCE"
     flag: "flag{c42-step3-escape}"
     next_hint: "从宿主可访问 IMDS 端点"
   - step: 4
-    scenario: k8s-04
+    scenario: k8s-41
     description: "SSRF → IMDS → 窃取 IAM 临时凭据"
     flag: "flag{c42-step4-imds}"
     next_hint: "凭据可调用 STS-compatible identity service 跨项目"
   - step: 5
-    scenario: k8s-39
+    scenario: k8s-05
     description: "跨项目 AssumeRole → 获取最终 flag"
     flag: "flag{c42-step5-final}"
