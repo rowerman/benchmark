@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-01"
-CLUSTER_NAME="cve-k8s-01-rbac"
+K8S_ID="prv-01"
+CLUSTER_NAME="cve-prv-01-rbac"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init

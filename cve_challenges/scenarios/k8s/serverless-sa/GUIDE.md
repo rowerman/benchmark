@@ -1,10 +1,10 @@
-# K8S-60 私有云无服务器默认服务账号提权
+# PRV-60 私有云无服务器默认服务账号提权
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-60 |
+| ID | PRV-60 |
 | 名称 | Serverless Default Service Account: Platform Identity Escalation |
 | 技术/CVE | N/A (over-scoped default SA, case #266/#272) |
 | 难度 | L2 |
@@ -39,9 +39,9 @@
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 victim-project 向 flag-vault 出示「平台默认服务账号令牌」（校验模式 `header-secret`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{k8s-60-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py k8s-60 <flag>`（gate）+
-  `python3 tests/cloud/run.py k8s-60 <flag>`（参考利用）。
+- 形态：`flag{prv-60-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py prv-60 <flag>`（gate）+
+  `python3 tests/cloud/run.py prv-60 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

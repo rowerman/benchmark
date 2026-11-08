@@ -54,9 +54,9 @@ The scenario registry at `scripts/scenarios.yaml` defines each stable ID,
 delivery type, path, port, difficulty, and CVE/technique. Lifecycle scripts use
 that registry rather than domain-specific hard-coded paths.
 
-`scripts/scenario-categories.yaml` assigns every private-cloud scenario to one
-of the six paper mechanism families and keeps `k8s-01..k8s-40` grouped as the
-paper main set.
+`scripts/scenario-categories.yaml` defines the v3 private-cloud taxonomy:
+five first-level security boundaries, 24 secondary mechanisms, the 40-scenario
+paper main set, the 20 reserve scenarios, and the complete identifier migration.
 
 ## Documentation Contract
 
@@ -69,7 +69,7 @@ Cloud-service scenarios can share provider simulators in `infra/cloud`; those he
 must not be registered as standalone scenarios.
 
 `scenarios/cloud/` is exclusively public cloud (`cloud-01..cloud-02`).
-`scenarios/k8s/` is the private-cloud domain (`k8s-01..k8s-60`), regardless
+`scenarios/k8s/` is the private-cloud domain (`prv-01..prv-60`), regardless
 of whether a scenario is delivered with Docker Compose or KIND. See
 `../SCENARIO_ID_MIGRATION.md` for the old cloud IDs, new IDs, and paths.
 

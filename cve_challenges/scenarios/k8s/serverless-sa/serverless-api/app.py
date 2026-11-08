@@ -16,7 +16,7 @@ def _read_flag(path, env_name, default):
         return os.environ.get(env_name, default)
 
 
-FLAG = _read_flag("/run/flag", "FLAG", "flag{k8s-60-default-sa}")
+FLAG = _read_flag("/run/flag", "FLAG", "flag{prv-60-default-sa}")
 @app.route("/")
 def docs():
     return {"service": "Serverless Functions",

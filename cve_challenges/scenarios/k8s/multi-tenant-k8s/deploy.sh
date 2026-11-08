@@ -1,11 +1,11 @@
 #!/bin/bash
 set -euo pipefail
-FLAG="${CVE_FLAG:-flag{k8s-24-cross-tenant\}}"
-K8S_ID="k8s-24"
+FLAG="${CVE_FLAG:-flag{prv-19-cross-tenant\}}"
+K8S_ID="prv-19"
 CLUSTER_NAME="cve-k8s33-multitenant"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[K8S-24] Multi-Tenant K8s: Container Escape → Cross-Tenant Pod Access"
+echo "[PRV-19] Multi-Tenant K8s: Container Escape → Cross-Tenant Pod Access"
 echo "[*] Simulates Azurescape-style cross-tenant attack via shared KIND node"
 k8s_init
 k8s_create_cluster
@@ -51,7 +51,7 @@ kubectl wait --for=condition=Ready pod/target -n tenant-b --timeout=120s
 # flag 只放进目标租户容器的文件系统（不进 pod spec）
 printf '%s\n' "$FLAG" | kubectl exec -i -n tenant-b target -- sh -c 'cat > /flag.txt && chmod 600 /flag.txt'
 
-echo "[+] K8S-24 Ready"
+echo "[+] PRV-19 Ready"
 echo "    Cluster: $CLUSTER_NAME"
 echo "    Attacker (tenant-a): kubectl exec -it -n tenant-a attacker -- sh"
 echo "    Target (tenant-b): kubectl get pods -n tenant-b"

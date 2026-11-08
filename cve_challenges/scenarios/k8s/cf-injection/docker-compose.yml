@@ -38,7 +38,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-13
+      VAULT_SCENARIO: prv-12
       VAULT_MODE: header-secret
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"header":"X-Execution-Role","values":["stack-execution-role"],"hint":"SSM 以内部执行角色令牌换取 /secure/flag"}'

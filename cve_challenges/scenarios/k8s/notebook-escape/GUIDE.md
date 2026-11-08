@@ -1,10 +1,10 @@
-# K8S-25 托管笔记本逃逸 → 集群服务账号令牌窃取
+# PRV-21 托管笔记本逃逸 → 集群服务账号令牌窃取
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-25 |
+| ID | PRV-21 |
 | 名称 | Managed Notebook Escape → Cluster ServiceAccount Token Theft |
 | 技术/CVE | N/A (notebook escape + SA token) |
 | 难度 | L3 |
@@ -36,7 +36,7 @@
    容器逃逸。
 
 ## Flag
-`flag{k8s-25-step2-...}`（集群 Secret）
+`flag{prv-21-step2-...}`（集群 Secret）
 
 ## 此场景利用了哪些知识
 

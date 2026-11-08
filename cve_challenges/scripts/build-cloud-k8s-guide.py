@@ -106,7 +106,7 @@ def scenario_card(sid: str, entry: dict[str, object], index_anchor: str) -> list
     text = (ROOT / str(entry["path"]) / "GUIDE.md").read_text(encoding="utf-8")
     heading = re.search(r"(?m)^#\s+(.+)$", text)
     short = heading.group(1).strip() if heading else str(entry["name"])
-    short = re.sub(r"^(?:cloud|k8s|web|db)-\d+\s*[:：\-]?\s*", "", short, flags=re.I)
+    short = re.sub(r"^(?:cloud|prv|k8s|web|db)-\d+\s*[:：\-]?\s*", "", short, flags=re.I)
     sections = split_sections(text)
     overview_table = table(pick(sections, "Overview"))
 
@@ -199,9 +199,9 @@ def build_document(registry: dict[str, dict[str, object]]) -> str:
     add(f'| 交付方式 | docker {by_type["docker"]} / k8s {by_type["k8s"]} |')
     add("| 难度分布 | " + " / ".join(f"{key} {by_diff[key]}" for key in sorted(by_diff)) + " |")
     add(f'| 具名 CVE 编号 | {len(cve_numbers)}（{"、".join(cve_numbers)}） |')
-    add("| 场景 ID | cloud-01..cloud-02，k8s-01..k8s-60 |")
+    add("| 场景 ID | cloud-01..cloud-02，prv-01..prv-60 |")
     add("")
-    add("Cloud 场景覆盖公有云全局命名空间风险；K8s 作为私有云总类覆盖实例元数据、联邦身份、")
+    add("Cloud 场景覆盖公有云全局命名空间风险；`prv-01..prv-60` 作为私有云稳定编号，覆盖实例元数据、联邦身份、")
     add("IAM 权限边界、共享托管服务、容器逃逸、集群控制面、RBAC、网络策略与准入控制等问题。")
     add("每个场景的 `GUIDE.md` 是它的事实来源。\n")
 
@@ -214,9 +214,9 @@ def build_document(registry: dict[str, dict[str, object]]) -> str:
     add("./scripts/list-scenarios.sh")
     add("")
     add("# 启动 / 停止单个场景（脚本按注册表定位路径与类型，并生成运行时 Flag）")
-    add("./scripts/start-scenario.sh k8s-41     # Docker 场景")
-    add("./scripts/start-scenario.sh k8s-14       # KIND 场景")
-    add("./scripts/stop-scenario.sh k8s-41")
+    add("./scripts/start-scenario.sh prv-41     # Docker 场景")
+    add("./scripts/start-scenario.sh prv-13       # KIND 场景")
+    add("./scripts/stop-scenario.sh prv-41")
     add("")
     add("# 攻击链入口（见附录 A）")
     add("./scripts/start-chain.sh managed-db-lateral")
@@ -250,7 +250,7 @@ def build_document(registry: dict[str, dict[str, object]]) -> str:
     add("- 攻击链引用的场景 ID 均可在注册表中解析（3 条 legacy 链除外，见第四节）。\n")
     add("文档一致性结论：本节覆盖的 62 个 cloud / k8s 场景 `GUIDE.md` 全部存在且非空，")
     add("`场景信息` 表中的 ID / 名称 / 技术·CVE / 难度 / 交付方式 / 入口与注册表逐项一致，")
-    add("且不存在空骨架区块。其中 32 个 K8s 交付场景（`type: k8s`，含 `K8S-23`）统一使用同一套中文区块：")
+    add("且不存在空骨架区块。其中 32 个 K8s 交付场景（`type: k8s`，含 `PRV-27`）统一使用同一套中文区块：")
     add("`场景信息` → `场景概述` → `前置知识` → `利用步骤` → `验证命令` → `Flag` → `此场景利用了哪些知识` → `修复建议`。")
     add("`scripts/validate-structure.py` 会校验每个场景 GUIDE 的骨架区块与注册表元数据。\n")
 
@@ -263,7 +263,7 @@ def build_document(registry: dict[str, dict[str, object]]) -> str:
     add("| 2 | 29 个 K8s GUIDE 含空的 `## 攻击路径与利用步骤` 占位标题 | 删除空标题，其内容来源（攻击路径摘要）并入 `场景概述` |")
     add("| 3 | K8s GUIDE 中英标题混排、区块集合不统一（`Attack Path` / `Attack Path Summary`、`Verification` / `Verification Commands`） | 32 个 K8s 交付 GUIDE 统一为同一套中文区块模板 |")
     add("| 4 | 攻击链存在两套 schema（`nodes` / `steps_detail`）且 3 条链用描述文本冒充场景 ID | 5 条 `steps_detail` 链并入 `nodes`，场景 ID 统一小写；非场景中间步骤改用 `name`；`validate-structure.py` 现在强制 `scenario` 必须是注册 ID |")
-    add("| 5 | 场景 ID 未按论文主集和机制类别组织 | 29 个私有云场景移入 `scenarios/k8s/`；主集重编号为 `k8s-01..k8s-40`，备选集为 `k8s-41..k8s-60`；公有云保留 `cloud-01..cloud-02` |")
+    add("| 5 | 场景 ID 未按论文主集和机制类别组织 | 29 个私有云场景移入 `scenarios/k8s/`；主集重编号为 `prv-01..prv-40`，备选集为 `prv-41..prv-60`；公有云保留 `cloud-01..cloud-02` |")
     add("")
     add("### 4.2 仍待处理\n")
     add("| # | 问题 | 证据 | 建议 |")
@@ -295,7 +295,7 @@ def build_document(registry: dict[str, dict[str, object]]) -> str:
     for chain_file in sorted((ROOT / "chains").glob("*/chain.yaml")):
         chain = yaml.safe_load(chain_file.read_text(encoding="utf-8")) or {}
         nodes = [node for node in chain.get("nodes") or [] if isinstance(node, dict)]
-        if any(str(node.get("scenario", "")).lower().split("-")[0] in ("cloud", "k8s") for node in nodes):
+        if any(str(node.get("scenario", "")).lower().split("-")[0] in ("cloud", "prv") for node in nodes):
             chain_rows.append((chain_file.parent.name, chain.get("name") or chain.get("title") or "", nodes))
     add(f"共 {len(chain_rows)} 条攻击链涉及 cloud 或 k8s 场景。步骤中的场景 ID 与注册表对应；")
     add("标注为描述文本（如 `Node Flag`）的步骤是 legacy 链的遗留写法（见第四节）。\n")
@@ -314,7 +314,7 @@ def build_document(registry: dict[str, dict[str, object]]) -> str:
     add("| 来源 | 说明 |")
     add("|---|---|")
     add("| `cve_challenges/scripts/scenarios.yaml` | 场景注册表：稳定 ID、类型、路径、端口、难度、CVE/技术 |")
-    add("| `cve_challenges/scripts/scenario-categories.yaml` | 私有云主集/备选集与六类机制归属 |")
+    add("| `cve_challenges/scripts/scenario-categories.yaml` | 私有云五个一级边界、24 个二级机制及 60 条编号迁移映射 |")
     add("| `cve_challenges/scenarios/cloud/*/GUIDE.md` | 2 个公有云场景的权威说明 |")
     add("| `cve_challenges/scenarios/k8s/*/GUIDE.md` | 60 个私有云场景的权威说明 |")
     add("| `cve_challenges/chains/*/chain.yaml` | 攻击链定义 |")

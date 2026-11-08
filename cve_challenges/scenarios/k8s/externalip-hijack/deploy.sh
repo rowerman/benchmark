@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-28"
-CLUSTER_NAME="cve-k8s-28-externalip"
+K8S_ID="prv-28"
+CLUSTER_NAME="cve-prv-28-externalip"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[K8S-28] CVE-2020-8554 Service ExternalIP Traffic Interception"
+echo "[PRV-28] CVE-2020-8554 Service ExternalIP Traffic Interception"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready

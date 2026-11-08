@@ -2,9 +2,9 @@ name: "CAP_SYS_ADMIN to Full Cluster"
 id: chain-12
 steps: 3
 nodes:
-  - scenario: k8s-20
+  - scenario: prv-17
     flag: "flag{chain12-step1-capsys}"
-  - scenario: k8s-01
+  - scenario: prv-01
     flag: "flag{chain12-step2-rbac}"
-  - scenario: k8s-42
+  - scenario: prv-42
     flag: "flag{chain12-step3-etcd-final}"

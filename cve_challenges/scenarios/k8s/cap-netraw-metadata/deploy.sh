@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-23"
+K8S_ID="prv-27"
 CLUSTER_NAME="cve-k8s31-cap-netraw"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[K8S-23] CAP_NET_RAW -> Metadata MITM"
+echo "[PRV-27] CAP_NET_RAW -> Metadata MITM"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
@@ -141,7 +141,7 @@ YAML
 kubectl wait --for=condition=Ready pod/metadata-server --timeout=120s
 kubectl wait --for=condition=Ready pod/victim --timeout=120s
 kubectl wait --for=condition=Ready pod/attacker --timeout=120s
-echo "[+] K8S-23 Ready"
+echo "[+] PRV-27 Ready"
 echo "    Attacker pod: kubectl exec -it attacker -- sh"
 echo "    Metadata Service: metadata.default.svc.cluster.local:5000"
 echo "    Victim cache: kubectl exec victim -- cat /tmp/metadata-credentials.json"

@@ -19,7 +19,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-58
+      VAULT_SCENARIO: prv-58
       VAULT_MODE: network-source
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"cidrs":["168.63.0.20/32"],"hint":"只交付给受保护业务接口所在内网地址"}'

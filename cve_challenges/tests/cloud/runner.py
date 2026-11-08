@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 START = ROOT / "scripts" / "start-scenario.sh"
 STOP = ROOT / "scripts" / "stop-scenario.sh"
 REGISTRY = ROOT / "scripts" / "scenarios.yaml"
-FLAG_COUNTS = {"k8s-33": 2, "k8s-26": 2}
+FLAG_COUNTS = {"prv-33": 2, "prv-23": 2}
 NON_HTTP_PORTS = {10627}
 
 

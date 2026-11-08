@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-29"
-CLUSTER_NAME="cve-k8s-29-netpol-bypass"
+K8S_ID="prv-30"
+CLUSTER_NAME="cve-prv-30-netpol-bypass"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init

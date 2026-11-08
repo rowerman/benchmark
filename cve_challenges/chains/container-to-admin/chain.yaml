@@ -6,19 +6,19 @@ steps: 3
 domains: [k8s]
 nodes:
   - step: 1
-    scenario: k8s-01
+    scenario: prv-01
     description: "RBAC Secrets Abuse"
     flag: "flag{chain2-step1-rbac}"
     next_hint: "The attacker tenant has a privileged breakout pod it can exec into"
 
   - step: 2
-    scenario: k8s-18
+    scenario: prv-16
     description: "Privileged container breakout → host filesystem (nsenter)"
     flag: "flag{chain2-step2-escape}"
     next_hint: "From the node shell, reach the control-plane etcd"
 
   - step: 3
-    scenario: k8s-42
+    scenario: prv-42
     description: "etcd Unauthorized Access (node-local 127.0.0.1:2379) → final flag"
     flag: "flag{chain2-step3-etcd-final}"
     next_hint: null

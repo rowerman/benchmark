@@ -2,9 +2,9 @@ name: "SA Token Lateral to Escape"
 id: chain-13
 steps: 3
 nodes:
-  - scenario: k8s-43
+  - scenario: prv-43
     flag: "flag{chain13-step1-crossns}"
-  - scenario: k8s-01
+  - scenario: prv-01
     flag: "flag{chain13-step2-rbac}"
-  - scenario: k8s-19
+  - scenario: prv-15
     flag: "flag{chain13-step3-escape-final}"

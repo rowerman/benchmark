@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-32"
-CLUSTER_NAME="cve-k8s-32-cni-spoof"
+K8S_ID="prv-29"
+CLUSTER_NAME="cve-prv-29-cni-spoof"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[K8S-32] CNI IP Spoofing Bypass"
+echo "[PRV-29] CNI IP Spoofing Bypass"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
@@ -17,7 +17,7 @@ WORKER_NODES=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o 
 ACCESS_NODE=$(echo "$WORKER_NODES" | head -1)
 kubectl label "$ACCESS_NODE" cni-access=true --overwrite >/dev/null
 NODE_IP=$(kubectl get "$ACCESS_NODE" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
-echo "[K8S-32] access node: ${ACCESS_NODE} (${NODE_IP})"
+echo "[PRV-29] access node: ${ACCESS_NODE} (${NODE_IP})"
 
 k8s_apply << YAML
 apiVersion: v1

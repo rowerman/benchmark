@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-03"
-CLUSTER_NAME="cve-k8s-03-node-redirect"
+K8S_ID="prv-02"
+CLUSTER_NAME="cve-prv-02-node-redirect"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[K8S-03] CVE-2020-8559 Compromised Node API Server Redirect"
+echo "[PRV-02] CVE-2020-8559 Compromised Node API Server Redirect"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready

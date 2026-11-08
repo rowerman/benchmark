@@ -43,7 +43,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-51
+      VAULT_SCENARIO: prv-51
       VAULT_MODE: mtls
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"ca_url":"http://internal-ca:5000/ca","cn_rule":"replication\\..*","hint":"内部 CA 签发且 CN 形如 replication.<id>… 的客户端证书"}'

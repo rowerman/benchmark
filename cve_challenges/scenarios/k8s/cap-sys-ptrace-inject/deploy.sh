@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-46"
-CLUSTER_NAME="cve-k8s-46-ptrace"
+K8S_ID="prv-46"
+CLUSTER_NAME="cve-prv-46-ptrace"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init

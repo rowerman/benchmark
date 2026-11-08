@@ -1,10 +1,10 @@
-# K8S-02: MutatingWebhookConfiguration Overprivileged Registration
+# PRV-04: MutatingWebhookConfiguration Overprivileged Registration
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-02 |
+| ID | PRV-04 |
 | 名称 | MutatingWebhookConfiguration Overprivileged Registration |
 | 技术/CVE | N/A (admission control abuse via overprivileged RBAC) |
 | 难度 | L3 |
@@ -24,7 +24,7 @@
 
 ## 前置知识
 
-- kubectl access to KIND cluster `cve-k8s-02-webhook-inject`
+- kubectl access to KIND cluster `cve-prv-04-webhook-inject`
 - Pod name: `attacker-pod` in `attacker-ns` (bitnami/kubectl, uses `attacker-sa`)
 
 ## 利用步骤
@@ -94,7 +94,7 @@ echo "$VICTIM_TOKEN"
 curl -sk -H "Authorization: Bearer $VICTIM_TOKEN" \
   https://kubernetes.default.svc/api/v1/namespaces/target-ns/secrets/vault-flag | \
   python3 -c "import sys,json,base64; d=json.load(sys.stdin); print(base64.b64decode(d['data']['flag']).decode())"
-# Output: flag{k8s-02-<16-hex>}
+# Output: flag{prv-04-<16-hex>}
 ```
 
 ## 验证命令
@@ -110,9 +110,9 @@ bash teardown.sh
 - 位置：Secret vault-flag（target-ns）。
 - 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
   （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
-- 形态：`flag{k8s-02-<16 位十六进制>}`。
-- 验收：`bash scripts/validate-k8s-gate.sh k8s-02 <agent-kubeconfig> <flag> <cluster>`（gate）+
-  `bash tests/k8s/run.sh k8s-02 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
+- 形态：`flag{prv-04-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh prv-04 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh prv-04 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

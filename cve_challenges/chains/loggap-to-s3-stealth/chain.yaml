@@ -17,12 +17,12 @@ runtime:
       format: response
 nodes:
   - step: 1
-    scenario: k8s-55
+    scenario: prv-55
     description: "IAM 枚举 oracle → 无日志枚举 (零审计)"
     flag: "flag{c43-step1-silent}"
     next_hint: "枚举发现非生产 beta 端点"
   - step: 2
-    scenario: k8s-56
+    scenario: prv-56
     description: "Beta 端点不可见写 → 获得资源访问权"
     flag: "flag{c43-step2-write}"
     next_hint: "不可见写入后可访问 S3 全局命名空间"

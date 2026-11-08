@@ -1,5 +1,5 @@
 seeds:
-  k8s-51:
+  prv-51:
   - command: 'set -e
 
       read -r f
@@ -9,7 +9,7 @@ seeds:
       '
     flag: CVE_FLAG
     service: victim-pg
-  k8s-59:
+  prv-59:
   - command: 'set -e
 
       printf ''tenant-b-rotation-token'' > /app/workspaces/tenant-b/secret.txt
@@ -18,55 +18,55 @@ seeds:
     flag: CVE_FLAG
     service: shared-executor
 sinks:
-  k8s-41:
+  prv-41:
   - service: flag-vault
     flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
-  k8s-47:
+  prv-47:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-13:
+  prv-12:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-48:
+  prv-48:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-25:
+  prv-21:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-49:
+  prv-49:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-05:
+  prv-05:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-06:
+  prv-06:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-07:
+  prv-07:
   - flags:
     - flag: CVE_FLAG
       paths:
@@ -78,13 +78,13 @@ sinks:
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-50:
+  prv-50:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-33:
+  prv-33:
   - flags:
     - flag: CVE_FLAG1
       paths:
@@ -95,25 +95,25 @@ sinks:
       paths:
       - /vault/flag2
     service: flag-vault
-  k8s-34:
+  prv-34:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-35:
+  prv-35:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-51:
+  prv-51:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-26:
+  prv-23:
   - flags:
     - flag: CVE_FLAG1
       paths:
@@ -124,49 +124,49 @@ sinks:
       paths:
       - /vault/flag2
     service: flag-vault
-  k8s-40:
+  prv-40:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-27:
+  prv-25:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-52:
+  prv-52:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-53:
+  prv-53:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-54:
+  prv-54:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-55:
+  prv-55:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-56:
+  prv-56:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-57:
+  prv-57:
   - flags:
     - flag: CVE_FLAG
       paths:
@@ -178,31 +178,31 @@ sinks:
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-36:
+  prv-36:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-58:
+  prv-58:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-59:
+  prv-59:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-60:
+  prv-60:
   - flags:
     - flag: CVE_FLAG
       paths:
       - /vault/flag
     service: flag-vault
-  k8s-37:
+  prv-37:
   - flags:
     - flag: CVE_FLAG
       paths:

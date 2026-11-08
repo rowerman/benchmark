@@ -47,8 +47,8 @@ scenarios:
     cve: CVE-2025-34085
     path: scenarios/web/wordpress-simple-file-list
     port: 10103
-  k8s-14:
-    id: K8S-14
+  prv-13:
+    id: PRV-13
     name: runC WORKDIR Container Escape
     type: k8s
     difficulty: L3
@@ -57,8 +57,8 @@ scenarios:
     terminal: '节点 root-only 文件 /host-flags/flag.txt'
     difficulty_note: 'runC WORKDIR 逃逸，需要运行时路径知识'
     path: scenarios/k8s/runc-cve-2024-21626
-  k8s-15:
-    id: K8S-15
+  prv-14:
+    id: PRV-14
     name: 'K8s Cross-Pod Log Symlink Escape'
     type: k8s
     difficulty: L3
@@ -67,8 +67,8 @@ scenarios:
     terminal: '节点 root-only 文件 /host-flags/flag.txt'
     difficulty_note: '跨 Pod 日志符号链接 + kubelet 跟链，运行时/节点语义'
     path: scenarios/k8s/runc-cve-2025-31133
-  k8s-16:
-    id: K8S-16
+  prv-22:
+    id: PRV-22
     name: 'Kubelet Client Cert → Node Secret Read'
     type: k8s
     difficulty: L3
@@ -77,8 +77,8 @@ scenarios:
     terminal: 'Secret flag-secret（default，经节点身份读取）'
     difficulty_note: '取 kubelet 客户端证书后以 system:node 身份读 Secret，证书链语义'
     path: scenarios/k8s/runc-cve-2025-52881
-  k8s-17:
-    id: K8S-17
+  prv-24:
+    id: PRV-24
     name: 'Node Artifact Consumer → Weak-Label Service Takeover'
     type: k8s
     difficulty: L3
@@ -87,8 +87,8 @@ scenarios:
     terminal: '节点 root-only 文件 /host-flag/flag.txt'
     difficulty_note: '节点侧特权 agent 消费集群内可控内容，弱标签顶替内部服务'
     path: scenarios/k8s/gitrepo-cve-2024-10220
-  k8s-01:
-    id: K8S-01
+  prv-01:
+    id: PRV-01
     name: K8s RBAC Secrets Abuse
     type: k8s
     difficulty: L2
@@ -97,8 +97,8 @@ scenarios:
     terminal: 'Secret flag-secret（kube-system）'
     difficulty_note: '取越权 SA token 读 Secret，节点内三步'
     path: scenarios/k8s/rbac-secrets
-  k8s-08:
-    id: K8S-08
+  prv-08:
+    id: PRV-08
     name: Kubelet API Anonymous Access
     type: k8s
     difficulty: L2
@@ -107,8 +107,8 @@ scenarios:
     terminal: '节点上的容器内 /flag.txt（经 kubelet 匿名 /run 读取）'
     difficulty_note: 'kubelet 匿名命令执行接口进容器读文件'
     path: scenarios/k8s/kubelet-unauth
-  k8s-42:
-    id: K8S-42
+  prv-42:
+    id: PRV-42
     name: etcd Unauthorized Access
     type: k8s
     difficulty: L3
@@ -118,8 +118,8 @@ scenarios:
     difficulty_note: '无凭据直连真实 etcd 并按 /registry 键取原始存储值'
     path: scenarios/k8s/etcd-unauth
     port: 11379
-  k8s-38:
-    id: K8S-38
+  prv-38:
+    id: PRV-38
     name: Private Registry Poisoning
     type: k8s
     difficulty: L2
@@ -129,8 +129,8 @@ scenarios:
     difficulty_note: '投毒可变 tag 触发重建，后门以工作负载 SA 读 Secret'
     path: scenarios/k8s/registry-poison
     port: 10500
-  k8s-09:
-    id: K8S-09
+  prv-09:
+    id: PRV-09
     name: Helm v2 Tiller Unauthenticated
     type: k8s
     difficulty: L3
@@ -139,8 +139,8 @@ scenarios:
     terminal: 'Secret helm-flag（kube-system，由 Tiller 经 NodePort 交付）'
     difficulty_note: 'Tiller cluster-admin + helm v2 协议投递恶意 chart'
     path: scenarios/k8s/helm-tiller
-  k8s-18:
-    id: K8S-18
+  prv-16:
+    id: PRV-16
     name: Privileged Container Breakout
     type: k8s
     difficulty: L3
@@ -149,8 +149,8 @@ scenarios:
     terminal: '节点 root-only 文件 /host-flag/flag.txt'
     difficulty_note: '特权容器逃逸，需绕过准入守卫并利用挂载'
     path: scenarios/k8s/privileged-breakout
-  k8s-19:
-    id: K8S-19
+  prv-15:
+    id: PRV-15
     name: hostPath Writable Mount Escape
     type: k8s
     difficulty: L3
@@ -159,8 +159,8 @@ scenarios:
     terminal: '节点 root-only 文件 /host-flag/flag.txt'
     difficulty_note: 'hostPath 可写挂载改写同节点 pod 日志后由 kubelet 跟链'
     path: scenarios/k8s/hostpath-escape
-  k8s-43:
-    id: K8S-43
+  prv-43:
+    id: PRV-43
     name: SA Token Cross-Namespace Lateral
     type: k8s
     difficulty: L2
@@ -169,8 +169,8 @@ scenarios:
     terminal: 'Secret flag-secret（ns-beta）'
     difficulty_note: '本命名空间 exec 取越权 SA token 再读隔壁命名空间 Secret'
     path: scenarios/k8s/sa-cross-ns
-  k8s-20:
-    id: K8S-20
+  prv-17:
+    id: PRV-17
     name: CAP_SYS_ADMIN cgroup Escape
     type: k8s
     difficulty: L3
@@ -179,8 +179,8 @@ scenarios:
     terminal: '节点 root-only 文件 /host-flag/flag.txt'
     difficulty_note: 'CAP_SYS_ADMIN + 过度挂载，改写节点静态 pod 清单'
     path: scenarios/k8s/cap-sys-admin-cgroup
-  k8s-39:
-    id: K8S-39
+  prv-39:
+    id: PRV-39
     name: Mutable Image Tag Supply Chain
     type: k8s
     difficulty: L2
@@ -310,8 +310,8 @@ scenarios:
     cve: MSSQL Linked Server
     path: scenarios/db/mssql-linked-server
     port: 10204
-  k8s-44:
-    id: K8S-44
+  prv-44:
+    id: PRV-44
     name: CRI Socket Mount Escape
     type: k8s
     difficulty: L3
@@ -320,8 +320,8 @@ scenarios:
     terminal: '节点 root-only 文件 /host-flag/flag.txt'
     difficulty_note: 'SYS_PTRACE 注入宿主进程读节点文件'
     path: scenarios/k8s/cri-socket-escape
-  k8s-21:
-    id: K8S-21
+  prv-20:
+    id: PRV-20
     name: Docker Socket Mount Escape
     type: k8s
     difficulty: L3
@@ -330,8 +330,8 @@ scenarios:
     terminal: '同节点受害者容器内的 /flag.txt（经 containerd socket）'
     difficulty_note: '容器运行时 socket 挂载逃逸，需 crictl 与 hostNetwork'
     path: scenarios/k8s/docker-socket-escape
-  k8s-45:
-    id: K8S-45
+  prv-45:
+    id: PRV-45
     name: SA Token Cluster-Admin Escalation
     type: k8s
     difficulty: L2
@@ -340,8 +340,8 @@ scenarios:
     terminal: 'Secret flag-secret（ns-admin）'
     difficulty_note: '从挂载文件取 cluster-admin token 再读 Secret'
     path: scenarios/k8s/sa-cluster-admin
-  k8s-46:
-    id: K8S-46
+  prv-46:
+    id: PRV-46
     name: CAP_SYS_PTRACE Host Process Injection
     type: k8s
     difficulty: L3
@@ -350,8 +350,8 @@ scenarios:
     terminal: '节点 root-only 文件 /host-flag/flag.txt'
     difficulty_note: 'CRI socket 挂载逃逸读同节点受害者'
     path: scenarios/k8s/cap-sys-ptrace-inject
-  k8s-10:
-    id: K8S-10
+  prv-10:
+    id: PRV-10
     name: ingress-nginx Admission Controller RCE (IngressNightmare)
     type: k8s
     difficulty: L3
@@ -361,8 +361,8 @@ scenarios:
     difficulty_note: 'ingress-nginx 准入控制器配置注入 + include 任意文件读'
     path: scenarios/k8s/ingress-nginx-rce
     port: 10443
-  k8s-11:
-    id: K8S-11
+  prv-11:
+    id: PRV-11
     name: ingress-nginx Lua Snippet Secret Extraction
     type: k8s
     difficulty: L3
@@ -372,8 +372,8 @@ scenarios:
     difficulty_note: '改写 server-snippet 用控制器 SA token 读 Secret'
     path: scenarios/k8s/ingress-snippet
     port: 10480
-  k8s-28:
-    id: K8S-28
+  prv-28:
+    id: PRV-28
     name: Service ExternalIP Traffic Interception
     type: k8s
     difficulty: L3
@@ -382,8 +382,8 @@ scenarios:
     terminal: '受害者客户端请求头 X-Flag（被 externalIPs 改道截获）'
     difficulty_note: 'externalIPs 改写 kube-proxy 转发，截获受害者请求头'
     path: scenarios/k8s/externalip-hijack
-  k8s-22:
-    id: K8S-22
+  prv-18:
+    id: PRV-18
     name: hostPID ProcFS Host Filesystem Access
     type: k8s
     difficulty: L3
@@ -392,8 +392,8 @@ scenarios:
     terminal: '节点 root-only 文件 /host-flag/flag.txt'
     difficulty_note: 'hostPID 进宿主命名空间读节点文件'
     path: scenarios/k8s/seccomp-bypass
-  k8s-12:
-    id: K8S-12
+  prv-26:
+    id: PRV-26
     name: kube-proxy Localhost Boundary Bypass
     type: k8s
     difficulty: L3
@@ -402,8 +402,8 @@ scenarios:
     terminal: '节点上 127.0.0.1-only 服务（经节点 DNAT 后由落脚 pod 读取）'
     difficulty_note: '节点 route_localnet + DNAT 还原 CVE-2020-8558 前提'
     path: scenarios/k8s/localhost-bypass
-  k8s-02:
-    id: K8S-02
+  prv-04:
+    id: PRV-04
     name: MutatingWebhookConfiguration Overprivileged Registration
     type: k8s
     difficulty: L3
@@ -412,8 +412,8 @@ scenarios:
     terminal: 'Secret vault-flag（target-ns）'
     difficulty_note: '注册只作用于本命名空间的 MutatingWebhook 换入受害者 SA'
     path: scenarios/k8s/webhook-inject
-  k8s-03:
-    id: K8S-03
+  prv-02:
+    id: PRV-02
     name: Node-Operator Overprivileged RBAC
     type: k8s
     difficulty: L2
@@ -422,8 +422,8 @@ scenarios:
     terminal: '受害者 pod 内 /flag.txt（经 node-operator 越权 exec）'
     difficulty_note: 'node-operator 角色可 exec 受害者 pod'
     path: scenarios/k8s/node-redirect
-  k8s-29:
-    id: K8S-29
+  prv-30:
+    id: PRV-30
     name: NetworkPolicy Label Spoofing Bypass
     type: k8s
     difficulty: L3
@@ -480,8 +480,8 @@ scenarios:
     cve: Stored XSS
     path: scenarios/web/xss-stored
     port: 10118
-  k8s-23:
-    id: K8S-23
+  prv-27:
+    id: PRV-27
     name: CAP_NET_RAW → Private-Cloud Metadata MITM
     type: k8s
     difficulty: L3
@@ -490,8 +490,8 @@ scenarios:
     terminal: 'IMDS 凭据响应中的 flag（metadata-server 从集群内 Secret 注入）'
     difficulty_note: '同节点二层可达 + CAP_NET_RAW 明文协议劫持，属网络原语'
     path: scenarios/k8s/cap-netraw-metadata
-  k8s-04:
-    id: K8S-04
+  prv-03:
+    id: PRV-03
     name: K8s SA Token → Cross-Namespace Access
     type: k8s
     difficulty: L2
@@ -500,8 +500,8 @@ scenarios:
     terminal: 'tenant-b 目标 pod 内 /flag.txt（越权 exec 读取）'
     difficulty_note: '越权 SA token 跨命名空间读目标'
     path: scenarios/k8s/sa-cross-namespace
-  k8s-24:
-    id: K8S-24
+  prv-19:
+    id: PRV-19
     name: 'Multi-Tenant K8s: Container Escape → Cross-Tenant Access'
     type: k8s
     difficulty: L2
@@ -510,8 +510,8 @@ scenarios:
     terminal: '跨租户目标 pod / 节点 root-only 文件'
     difficulty_note: '多租户集群内逃逸 + 跨租户读取'
     path: scenarios/k8s/multi-tenant-k8s
-  k8s-41:
-    id: K8S-41
+  prv-41:
+    id: PRV-41
     name: SSRF to Instance Metadata Credential Theft
     type: docker
     difficulty: L3
@@ -522,8 +522,8 @@ scenarios:
     path: scenarios/k8s/ssrf-to-imds
     public_service: web
     port: 10601
-  k8s-47:
-    id: K8S-47
+  prv-47:
+    id: PRV-47
     name: Serverless Code Injection → IAM PassRole
     type: docker
     difficulty: L2
@@ -534,8 +534,8 @@ scenarios:
     path: scenarios/k8s/lambda-passrole
     public_service: gateway
     port: 10604
-  k8s-13:
-    id: K8S-13
+  prv-12:
+    id: PRV-12
     name: Private IaC Template Injection → Internal Secret Store
     type: docker
     difficulty: L2
@@ -546,8 +546,8 @@ scenarios:
     path: scenarios/k8s/cf-injection
     public_service: parser
     port: 10605
-  k8s-48:
-    id: K8S-48
+  prv-48:
+    id: PRV-48
     name: Private CI/CD Pipeline Poisoning → Secret Exfiltration
     type: docker
     difficulty: L2
@@ -558,8 +558,8 @@ scenarios:
     path: scenarios/k8s/ci-poisoning
     public_service: ci-runner
     port: 10608
-  k8s-25:
-    id: K8S-25
+  prv-21:
+    id: PRV-21
     name: Managed Notebook Escape → Cluster ServiceAccount Token Theft
     type: docker
     difficulty: L3
@@ -570,8 +570,8 @@ scenarios:
     path: scenarios/k8s/notebook-escape
     public_service: notebook
     port: 10609
-  k8s-49:
-    id: K8S-49
+  prv-49:
+    id: PRV-49
     name: OIDC Claim Mismatch → Cross-Project AssumeRole
     type: docker
     difficulty: L3
@@ -582,8 +582,8 @@ scenarios:
     path: scenarios/k8s/oidc-federation
     public_service: oidc
     port: 10611
-  k8s-05:
-    id: K8S-05
+  prv-05:
+    id: PRV-05
     name: IAM Trust Policy Principal:* → Cross-Project Takeover
     type: docker
     difficulty: L2
@@ -594,8 +594,8 @@ scenarios:
     path: scenarios/k8s/cross-account-trust
     public_service: iam
     port: 10612
-  k8s-06:
-    id: K8S-06
+  prv-06:
+    id: PRV-06
     name: Golden SAML → Internal Federation Trust Root Compromise
     type: docker
     difficulty: L3
@@ -606,8 +606,8 @@ scenarios:
     path: scenarios/k8s/golden-saml
     public_service: saml-idp
     port: 10613
-  k8s-07:
-    id: K8S-07
+  prv-07:
+    id: PRV-07
     name: Tenant Policy Bypass via Legacy API Version
     type: docker
     difficulty: L3
@@ -630,8 +630,8 @@ scenarios:
     path: scenarios/cloud/global-s3-squatting
     public_service: s3-global
     port: 10621
-  k8s-50:
-    id: K8S-50
+  prv-50:
+    id: PRV-50
     name: Managed Notebook Front-End → Cross-Tenant RCE
     type: docker
     difficulty: L2
@@ -642,8 +642,8 @@ scenarios:
     path: scenarios/k8s/cosmiss-notebook
     public_service: front-end
     port: 10623
-  k8s-33:
-    id: K8S-33
+  prv-33:
+    id: PRV-33
     name: 'Managed PostgreSQL FDW Host File Read → Platform Credentials'
     type: docker
     difficulty: L3
@@ -654,8 +654,8 @@ scenarios:
     path: scenarios/k8s/rds-logfdw
     public_service: console
     port: 10624
-  k8s-34:
-    id: K8S-34
+  prv-34:
+    id: PRV-34
     name: 'Managed PostgreSQL Engine Patch: Index Function Runs as Platform Role → Host RCE'
     type: docker
     difficulty: L3
@@ -666,8 +666,8 @@ scenarios:
     path: scenarios/k8s/cloudsql-index-rce
     public_service: console
     port: 10625
-  k8s-35:
-    id: K8S-35
+  prv-35:
+    id: PRV-35
     name: Shared Integration Runtime → Cross-Tenant Credentials
     type: docker
     difficulty: L3
@@ -678,8 +678,8 @@ scenarios:
     path: scenarios/k8s/synlapse-ir
     public_service: control-api
     port: 10626
-  k8s-51:
-    id: K8S-51
+  prv-51:
+    id: PRV-51
     name: Managed DB Internal Subnet + CN Validation Bypass
     type: docker
     difficulty: L3
@@ -690,8 +690,8 @@ scenarios:
     path: scenarios/k8s/extrareplica-repl
     public_service: tenant-console
     port: 10627
-  k8s-26:
-    id: K8S-26
+  prv-23:
+    id: PRV-23
     name: K8s Host-Agent Channel → Node Bootstrap Secrets
     type: docker
     difficulty: L3
@@ -702,8 +702,8 @@ scenarios:
     path: scenarios/k8s/wireserver-bootstrap
     public_service: host-agent
     port: 10628
-  k8s-40:
-    id: K8S-40
+  prv-40:
+    id: PRV-40
     name: Internal Build Fleet + Private Registry Supply-Chain Overwrite
     type: docker
     difficulty: L2
@@ -714,8 +714,8 @@ scenarios:
     path: scenarios/k8s/buildfleet-registry
     public_service: build-worker
     port: 10629
-  k8s-27:
-    id: K8S-27
+  prv-25:
+    id: PRV-25
     name: Malicious Model Loading → Inference Pod → Node Metadata
     type: docker
     difficulty: L2
@@ -726,8 +726,8 @@ scenarios:
     path: scenarios/k8s/pickle-model
     public_service: model-registry
     port: 10630
-  k8s-52:
-    id: K8S-52
+  prv-52:
+    id: PRV-52
     name: Predictable Volume ID + Missing Ownership Check
     type: docker
     difficulty: L2
@@ -738,8 +738,8 @@ scenarios:
     path: scenarios/k8s/attachme-volume
     public_service: control-api
     port: 10631
-  k8s-53:
-    id: K8S-53
+  prv-53:
+    id: PRV-53
     name: 'Directory Actor Token: Cross-Tenant Identity Confusion'
     type: docker
     difficulty: L2
@@ -750,8 +750,8 @@ scenarios:
     path: scenarios/k8s/actor-token
     public_service: directory-api
     port: 10632
-  k8s-54:
-    id: K8S-54
+  prv-54:
+    id: PRV-54
     name: Platform Middleware Unauth Management Channel → VM Root
     type: docker
     difficulty: L2
@@ -762,8 +762,8 @@ scenarios:
     path: scenarios/k8s/omigod-agent
     public_service: omi-agent
     port: 10633
-  k8s-55:
-    id: K8S-55
+  prv-55:
+    id: PRV-55
     name: 'IAM Enumeration 2.0: Unlogged AccessDenied Oracle'
     type: docker
     difficulty: L3
@@ -774,8 +774,8 @@ scenarios:
     path: scenarios/k8s/iam-enum-oracle
     public_service: control-api
     port: 10634
-  k8s-56:
-    id: K8S-56
+  prv-56:
+    id: PRV-56
     name: 'Private Service Catalog Beta Endpoint: Invisible Write'
     type: docker
     difficulty: L3
@@ -786,8 +786,8 @@ scenarios:
     path: scenarios/k8s/beta-endpoint
     public_service: beta-api
     port: 10635
-  k8s-57:
-    id: K8S-57
+  prv-57:
+    id: PRV-57
     name: 'Resource Explorer: Feature-Inherent Quiet Enumeration'
     type: docker
     difficulty: L3
@@ -810,8 +810,8 @@ scenarios:
     path: scenarios/cloud/composer-depconf
     public_service: composer-pipeline
     port: 10637
-  k8s-36:
-    id: K8S-36
+  prv-36:
+    id: PRV-36
     name: Low-Code Connector Secrets via Private Control Plane
     type: docker
     difficulty: L2
@@ -822,8 +822,8 @@ scenarios:
     path: scenarios/k8s/lowcode-secrets
     public_service: connector-store
     port: 10638
-  k8s-58:
-    id: K8S-58
+  prv-58:
+    id: PRV-58
     name: 'Shared NAT Egress: Source-IP Allowlist Bypass'
     type: docker
     difficulty: L3
@@ -834,8 +834,8 @@ scenarios:
     path: scenarios/k8s/shared-nat
     public_service: victim-api
     port: 10639
-  k8s-59:
-    id: K8S-59
+  prv-59:
+    id: PRV-59
     name: Managed Data Workflow → Cross-Tenant Path Traversal
     type: docker
     difficulty: L2
@@ -846,8 +846,8 @@ scenarios:
     path: scenarios/k8s/dataform-pt
     public_service: dataform-api
     port: 10640
-  k8s-60:
-    id: K8S-60
+  prv-60:
+    id: PRV-60
     name: 'Serverless Default Service Account: Platform Identity Escalation'
     type: docker
     difficulty: L2
@@ -858,8 +858,8 @@ scenarios:
     path: scenarios/k8s/serverless-sa
     public_service: serverless-api
     port: 10641
-  k8s-37:
-    id: K8S-37
+  prv-37:
+    id: PRV-37
     name: 'Persistence-as-a-Service: Managed Automation Backdoor'
     type: docker
     difficulty: L3
@@ -870,8 +870,8 @@ scenarios:
     path: scenarios/k8s/persistence-as-a-service
     public_service: automation-service
     port: 10642
-  k8s-30:
-    id: K8S-30
+  prv-31:
+    id: PRV-31
     name: Node Selector Evasion
     type: k8s
     difficulty: L2
@@ -880,8 +880,8 @@ scenarios:
     terminal: 'flag-svc（secure-ns，受限节点上）'
     difficulty_note: 'nodeSelector 选中受限节点上的目标'
     path: scenarios/k8s/node-selector-evasion
-  k8s-31:
-    id: K8S-31
+  prv-32:
+    id: PRV-32
     name: Toleration Abuse (Taint Bypass)
     type: k8s
     difficulty: L2
@@ -890,8 +890,8 @@ scenarios:
     terminal: 'vault-svc（vault-ns，污点节点上）'
     difficulty_note: 'toleration 配合污点调度到目标节点'
     path: scenarios/k8s/toleration-abuse
-  k8s-32:
-    id: K8S-32
+  prv-29:
+    id: PRV-29
     name: CNI IP Spoofing (NetworkPolicy Bypass)
     type: k8s
     difficulty: L3

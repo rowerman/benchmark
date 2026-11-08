@@ -17,17 +17,17 @@ runtime:
       format: response
 nodes:
 - step: 1
-  scenario: k8s-58
+  scenario: prv-58
   description: 共享 NAT 出口 → 绕过源 IP 白名单 → 进入内部网络
   flag: flag{c47-step1-egress}
   next_hint: 内部控制面暴露连接器存储 API
 - step: 2
-  scenario: k8s-36
+  scenario: prv-36
   description: 连接器存储 → 跨租户密钥外泄
   flag: flag{c47-step2-secrets}
   next_hint: 密钥可用于跨项目访问
 - step: 3
-  scenario: k8s-05
+  scenario: prv-05
   description: 跨项目 AssumeRole → 最终 flag
   flag: flag{c47-step3-final}
   next_hint: null

@@ -22,7 +22,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-60
+      VAULT_SCENARIO: prv-60
       VAULT_MODE: header-secret
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"header":"Authorization","values":["Bearer default-compute-sa-token"],"hint":"平台默认服务账号令牌"}'

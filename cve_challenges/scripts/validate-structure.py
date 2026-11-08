@@ -36,7 +36,7 @@ def compose_files() -> list[Path]:
 
 
 def kind_config_paths() -> list[Path]:
-    return sorted(SCENARIOS_ROOT.glob("*/k8s-*/kind-config.yaml"))
+    return sorted(SCENARIOS_ROOT.glob("k8s/*/kind-config.yaml"))
 
 
 def check_ports_in_range(errors: list[str], ports: set[int], source: str) -> None:
@@ -181,34 +181,127 @@ def validates_registered_port(entry: dict[str, object], compose: Path) -> bool:
     )
 
 
+def validate_private_cloud_taxonomy(
+    errors: list[str],
+    scenarios: dict[str, dict[str, object]],
+    taxonomy: dict[str, object],
+) -> None:
+    private_ids = {sid for sid in scenarios if sid.startswith("prv-")}
+    expected_ids = {f"prv-{index:02d}" for index in range(1, 61)}
+    if private_ids != expected_ids:
+        fail(errors, "scenario-categories.yaml: private-cloud registry must contain prv-01..prv-60 exactly once")
+
+    if taxonomy.get("taxonomy_version") != 3:
+        fail(errors, "scenario-categories.yaml: taxonomy_version must be 3")
+    prefix = taxonomy.get("scenario_prefix") or {}
+    if not isinstance(prefix, dict) or prefix.get("stable") != "prv" or prefix.get("uppercase") != "PRV":
+        fail(errors, "scenario-categories.yaml: scenario_prefix must declare prv/PRV")
+
+    boundaries = taxonomy.get("first_level_boundaries") or {}
+    primary = taxonomy.get("primary_scenarios") or {}
+    reserve = taxonomy.get("reserve_scenarios") or {}
+    migration = (taxonomy.get("migration") or {}).get("current_to_v3") or {}
+    if not isinstance(boundaries, dict) or len(boundaries) != 5:
+        fail(errors, "scenario-categories.yaml: first_level_boundaries must contain exactly five boundaries")
+        return
+    expected_primary = {f"prv-{index:02d}" for index in range(1, 41)}
+    expected_reserve = {f"prv-{index:02d}" for index in range(41, 61)}
+    if not isinstance(primary, dict) or set(primary) != expected_primary:
+        fail(errors, "scenario-categories.yaml: primary_scenarios must contain prv-01..prv-40 exactly once")
+    if not isinstance(reserve, dict) or set(reserve) != expected_reserve:
+        fail(errors, "scenario-categories.yaml: reserve_scenarios must contain prv-41..prv-60 exactly once")
+    expected_migration = {
+        "k8s-01": "prv-01", "k8s-02": "prv-04", "k8s-03": "prv-02",
+        "k8s-04": "prv-03", "k8s-05": "prv-05", "k8s-06": "prv-06",
+        "k8s-07": "prv-07", "k8s-08": "prv-08", "k8s-09": "prv-09",
+        "k8s-10": "prv-10", "k8s-11": "prv-11", "k8s-12": "prv-26",
+        "k8s-13": "prv-12", "k8s-14": "prv-13", "k8s-15": "prv-14",
+        "k8s-16": "prv-22", "k8s-17": "prv-24", "k8s-18": "prv-16",
+        "k8s-19": "prv-15", "k8s-20": "prv-17", "k8s-21": "prv-20",
+        "k8s-22": "prv-18", "k8s-23": "prv-27", "k8s-24": "prv-19",
+        "k8s-25": "prv-21", "k8s-26": "prv-23", "k8s-27": "prv-25",
+        "k8s-28": "prv-28", "k8s-29": "prv-30", "k8s-30": "prv-31",
+        "k8s-31": "prv-32", "k8s-32": "prv-29", "k8s-33": "prv-33",
+        "k8s-34": "prv-34", "k8s-35": "prv-35", "k8s-36": "prv-36",
+        "k8s-37": "prv-37", "k8s-38": "prv-38", "k8s-39": "prv-39",
+        "k8s-40": "prv-40", "k8s-41": "prv-41", "k8s-42": "prv-42",
+        "k8s-43": "prv-43", "k8s-44": "prv-44", "k8s-45": "prv-45",
+        "k8s-46": "prv-46", "k8s-47": "prv-47", "k8s-48": "prv-48",
+        "k8s-49": "prv-49", "k8s-50": "prv-50", "k8s-51": "prv-51",
+        "k8s-52": "prv-52", "k8s-53": "prv-53", "k8s-54": "prv-54",
+        "k8s-55": "prv-55", "k8s-56": "prv-56", "k8s-57": "prv-57",
+        "k8s-58": "prv-58", "k8s-59": "prv-59", "k8s-60": "prv-60",
+    }
+    if migration != expected_migration:
+        fail(errors, "scenario-categories.yaml: migration.current_to_v3 must bijectively map k8s-01..60 to prv-01..60")
+
+    boundary_ids: list[str] = []
+    mechanism_parent: dict[str, str] = {}
+    mechanism_scenarios: dict[str, list[str]] = {}
+    for boundary_code, boundary in boundaries.items():
+        if not isinstance(boundary, dict):
+            fail(errors, f"scenario-categories.yaml: malformed boundary {boundary_code!r}")
+            continue
+        for field in ("code", "label_zh", "label_en", "scenario_range", "mechanisms"):
+            if not boundary.get(field):
+                fail(errors, f"scenario-categories.yaml: boundary {boundary_code} missing {field}")
+        scenario_range = boundary.get("scenario_range") or {}
+        try:
+            start = int(scenario_range["start"])
+            end = int(scenario_range["end"])
+        except (KeyError, TypeError, ValueError):
+            fail(errors, f"scenario-categories.yaml: boundary {boundary_code} has invalid scenario_range")
+            continue
+        boundary_ids.extend(f"prv-{index:02d}" for index in range(start, end + 1))
+        mechanisms = boundary.get("mechanisms") or {}
+        if not isinstance(mechanisms, dict):
+            fail(errors, f"scenario-categories.yaml: boundary {boundary_code} mechanisms must be a mapping")
+            continue
+        for mechanism_code, mechanism in mechanisms.items():
+            if mechanism_code in mechanism_parent:
+                fail(errors, f"scenario-categories.yaml: duplicate mechanism {mechanism_code}")
+            mechanism_parent[mechanism_code] = boundary_code
+            if not isinstance(mechanism, dict) or not mechanism.get("label_zh") or not mechanism.get("label_en"):
+                fail(errors, f"scenario-categories.yaml: malformed mechanism {mechanism_code}")
+                continue
+            ids = [str(sid) for sid in mechanism.get("scenarios") or []]
+            mechanism_scenarios[mechanism_code] = ids
+            for sid in ids:
+                if sid not in expected_primary or int(sid.split("-")[1]) not in range(start, end + 1):
+                    fail(errors, f"scenario-categories.yaml: {sid} is outside parent boundary {boundary_code}")
+                attribution = primary.get(sid)
+                if attribution != {"first_level": boundary_code, "mechanism": mechanism_code}:
+                    fail(errors, f"scenario-categories.yaml: inconsistent primary attribution for {sid}")
+
+    if boundary_ids != [f"prv-{index:02d}" for index in range(1, 41)]:
+        fail(errors, "scenario-categories.yaml: boundary ranges must cover prv-01..prv-40 in order without overlap")
+    if len(mechanism_parent) != 24:
+        fail(errors, "scenario-categories.yaml: taxonomy must define exactly 24 secondary mechanisms")
+    flattened_mechanisms = [
+        sid
+        for mechanism in mechanism_scenarios.values()
+        for sid in mechanism
+    ]
+    duplicates = {sid for sid in flattened_mechanisms if flattened_mechanisms.count(sid) > 1}
+    if duplicates:
+        fail(errors, f"scenario-categories.yaml: scenarios assigned to multiple mechanisms: {sorted(duplicates)}")
+    if set(flattened_mechanisms) != expected_primary:
+        fail(errors, "scenario-categories.yaml: mechanisms must cover prv-01..prv-40 exactly once")
+    for sid, attribution in primary.items():
+        if not isinstance(attribution, dict):
+            fail(errors, f"scenario-categories.yaml: malformed primary attribution for {sid}")
+            continue
+        mechanism = str(attribution.get("mechanism"))
+        if mechanism_parent.get(mechanism) != attribution.get("first_level"):
+            fail(errors, f"scenario-categories.yaml: {sid} points to a mechanism under the wrong boundary")
+
+
 def main() -> None:
     errors: list[str] = []
     data = yaml.safe_load(REGISTRY.read_text(encoding="utf-8"))
     scenarios: dict[str, dict[str, object]] = data["scenarios"]
     category_data = yaml.safe_load(CATEGORIES.read_text(encoding="utf-8"))
-    category_entries = category_data.get("categories", {})
-    k8s_ids = {sid for sid in scenarios if sid.startswith("k8s-")}
-    categorized: list[str] = []
-    for category, spec in category_entries.items():
-        if not isinstance(spec, dict) or not spec.get("label") or not isinstance(spec.get("scenarios"), list):
-            fail(errors, f"scenario-categories.yaml: malformed category {category!r}")
-            continue
-        categorized.extend(str(sid) for sid in spec["scenarios"])
-    duplicates = {sid for sid in categorized if categorized.count(sid) > 1}
-    if duplicates:
-        fail(errors, f"scenario-categories.yaml: duplicate scenario assignments: {sorted(duplicates)}")
-    if set(categorized) != k8s_ids:
-        fail(errors, "scenario-categories.yaml: assignments must cover every K8s scenario exactly once")
-    category_order = list(category_entries)
-    primary_order = [
-        sid
-        for category in category_order
-        for sid in category_entries[category]["scenarios"]
-        if int(str(sid).split("-")[1]) <= 40
-    ]
-    expected_primary = [f"k8s-{index:02d}" for index in range(1, 41)]
-    if primary_order != expected_primary:
-        fail(errors, "scenario-categories.yaml: main-set categories must group k8s-01..k8s-40 in order")
+    validate_private_cloud_taxonomy(errors, scenarios, category_data)
 
     if not SCENARIOS_ROOT.is_dir():
         fail(errors, "missing scenarios/ root")

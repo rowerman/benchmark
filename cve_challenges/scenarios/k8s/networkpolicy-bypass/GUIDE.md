@@ -1,10 +1,10 @@
-# K8S-29: NetworkPolicy Label Spoofing Bypass
+# PRV-30: NetworkPolicy Label Spoofing Bypass
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-29 |
+| ID | PRV-30 |
 | 名称 | NetworkPolicy Label Spoofing Bypass |
 | 技术/CVE | N/A (network policy bypass) |
 | 难度 | L3 |
@@ -25,7 +25,7 @@ Attacker pod blocked by NetworkPolicy (requires tier=frontend label)
 
 ## 前置知识
 
-- kubectl access to KIND cluster `cve-k8s-29-netpol-bypass`
+- kubectl access to KIND cluster `cve-prv-30-netpol-bypass`
 - 集群已安装 Calico（kind 默认 CNI 不强制 NetworkPolicy）；攻击者 RBAC 限于 `attacker-ns`
 
 ## 利用步骤
@@ -69,7 +69,7 @@ kubectl --token=$TOKEN wait --for=condition=Ready pod/bypass-pod -n attacker-ns 
 ```bash
 kubectl exec -n attacker-ns attacker-pod -- wget -qO- \
   http://flag-service.isolated-ns.svc.cluster.local:8080/flag
-# Output: flag{k8s-29-<16-hex>}
+# Output: flag{prv-30-<16-hex>}
 ```
 
 ## 验证命令
@@ -88,9 +88,9 @@ bash teardown.sh
 - 位置：flag-service（isolated-ns，NetworkPolicy 内）。
 - 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
   （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
-- 形态：`flag{k8s-29-<16 位十六进制>}`。
-- 验收：`bash scripts/validate-k8s-gate.sh k8s-29 <agent-kubeconfig> <flag> <cluster>`（gate）+
-  `bash tests/k8s/run.sh k8s-29 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
+- 形态：`flag{prv-30-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh prv-30 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh prv-30 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

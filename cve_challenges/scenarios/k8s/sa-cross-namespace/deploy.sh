@@ -1,12 +1,12 @@
 #!/bin/bash
 set -euo pipefail
-FLAG1="${CVE_FLAG1:-flag{k8s-04-step1-sa\}}"
-FLAG2="${CVE_FLAG2:-flag{k8s-04-step2-cross-ns\}}"
-K8S_ID="k8s-04"
+FLAG1="${CVE_FLAG1:-flag{prv-03-step1-sa\}}"
+FLAG2="${CVE_FLAG2:-flag{prv-03-step2-cross-ns\}}"
+K8S_ID="prv-03"
 CLUSTER_NAME="cve-k8s32-sa-cross-ns"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[K8S-04] K8s SA Token → Cross-Namespace Access"
+echo "[PRV-03] K8s SA Token → Cross-Namespace Access"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
@@ -87,7 +87,7 @@ spec:
       image: nginx:1.24-alpine
 YAML
 
-echo "[+] K8S-04 Ready"
+echo "[+] PRV-03 Ready"
 echo "    Attacker pod (tenant-a): kubectl exec -it -n tenant-a attacker -- sh"
 echo "    Target flag: kubectl get secret -n tenant-b target-flag -o jsonpath='{.data.flag}' | base64 -d"
 echo "    Exploit: Use broad SA token to access tenant-b resources"

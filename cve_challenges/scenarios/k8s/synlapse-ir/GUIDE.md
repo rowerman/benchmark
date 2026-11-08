@@ -1,10 +1,10 @@
-# K8S-35 共享集成运行时 → 跨租户凭据
+# PRV-35 共享集成运行时 → 跨租户凭据
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-35 |
+| ID | PRV-35 |
 | 名称 | Shared Integration Runtime → Cross-Tenant Credentials |
 | 技术/CVE | N/A (ODBC driver injection, CVE-2022-29972 lineage, case #062) |
 | 难度 | L3 |
@@ -41,9 +41,9 @@
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 共享集成运行时 向 flag-vault 出示「共享运行时地址（注入的命令直达 vault）」（校验模式 `network-source`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{k8s-35-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py k8s-35 <flag>`（gate）+
-  `python3 tests/cloud/run.py k8s-35 <flag>`（参考利用）。
+- 形态：`flag{prv-35-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py prv-35 <flag>`（gate）+
+  `python3 tests/cloud/run.py prv-35 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

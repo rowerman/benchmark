@@ -1,10 +1,10 @@
-# K8S-28: Service ExternalIP Traffic Interception
+# PRV-28: Service ExternalIP Traffic Interception
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-28 |
+| ID | PRV-28 |
 | 名称 | Service ExternalIP Traffic Interception |
 | 技术/CVE | CVE-2020-8554 |
 | 难度 | L3 |
@@ -24,7 +24,7 @@ Attacker pod (attack-ns) → Discover target service ClusterIP
 
 ## 前置知识
 
-- kubectl access to KIND cluster `cve-k8s-28-externalip`
+- kubectl access to KIND cluster `cve-prv-28-externalip`
 - 可创建带 `externalIPs` 的 Service；目标 Service 流量经 ClusterIP 路由
 
 ## 利用步骤
@@ -86,9 +86,9 @@ bash teardown.sh
 - 位置：受害者客户端请求头 X-Flag（被 externalIPs 改道截获）。
 - 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
   （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
-- 形态：`flag{k8s-28-<16 位十六进制>}`。
-- 验收：`bash scripts/validate-k8s-gate.sh k8s-28 <agent-kubeconfig> <flag> <cluster>`（gate）+
-  `bash tests/k8s/run.sh k8s-28 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
+- 形态：`flag{prv-28-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh prv-28 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh prv-28 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

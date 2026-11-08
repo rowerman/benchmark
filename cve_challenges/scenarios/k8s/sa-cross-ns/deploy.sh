@@ -1,8 +1,8 @@
 #!/bin/bash
-# K8S-43: SA Token Cross-Namespace Lateral Movement
+# PRV-43: SA Token Cross-Namespace Lateral Movement
 set -euo pipefail
-K8S_ID="k8s-43"
-CLUSTER_NAME="cve-k8s-43-sa-cross"
+K8S_ID="prv-43"
+CLUSTER_NAME="cve-prv-43-sa-cross"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init

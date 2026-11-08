@@ -6,7 +6,7 @@ CLUSTER_NAME="cve-chain-docker-etcd"
 source "$SCRIPT_DIR/../../scripts/k8s-common.sh"
 
 echo "[Chain Docker-to-etcd] 3-step K8s attack chain"
-echo "  K8S-21 (Docker Socket) -> K8S-38 (Registry Poison) -> K8S-42 (etcd)"
+echo "  PRV-20 (Docker Socket) -> PRV-38 (Registry Poison) -> PRV-42 (etcd)"
 
 # Prepare flags
 FLAG_DIR="/home/kianabin/cve-flags/chain22"

@@ -44,7 +44,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-49
+      VAULT_SCENARIO: prv-49
       VAULT_MODE: jwt
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"jwks_url":"http://oidc:5000/.well-known/jwks.json","issuer":"https://token.actions.githubusercontent.com","audience":"sts.amazonaws.com","claims":{"sub":"repo:demo-org/demo-repo:ref:refs/heads/main"},"hint":"OIDC JWT from the repository identity provider"}'

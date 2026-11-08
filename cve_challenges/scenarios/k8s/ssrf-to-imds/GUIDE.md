@@ -1,10 +1,10 @@
-# K8S-41 SSRF → 私有云实例元数据凭据窃取
+# PRV-41 SSRF → 私有云实例元数据凭据窃取
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-41 |
+| ID | PRV-41 |
 | 名称 | SSRF to Instance Metadata Credential Theft |
 | 技术/CVE | N/A (SSRF → IMDS) |
 | 难度 | L3 |
@@ -41,9 +41,9 @@ Web 应用存在 SSRF，可访问私有云 IaaS 实例的 `169.254.169.254` 元�
 - 位置：`flag-vault` 容器内的 `/vault/flag`（0600 root，容器进程读入内存后即不落盘）。
 - 交付条件：只有 s3 向 flag-vault 出示「从 IMDS 偷到的 AK/SK 按 SigV4 签名」（校验模式 `sigv4`）时才交付；
   其它容器、容器环境变量、落地文件与日志里都没有明文。
-- 形态：`flag{k8s-41-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
-- 验收：`python3 scripts/validate-cloud-gate.py k8s-41 <flag>`（gate）+
-  `python3 tests/cloud/run.py k8s-41 <flag>`（参考利用）。
+- 形态：`flag{prv-41-<16 位十六进制>}`（验收侧运行时生成，宿主不留副本）。
+- 验收：`python3 scripts/validate-cloud-gate.py prv-41 <flag>`（gate）+
+  `python3 tests/cloud/run.py prv-41 <flag>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

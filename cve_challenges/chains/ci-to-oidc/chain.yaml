@@ -17,17 +17,17 @@ runtime:
       format: response
 nodes:
 - step: 1
-  scenario: k8s-48
+  scenario: prv-48
   description: CI/CD 脚本注入 → 泄露 CI 环境
   flag: flag{c45-step1-ci}
   next_hint: CI 环境中发现了 OIDC IdP 的 URL
 - step: 2
-  scenario: k8s-49
+  scenario: prv-49
   description: 发现 OIDC IdP → 签发 JWT → AssumeRoleWithWebIdentity
   flag: flag{c45-step2-oidc}
   next_hint: 角色凭据可访问跨项目资源
 - step: 3
-  scenario: k8s-05
+  scenario: prv-05
   description: 跨项目 AssumeRole → 获取最终 flag
   flag: flag{c45-step3-cross}
   next_hint: null

@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-10"
-CLUSTER_NAME="cve-k8s-10-ingress-rce"
+K8S_ID="prv-10"
+CLUSTER_NAME="cve-prv-10-ingress-rce"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[K8S-10] CVE-2025-1974 ingress-nginx Admission Controller RCE"
+echo "[PRV-10] CVE-2025-1974 ingress-nginx Admission Controller RCE"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready
@@ -131,7 +131,7 @@ echo ""
 echo "    Exploitation steps:"
 echo "    1. Verify webhook access:"
 echo "       curl -k https://localhost:10443/networking/v1/ingresses"
-echo "    2. Craft malicious AdmissionReview payload (see docs/k8s-10)"
+echo "    2. Craft malicious AdmissionReview payload (see docs/prv-10)"
 echo "    3. Send exploit to achieve RCE in ingress-nginx controller"
 echo "    4. Read flag: cat /tmp/flag.txt (inside controller pod)"
 echo ""

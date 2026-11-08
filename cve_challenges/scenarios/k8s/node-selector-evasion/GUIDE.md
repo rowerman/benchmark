@@ -1,10 +1,10 @@
-# K8S-30: Node Selector Evasion
+# PRV-31: Node Selector Evasion
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-30 |
+| ID | PRV-31 |
 | 名称 | Node Selector Evasion |
 | 技术/CVE | N/A (scheduling bypass) |
 | 难度 | L2 |
@@ -63,7 +63,7 @@ kubectl --token=$TOKEN exec evader -n attacker-ns -- wget -qO- http://${FLAG_IP}
 ## 验证命令
 
 ```bash
-kubectl cluster-info --context kind-cve-k8s-30-node-evasion
+kubectl cluster-info --context kind-cve-prv-31-node-evasion
 kubectl get nodes --show-labels
 ```
 
@@ -72,9 +72,9 @@ kubectl get nodes --show-labels
 - 位置：flag-svc（secure-ns，受限节点上）。
 - 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
   （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
-- 形态：`flag{k8s-30-<16 位十六进制>}`。
-- 验收：`bash scripts/validate-k8s-gate.sh k8s-30 <agent-kubeconfig> <flag> <cluster>`（gate）+
-  `bash tests/k8s/run.sh k8s-30 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
+- 形态：`flag{prv-31-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh prv-31 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh prv-31 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

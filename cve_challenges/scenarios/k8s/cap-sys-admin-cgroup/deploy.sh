@@ -1,8 +1,8 @@
 #!/bin/bash
-# K8S-20: CAP_SYS_ADMIN cgroup Escape
+# PRV-17: CAP_SYS_ADMIN cgroup Escape
 set -euo pipefail
-K8S_ID="k8s-20"
-CLUSTER_NAME="cve-k8s-20-capsys"
+K8S_ID="prv-17"
+CLUSTER_NAME="cve-prv-17-capsys"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init

@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-K8S_ID="k8s-22"
-CLUSTER_NAME="cve-k8s-22-seccomp-bypass"
+K8S_ID="prv-18"
+CLUSTER_NAME="cve-prv-18-seccomp-bypass"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
-echo "[K8S-22] hostPID Process Information Disclosure"
+echo "[PRV-18] hostPID Process Information Disclosure"
 k8s_init
 k8s_create_cluster
 k8s_wait_ready

@@ -17,19 +17,19 @@ runtime:
       format: response
 nodes:
 - step: 1
-  scenario: k8s-34
+  scenario: prv-34
   description: 引擎补丁 → 索引函数以供应商角色执行 → 宿主 RCE
   flag: flag{c49-step1-host}
   next_hint: 宿主上有供应商内部服务凭据文件
 - step: 2
-  scenario: k8s-33
+  scenario: prv-33
   description: log_fdw 宿主文件读取 → 供应商内部凭据
   flags:
     - flag{c49-step2-host-read}
     - flag{c49-step2-internal-api}
   next_hint: 内部网络可达受害者数据库（防火墙只管公网）
 - step: 3
-  scenario: k8s-51
+  scenario: prv-51
   description: 内部子网 + CN 正则缺陷 → 跨租户流复制 → 最终 flag
   flag: flag{c49-step3-final}
   next_hint: null

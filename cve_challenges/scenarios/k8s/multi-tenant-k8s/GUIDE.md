@@ -1,10 +1,10 @@
-# K8S-24 多租户 K8s：容器逃逸 → 跨租户访问
+# PRV-19 多租户 K8s：容器逃逸 → 跨租户访问
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-24 |
+| ID | PRV-19 |
 | 名称 | Multi-Tenant K8s: Container Escape → Cross-Tenant Access |
 | 技术/CVE | N/A (privileged container + hostPID escape) |
 | 难度 | L2 |
@@ -82,9 +82,9 @@ kubectl exec -n tenant-a attacker -- cat /proc/1/status | grep -E 'Seccomp|Cap'
 - 位置：跨租户目标 pod / 节点 root-only 文件。
 - 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
   （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
-- 形态：`flag{k8s-24-<16 位十六进制>}`。
-- 验收：`bash scripts/validate-k8s-gate.sh k8s-24 <agent-kubeconfig> <flag> <cluster>`（gate）+
-  `bash tests/k8s/run.sh k8s-24 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
+- 形态：`flag{prv-19-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh prv-19 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh prv-19 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

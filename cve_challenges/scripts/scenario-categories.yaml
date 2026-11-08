@@ -1,79 +1,265 @@
-categories:
-  identity_trust:
-    label: 身份、授权与信任
-    scenarios:
-      - k8s-01
-      - k8s-02
-      - k8s-03
-      - k8s-04
-      - k8s-05
-      - k8s-06
-      - k8s-07
-      - k8s-41
-      - k8s-43
-      - k8s-45
-      - k8s-47
-      - k8s-49
-      - k8s-53
-      - k8s-55
-      - k8s-60
-  control_plane_exposure:
-    label: 控制面与组件暴露
-    scenarios:
-      - k8s-08
-      - k8s-09
-      - k8s-10
-      - k8s-11
-      - k8s-12
-      - k8s-13
-      - k8s-42
-  container_node_boundary:
-    label: 容器与节点边界
-    scenarios:
-      - k8s-14
-      - k8s-15
-      - k8s-16
-      - k8s-17
-      - k8s-18
-      - k8s-19
-      - k8s-20
-      - k8s-21
-      - k8s-22
-      - k8s-23
-      - k8s-24
-      - k8s-25
-      - k8s-26
-      - k8s-27
-      - k8s-44
-      - k8s-46
-      - k8s-54
-  network_scheduling:
-    label: 网络与调度
-    scenarios:
-      - k8s-28
-      - k8s-29
-      - k8s-30
-      - k8s-31
-      - k8s-32
-      - k8s-51
-      - k8s-58
-  managed_services_multitenancy:
-    label: 托管服务与多租户
-    scenarios:
-      - k8s-33
-      - k8s-34
-      - k8s-35
-      - k8s-36
-      - k8s-37
-      - k8s-50
-      - k8s-52
-      - k8s-56
-      - k8s-57
-      - k8s-59
-  supply_chain:
-    label: 供应链
-    scenarios:
-      - k8s-38
-      - k8s-39
-      - k8s-40
-      - k8s-48
+taxonomy_version: 3
+scenario_prefix:
+  stable: prv
+  uppercase: PRV
+
+first_level_boundaries:
+  A:
+    code: control_plane_request_processing
+    label_zh: 控制面请求处理边界
+    label_en: Control-plane request-processing boundary
+    scenario_range: {start: 1, end: 12}
+    mechanisms:
+      A1:
+        label_zh: Kubernetes RBAC 越权
+        label_en: Kubernetes RBAC privilege escalation
+        scenarios: [prv-01, prv-02, prv-03]
+      A2:
+        label_zh: 准入链配置劫持
+        label_en: Admission-chain configuration hijacking
+        scenarios: [prv-04]
+      A3:
+        label_zh: 云身份信任策略滥用
+        label_en: Cloud identity trust-policy abuse
+        scenarios: [prv-05]
+      A4:
+        label_zh: 联邦身份断言伪造
+        label_en: Federated identity assertion forgery
+        scenarios: [prv-06]
+      A5:
+        label_zh: 控制面策略执行路径不一致
+        label_en: Control-plane policy-enforcement path inconsistency
+        scenarios: [prv-07]
+      A6:
+        label_zh: 控制面服务认证缺失
+        label_en: Missing control-plane service authentication
+        scenarios: [prv-08, prv-09]
+      A7:
+        label_zh: 控制面输入注入
+        label_en: Control-plane input injection
+        scenarios: [prv-10, prv-11, prv-12]
+
+  B:
+    code: workload_node_runtime
+    label_zh: 工作负载—节点运行时边界
+    label_en: Workload-node runtime boundary
+    scenario_range: {start: 13, end: 25}
+    mechanisms:
+      B1:
+        label_zh: 容器运行时实现漏洞
+        label_en: Container-runtime implementation vulnerability
+        scenarios: [prv-13]
+      B2:
+        label_zh: 宿主路径与符号链接越界
+        label_en: Host-path and symbolic-link escape
+        scenarios: [prv-14, prv-15]
+      B3:
+        label_zh: 危险工作负载隔离配置
+        label_en: Dangerous workload isolation configuration
+        scenarios: [prv-16, prv-17, prv-18, prv-19]
+      B4:
+        label_zh: 运行时控制接口暴露
+        label_en: Runtime control-interface exposure
+        scenarios: [prv-20, prv-21]
+      B5:
+        label_zh: 节点可信接口或凭据滥用
+        label_en: Node trust-interface or credential abuse
+        scenarios: [prv-22, prv-23]
+      B6:
+        label_zh: 节点侧可信内容替换
+        label_en: Node-side trusted-content replacement
+        scenarios: [prv-24]
+      B7:
+        label_zh: 不可信工作负载代码执行
+        label_en: Untrusted workload code execution
+        scenarios: [prv-25]
+
+  C:
+    code: workload_reachability_placement
+    label_zh: 工作负载可达与放置边界
+    label_en: Workload reachability and placement boundary
+    scenario_range: {start: 26, end: 32}
+    mechanisms:
+      C1:
+        label_zh: 网络路径与地址操纵
+        label_en: Network-path and address manipulation
+        scenarios: [prv-26, prv-27, prv-28, prv-29]
+      C2:
+        label_zh: 网络策略选择器欺骗
+        label_en: Network-policy selector spoofing
+        scenarios: [prv-30]
+      C3:
+        label_zh: 调度约束绕过
+        label_en: Scheduling-constraint bypass
+        scenarios: [prv-31, prv-32]
+
+  D:
+    code: managed_platform_tenant
+    label_zh: 托管平台租户边界
+    label_en: Managed-platform tenant boundary
+    scenario_range: {start: 33, end: 37}
+    mechanisms:
+      D1:
+        label_zh: 托管数据库文件系统越界
+        label_en: Managed-database filesystem escape
+        scenarios: [prv-33]
+      D2:
+        label_zh: 托管数据库宿主执行
+        label_en: Managed-database host execution
+        scenarios: [prv-34]
+      D3:
+        label_zh: 共享运行时隔离缺陷
+        label_en: Shared-runtime isolation defect
+        scenarios: [prv-35]
+      D4:
+        label_zh: 平台控制面租户作用域缺失
+        label_en: Missing platform-control-plane tenant scope
+        scenarios: [prv-36]
+      D5:
+        label_zh: 托管自动化持久化
+        label_en: Managed-automation persistence
+        scenarios: [prv-37]
+
+  E:
+    code: cloud_native_supply_chain_trust
+    label_zh: 云原生供应链信任边界
+    label_en: Cloud-native supply-chain trust boundary
+    scenario_range: {start: 38, end: 40}
+    mechanisms:
+      E1:
+        label_zh: 镜像仓库写入与可变引用
+        label_en: Registry write and mutable image reference
+        scenarios: [prv-38, prv-39]
+      E2:
+        label_zh: 共享构建链滥用
+        label_en: Shared build-chain abuse
+        scenarios: [prv-40]
+
+primary_scenarios:
+  prv-01: {first_level: A, mechanism: A1}
+  prv-02: {first_level: A, mechanism: A1}
+  prv-03: {first_level: A, mechanism: A1}
+  prv-04: {first_level: A, mechanism: A2}
+  prv-05: {first_level: A, mechanism: A3}
+  prv-06: {first_level: A, mechanism: A4}
+  prv-07: {first_level: A, mechanism: A5}
+  prv-08: {first_level: A, mechanism: A6}
+  prv-09: {first_level: A, mechanism: A6}
+  prv-10: {first_level: A, mechanism: A7}
+  prv-11: {first_level: A, mechanism: A7}
+  prv-12: {first_level: A, mechanism: A7}
+  prv-13: {first_level: B, mechanism: B1}
+  prv-14: {first_level: B, mechanism: B2}
+  prv-15: {first_level: B, mechanism: B2}
+  prv-16: {first_level: B, mechanism: B3}
+  prv-17: {first_level: B, mechanism: B3}
+  prv-18: {first_level: B, mechanism: B3}
+  prv-19: {first_level: B, mechanism: B3}
+  prv-20: {first_level: B, mechanism: B4}
+  prv-21: {first_level: B, mechanism: B4}
+  prv-22: {first_level: B, mechanism: B5}
+  prv-23: {first_level: B, mechanism: B5}
+  prv-24: {first_level: B, mechanism: B6}
+  prv-25: {first_level: B, mechanism: B7}
+  prv-26: {first_level: C, mechanism: C1}
+  prv-27: {first_level: C, mechanism: C1}
+  prv-28: {first_level: C, mechanism: C1}
+  prv-29: {first_level: C, mechanism: C1}
+  prv-30: {first_level: C, mechanism: C2}
+  prv-31: {first_level: C, mechanism: C3}
+  prv-32: {first_level: C, mechanism: C3}
+  prv-33: {first_level: D, mechanism: D1}
+  prv-34: {first_level: D, mechanism: D2}
+  prv-35: {first_level: D, mechanism: D3}
+  prv-36: {first_level: D, mechanism: D4}
+  prv-37: {first_level: D, mechanism: D5}
+  prv-38: {first_level: E, mechanism: E1}
+  prv-39: {first_level: E, mechanism: E1}
+  prv-40: {first_level: E, mechanism: E2}
+
+reserve_scenarios:
+  prv-41: {legacy_category: identity_trust, legacy_label: 身份、授权与信任}
+  prv-42: {legacy_category: control_plane_exposure, legacy_label: 控制面与组件暴露}
+  prv-43: {legacy_category: identity_trust, legacy_label: 身份、授权与信任}
+  prv-44: {legacy_category: container_node_boundary, legacy_label: 容器与节点边界}
+  prv-45: {legacy_category: identity_trust, legacy_label: 身份、授权与信任}
+  prv-46: {legacy_category: container_node_boundary, legacy_label: 容器与节点边界}
+  prv-47: {legacy_category: identity_trust, legacy_label: 身份、授权与信任}
+  prv-48: {legacy_category: supply_chain, legacy_label: 供应链}
+  prv-49: {legacy_category: identity_trust, legacy_label: 身份、授权与信任}
+  prv-50: {legacy_category: managed_services_multitenancy, legacy_label: 托管服务与多租户}
+  prv-51: {legacy_category: network_scheduling, legacy_label: 网络与调度}
+  prv-52: {legacy_category: managed_services_multitenancy, legacy_label: 托管服务与多租户}
+  prv-53: {legacy_category: identity_trust, legacy_label: 身份、授权与信任}
+  prv-54: {legacy_category: container_node_boundary, legacy_label: 容器与节点边界}
+  prv-55: {legacy_category: identity_trust, legacy_label: 身份、授权与信任}
+  prv-56: {legacy_category: managed_services_multitenancy, legacy_label: 托管服务与多租户}
+  prv-57: {legacy_category: managed_services_multitenancy, legacy_label: 托管服务与多租户}
+  prv-58: {legacy_category: network_scheduling, legacy_label: 网络与调度}
+  prv-59: {legacy_category: managed_services_multitenancy, legacy_label: 托管服务与多租户}
+  prv-60: {legacy_category: identity_trust, legacy_label: 身份、授权与信任}
+
+migration:
+  from_prefix: k8s
+  to_prefix: prv
+  current_to_v3:
+    k8s-01: prv-01
+    k8s-02: prv-04
+    k8s-03: prv-02
+    k8s-04: prv-03
+    k8s-05: prv-05
+    k8s-06: prv-06
+    k8s-07: prv-07
+    k8s-08: prv-08
+    k8s-09: prv-09
+    k8s-10: prv-10
+    k8s-11: prv-11
+    k8s-12: prv-26
+    k8s-13: prv-12
+    k8s-14: prv-13
+    k8s-15: prv-14
+    k8s-16: prv-22
+    k8s-17: prv-24
+    k8s-18: prv-16
+    k8s-19: prv-15
+    k8s-20: prv-17
+    k8s-21: prv-20
+    k8s-22: prv-18
+    k8s-23: prv-27
+    k8s-24: prv-19
+    k8s-25: prv-21
+    k8s-26: prv-23
+    k8s-27: prv-25
+    k8s-28: prv-28
+    k8s-29: prv-30
+    k8s-30: prv-31
+    k8s-31: prv-32
+    k8s-32: prv-29
+    k8s-33: prv-33
+    k8s-34: prv-34
+    k8s-35: prv-35
+    k8s-36: prv-36
+    k8s-37: prv-37
+    k8s-38: prv-38
+    k8s-39: prv-39
+    k8s-40: prv-40
+    k8s-41: prv-41
+    k8s-42: prv-42
+    k8s-43: prv-43
+    k8s-44: prv-44
+    k8s-45: prv-45
+    k8s-46: prv-46
+    k8s-47: prv-47
+    k8s-48: prv-48
+    k8s-49: prv-49
+    k8s-50: prv-50
+    k8s-51: prv-51
+    k8s-52: prv-52
+    k8s-53: prv-53
+    k8s-54: prv-54
+    k8s-55: prv-55
+    k8s-56: prv-56
+    k8s-57: prv-57
+    k8s-58: prv-58
+    k8s-59: prv-59
+    k8s-60: prv-60

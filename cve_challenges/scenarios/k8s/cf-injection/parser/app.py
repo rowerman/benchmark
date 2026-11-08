@@ -18,7 +18,7 @@ def _read_flag(path, env_name, default):
         return os.environ.get(env_name, default)
 
 
-FLAG = _read_flag("/run/flag", "FLAG", "flag{k8s-13-step2-cf-inject}")
+FLAG = _read_flag("/run/flag", "FLAG", "flag{prv-12-step2-cf-inject}")
 @app.route("/")
 def docs():
     return {"service": "Private IaC Template Parser (CloudFormation-compatible)",

@@ -1,4 +1,4 @@
 name: "WordPress LFI to Cluster Admin"
 id: chain-17
 steps: 4
-nodes: [{scenario: web-06,flag: "flag{chain17-step1-lfi}"},{scenario: k8s-01,flag: "flag{chain17-step2-rbac}"},{scenario: k8s-21,flag: "flag{chain17-step3-escape}"},{scenario: k8s-42,flag: "flag{chain17-step4-etcd-final}"}]
+nodes: [{scenario: web-06,flag: "flag{chain17-step1-lfi}"},{scenario: prv-01,flag: "flag{chain17-step2-rbac}"},{scenario: prv-20,flag: "flag{chain17-step3-escape}"},{scenario: prv-42,flag: "flag{chain17-step4-etcd-final}"}]

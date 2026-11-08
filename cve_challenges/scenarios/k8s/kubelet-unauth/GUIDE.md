@@ -1,10 +1,10 @@
-# K8S-08: Kubelet API Anonymous Access
+# PRV-08: Kubelet API Anonymous Access
 
 ## 场景信息
 
 | 字段 | 值 |
 |---|---|
-| ID | K8S-08 |
+| ID | PRV-08 |
 | 名称 | Kubelet API Anonymous Access |
 | 技术/CVE | N/A (misconfiguration) |
 | 难度 | L2 |
@@ -22,7 +22,7 @@
 
 ## 前置知识
 
-- kubectl access to KIND cluster `cve-k8s-08-kubelet`
+- kubectl access to KIND cluster `cve-prv-08-kubelet`
 - `curl` (or similar HTTP client) on the attack machine
 - Network access to the KIND node's kubelet port 10250
 
@@ -89,15 +89,15 @@ curl -k "https://${NODE_IP}:10250/run/default/flag-holder/nginx?cmd=cat%20/etc/h
 ```
 
 ### Step 6: Capture Flag
-- Flag format: `flag{k8s-08-*}`
+- Flag format: `flag{prv-08-*}`
 - Flag location: Plaintext env var `FLAG` of the `flag-holder` container, returned in the kubelet API's pod spec
-- Expected output: `flag{k8s-08-default}` (or custom value from `CVE_FLAG`)
+- Expected output: `flag{prv-08-default}` (or custom value from `CVE_FLAG`)
 
 ## 验证命令
 
 ```bash
 # Verify the cluster is deployed
-kubectl cluster-info --context kind-cve-k8s-08-kubelet
+kubectl cluster-info --context kind-cve-prv-08-kubelet
 
 # Verify the flag-holder pod exists
 kubectl get pod flag-holder
@@ -118,9 +118,9 @@ kubectl describe node | grep -A5 Kubelet
 - 位置：节点上的容器内 /flag.txt（经 kubelet 匿名 /run 读取）。
 - 注入：验收侧用 `CVE_FLAG` 显式传入（多 flag 场景用 `CVE_FLAG1..N`），部署时写进节点
   （root-only 0600）或集群内 Secret/ConfigMap，宿主不留副本。
-- 形态：`flag{k8s-08-<16 位十六进制>}`。
-- 验收：`bash scripts/validate-k8s-gate.sh k8s-08 <agent-kubeconfig> <flag> <cluster>`（gate）+
-  `bash tests/k8s/run.sh k8s-08 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
+- 形态：`flag{prv-08-<16 位十六进制>}`。
+- 验收：`bash scripts/validate-k8s-gate.sh prv-08 <agent-kubeconfig> <flag> <cluster>`（gate）+
+  `bash tests/k8s/run.sh prv-08 <agent-kubeconfig> <flag> <cluster>`（参考利用）。
 
 ## 此场景利用了哪些知识
 

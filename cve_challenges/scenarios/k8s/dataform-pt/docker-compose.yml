@@ -11,7 +11,7 @@ services:
     build:
       context: ../../../infra/cloud/flag-vault
     environment:
-      VAULT_SCENARIO: k8s-59
+      VAULT_SCENARIO: prv-59
       VAULT_MODE: network-source
       VAULT_FLAG_FILE: /vault/flag
       VAULT_CONFIG: '{"cidrs":["10.40.0.10/32"],"hint":"平台密钥库只对共享执行器地址开放"}'

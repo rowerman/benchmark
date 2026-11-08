@@ -2,9 +2,9 @@ name: "hostPath to Node Control"
 id: chain-11
 steps: 3
 nodes:
-  - scenario: k8s-19
+  - scenario: prv-15
     flag: "flag{chain11-step1-hostpath}"
-  - scenario: k8s-08
+  - scenario: prv-08
     flag: "flag{chain11-step2-kubelet}"
-  - scenario: k8s-44
+  - scenario: prv-44
     flag: "flag{chain11-step3-node-final}"

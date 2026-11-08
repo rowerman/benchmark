@@ -1,8 +1,8 @@
 #!/bin/bash
-# K8S-39: Mutable Image Tag Supply Chain Attack
+# PRV-39: Mutable Image Tag Supply Chain Attack
 set -euo pipefail
-K8S_ID="k8s-39"
-CLUSTER_NAME="cve-k8s-39-image-tag"
+K8S_ID="prv-39"
+CLUSTER_NAME="cve-prv-39-image-tag"
 source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 
 k8s_init
