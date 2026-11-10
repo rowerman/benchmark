@@ -32,6 +32,10 @@ set -euo pipefail
 KIND_IMAGE="${KIND_IMAGE:-kindest/node:v1.27.3}"
 KIND_WAIT_TIMEOUT="${KIND_WAIT_TIMEOUT:-120s}"
 KIND_POD_WAIT_TIMEOUT="${KIND_POD_WAIT_TIMEOUT:-120s}"
+KIND_CREATE_ATTEMPTS="${KIND_CREATE_ATTEMPTS:-2}"
+CALICO_ROLLOUT_TIMEOUT="${CALICO_ROLLOUT_TIMEOUT:-300s}"
+KUBE_ROUTER_VERSION="${KUBE_ROUTER_VERSION:-v2.12.0}"
+KUBE_ROUTER_ROLLOUT_TIMEOUT="${KUBE_ROUTER_ROLLOUT_TIMEOUT:-180s}"
 FLAGS_ROOT="${FLAGS_ROOT:-/home/kianabin/cve-flags}"
 
 # ── Initialization ────────────────────────────────────────────────
@@ -47,11 +51,12 @@ k8s_init() {
 
 k8s_create_cluster() {
     echo "[${K8S_ID}] Creating KIND cluster: ${CLUSTER_NAME}..."
+    k8s_add_internal_no_proxy
 
-    local config_flag=""
+    local kind_args=(create cluster --name "$CLUSTER_NAME")
     local config_file="${SCRIPT_DIR}/kind-config.yaml"
     if [ -f "$config_file" ]; then
-        config_flag="--config $config_file"
+        kind_args+=(--config "$config_file")
     fi
 
     # If cluster already exists, delete it first (idempotent)
@@ -61,9 +66,22 @@ k8s_create_cluster() {
         sleep 3
     fi
 
-    kind create cluster --name "$CLUSTER_NAME" $config_flag
+    # Kind 三节点创建偶尔会在 worker 加入阶段失败；失败后清理同名集群再重试一次。
+    local attempt
+    for attempt in $(seq 1 "$KIND_CREATE_ATTEMPTS"); do
+        if kind "${kind_args[@]}"; then
+            echo "[${K8S_ID}] Cluster created successfully"
+            return 0
+        fi
+        echo "[${K8S_ID}] KIND create attempt ${attempt}/${KIND_CREATE_ATTEMPTS} failed" >&2
+        kind delete cluster --name "$CLUSTER_NAME" >/dev/null 2>&1 || true
+        if [ "$attempt" -lt "$KIND_CREATE_ATTEMPTS" ]; then
+            sleep 5
+        fi
+    done
 
-    echo "[${K8S_ID}] Cluster created successfully"
+    echo "[${K8S_ID}] ERROR: KIND cluster creation failed after ${KIND_CREATE_ATTEMPTS} attempts" >&2
+    return 1
 }
 
 k8s_delete_cluster() {
@@ -105,6 +123,62 @@ k8s_wait_job() {
 
 # ── NetworkPolicy CNI ────────────────────────────────────────────
 
+# Kind 节点会把宿主代理带进容器。本地 registry 和集群内地址必须绕过代理，
+# 否则节点会尝试连接自身 127.0.0.1 上的代理端口。
+k8s_add_internal_no_proxy() {
+    local internal_hosts="registry,k8s-registry"
+    export NO_PROXY="${NO_PROXY:+${NO_PROXY},}${internal_hosts}"
+    export no_proxy="${no_proxy:+${no_proxy},}${internal_hosts}"
+}
+
+# 严格确保 manifest 使用的镜像已经存在并加载进当前 Kind 集群。
+# 否则 CNI Pod 会重新访问 registry，代理或镜像仓库抖动会变成无界 rollout。
+k8s_preload_images_into_cluster() {
+    local image pull_image attempt
+    for image in "$@"; do
+        [ -n "$image" ] || continue
+        if ! docker image inspect "$image" >/dev/null 2>&1; then
+            pull_image="$image"
+            for attempt in 1 2 3; do
+                echo "[${K8S_ID}] Pulling image on host: ${pull_image} (attempt ${attempt}/3)"
+                if docker pull "$pull_image" >/dev/null 2>&1; then
+                    break
+                fi
+                if [ -n "${K8S_IMAGE_MIRROR:-}" ] && [[ "$image" == docker.io/* ]]; then
+                    pull_image="${K8S_IMAGE_MIRROR}/${image#docker.io/}"
+                fi
+                sleep 3
+            done
+            if ! docker image inspect "$pull_image" >/dev/null 2>&1; then
+                echo "[${K8S_ID}] ERROR: required image is not available on host: ${image}" >&2
+                return 1
+            fi
+            if [ "$pull_image" != "$image" ]; then
+                docker tag "$pull_image" "$image"
+            fi
+        fi
+        echo "[${K8S_ID}] Loading image into Kind: ${image}"
+        if ! kind load docker-image "$image" --name "$CLUSTER_NAME"; then
+            echo "[${K8S_ID}] ERROR: failed to load image into Kind: ${image}" >&2
+            return 1
+        fi
+    done
+}
+
+k8s_dump_workload_diagnostics() {
+    local namespace="$1" label="$2"
+    echo "[${K8S_ID}] Workload diagnostics (${namespace}/${label}):" >&2
+    kubectl get pods -n "$namespace" -l "$label" -o wide >&2 || true
+    kubectl describe pods -n "$namespace" -l "$label" >&2 || true
+    kubectl get events -n "$namespace" --sort-by=.lastTimestamp >&2 | tail -40 || true
+    local pod
+    while read -r pod; do
+        [ -n "$pod" ] || continue
+        echo "[${K8S_ID}] Logs: ${namespace}/${pod}" >&2
+        kubectl logs -n "$namespace" "$pod" --all-containers --tail=80 >&2 || true
+    done < <(kubectl get pods -n "$namespace" -l "$label" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null)
+}
+
 k8s_install_calico() {
     echo "[${K8S_ID}] Installing Calico (NetworkPolicy enforcement)..."
     local calico_manifest="/tmp/calico-${K8S_ID}.yaml"
@@ -123,13 +197,59 @@ k8s_install_calico() {
         echo "[${K8S_ID}] ERROR: could not download the Calico manifest" >&2
         exit 1
     fi
+
+    local calico_images=()
+    mapfile -t calico_images < <(
+        sed -n 's/^[[:space:]]*image:[[:space:]]*//p' "$calico_manifest" | sort -u
+    )
+    if [ "${#calico_images[@]}" -eq 0 ]; then
+        echo "[${K8S_ID}] ERROR: no Calico images found in manifest" >&2
+        exit 1
+    fi
+    k8s_preload_images_into_cluster "${calico_images[@]}" || exit 1
+
     kubectl apply -f "$calico_manifest"
     # KIND does not support IPIP; switch Calico to VXLAN
-    kubectl -n kube-system set env daemonset/calico-node CALICO_IPV4POOL_IPIP=Never 2>/dev/null || true
-    kubectl -n kube-system set env daemonset/calico-node CALICO_IPV4POOL_VXLAN=Always 2>/dev/null || true
-    kubectl -n kube-system rollout status daemonset/calico-node --timeout=180s 2>/dev/null || \
-        kubectl wait --for=condition=Ready pods -n kube-system -l k8s-app=calico-node --timeout=180s 2>/dev/null || true
-    sleep 5
+    kubectl -n kube-system set env daemonset/calico-node CALICO_IPV4POOL_IPIP=Never
+    kubectl -n kube-system set env daemonset/calico-node CALICO_IPV4POOL_VXLAN=Always
+    if ! kubectl -n kube-system rollout status daemonset/calico-node --timeout="$CALICO_ROLLOUT_TIMEOUT"; then
+        k8s_dump_workload_diagnostics kube-system k8s-app=calico-node
+        exit 1
+    fi
+    if ! kubectl -n kube-system rollout status deployment/calico-kube-controllers --timeout="$CALICO_ROLLOUT_TIMEOUT"; then
+        k8s_dump_workload_diagnostics kube-system k8s-app=calico-kube-controllers
+        exit 1
+    fi
+}
+
+# Kube-router 的 bridge CNI 为同节点 Pod 提供共享二层，同时继续执行 Kubernetes
+# NetworkPolicy。用于必须真实做 ARP 的 CAP_NET_RAW 场景。
+k8s_install_kube_router() {
+    echo "[${K8S_ID}] Installing Kube-router ${KUBE_ROUTER_VERSION}..."
+    local manifest="/tmp/kube-router-${KUBE_ROUTER_VERSION}.yaml"
+    local image="docker.io/cloudnativelabs/kube-router:${KUBE_ROUTER_VERSION}"
+    local url="https://raw.githubusercontent.com/cloudnativelabs/kube-router/${KUBE_ROUTER_VERSION}/daemonset/generic-kuberouter.yaml"
+
+    for attempt in 1 2 3; do
+        curl -fsSL --connect-timeout 10 --max-time 120 "$url" -o "$manifest" && break
+        echo "  Kube-router manifest download attempt ${attempt} failed, retrying..."
+        sleep 5
+    done
+    if ! grep -q 'name: kube-router' "$manifest" 2>/dev/null; then
+        echo "[${K8S_ID}] ERROR: could not download the Kube-router manifest" >&2
+        exit 1
+    fi
+
+    sed -i \
+        -e "s#cloudnativelabs/kube-router\$#cloudnativelabs/kube-router:${KUBE_ROUTER_VERSION}#" \
+        -e 's/imagePullPolicy: Always/imagePullPolicy: IfNotPresent/g' \
+        "$manifest"
+    k8s_preload_images_into_cluster "$image" || exit 1
+    kubectl apply -f "$manifest"
+    if ! kubectl -n kube-system rollout status daemonset/kube-router --timeout="$KUBE_ROUTER_ROLLOUT_TIMEOUT"; then
+        k8s_dump_workload_diagnostics kube-system k8s-app=kube-router
+        exit 1
+    fi
 }
 
 # ── etcd helpers ─────────────────────────────────────────────────

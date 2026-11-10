@@ -26,7 +26,8 @@ Attacker pod blocked by NetworkPolicy (requires tier=frontend label)
 ## 前置知识
 
 - kubectl access to KIND cluster `cve-prv-30-netpol-bypass`
-- 集群已安装 Calico（kind 默认 CNI 不强制 NetworkPolicy）；攻击者 RBAC 限于 `attacker-ns`
+- 集群关闭 Kind 默认 CNI 并安装 Calico；Calico 镜像在应用 manifest 前加载到所有节点。
+  攻击者 RBAC 限于 `attacker-ns`
 
 ## 利用步骤
 
@@ -80,8 +81,8 @@ kubectl exec -n isolated-ns -l app=flag-service -- cat /tmp/flag.txt
 bash teardown.sh
 ```
 
-> 前置：本场景安装 Calico（kind 默认 CNI 不强制 NetworkPolicy），部署脚本会在
-> 建集群后自动安装并等待就绪。攻击者的 RBAC 被限制在 attacker-ns 内。
+> 前置：本场景关闭 Kind 默认 CNI，预加载并安装 Calico，然后等待节点和系统 Pod 就绪。
+> 攻击者的 RBAC 被限制在 attacker-ns 内。
 
 ## Flag
 

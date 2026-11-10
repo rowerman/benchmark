@@ -7,9 +7,9 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 echo "[PRV-30] NetworkPolicy Bypass via Label Spoofing"
 k8s_init
 k8s_create_cluster
+k8s_install_calico
 k8s_wait_ready
 k8s_write_node_flag /host-flag
-k8s_install_calico
 
 echo "[*] Pre-loading container images into KIND..."
 k8s_load_images alpine:latest nginx:1.24-alpine bitnami/kubectl:1.28

@@ -15,9 +15,11 @@
 
 ## 场景概述
 
-原 NetworkPolicy 的 `ipBlock` 允许整段节点 podCIDR，SNAT/加地址两条路都依赖"回复能回到攻击者
-所在节点"，复现不稳定。白名单改为"节点地址 /32"，落脚 pod 钉在同一节点并经 NodePort 访问：kube-proxy
-对 NodePort 的出口 NAT（KUBE-MARK-MASQ）会把源地址改写成节点地址，于是任意 Pod 都能借节点身份穿过策略。
+NetworkPolicy 的 `ipBlock` 错误地信任节点所在的二层网段。攻击落脚 pod 被授予 NET_ADMIN，
+可临时添加该网段内一个未使用地址，并让目的服务流量使用该伪造地址作为源 IP，从而穿过策略。
+
+部署使用纯 Calico 网络：Kind 默认 CNI 已关闭，Calico 镜像会先加载到各节点再应用 manifest，
+避免节点运行时再从 registry 拉取。
 
 ## 前置知识
 
@@ -32,9 +34,10 @@
 
 ## 利用步骤
 
-1. 在 `untrust-zone` 的落脚 pod 里直接请求该服务的 NodePort（pod 已固定在同一节点）。
-2. kube-proxy 对 NodePort 的出口 NAT 把源地址改写成节点地址，命中 `ipBlock` 的 /32 白名单。
-3. 读响应里的 flag。
+1. 从 `untrust-zone` 的落脚 pod 用真实 Pod IP 访问服务，确认请求被 NetworkPolicy 阻断。
+2. 在 `eth0` 上添加节点网段内的伪造地址，例如 `172.18.0.250/32`。
+3. 为该地址配置 NodePort 路由，使访问节点 `30808` 端口的流量使用伪造地址作为源 IP。
+4. 访问 `http://<node-ip>:30808/flag` 并读取 flag。
 
 ## 验证命令
 

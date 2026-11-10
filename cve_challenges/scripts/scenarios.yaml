@@ -897,6 +897,6 @@ scenarios:
     difficulty: L3
     cve: N/A (IP spoofing)
     entry_identity: 'exec-only untrust-zone/attacker-pod（只能进这个 pod）'
-    terminal: '节点 root-only 文件 /host-flag/flag.txt'
-    difficulty_note: '借 NodePort 出口 NAT 把源地址改写成节点地址命中白名单'
+    terminal: 'flag-pod（trust-zone）内 /flag.txt（经伪造节点网段源地址访问）'
+    difficulty_note: 'NET_ADMIN 伪造节点网段地址，命中 ipBlock 白名单'
     path: scenarios/k8s/cni-ip-spoof

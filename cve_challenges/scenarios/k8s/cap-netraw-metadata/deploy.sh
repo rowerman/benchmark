@@ -7,11 +7,10 @@ source "$(dirname "$0")/../../../scripts/k8s-common.sh"
 echo "[PRV-27] CAP_NET_RAW -> Metadata MITM"
 k8s_init
 k8s_create_cluster
+# Kube-router 的 bridge CNI 让同节点 Pod 共享二层，同时继续执行 NetworkPolicy。
+# Calico 使用点对点 veth + 主机路由，无法完成本场景要求的 ARP MITM。
+k8s_install_kube_router
 k8s_wait_ready
-# kind 默认 CNI 是点对点 veth（pod 之间没有共享二层），CAP_NET_RAW 的 ARP 劫持
-# 在这上面物理上做不出来；换 Calico 后 pod 挂到 cni0 网桥下，二层可达恢复，
-# 同时 NetworkPolicy 也才真正生效（"只有 victim 能访问 IMDS"才是真的）。
-k8s_install_calico
 k8s_load_images python:3.11-slim
 
 NODE_NAME=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')

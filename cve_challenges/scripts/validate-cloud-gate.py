@@ -70,6 +70,63 @@ def http_get_ready(url: str, timeout: float = 5, attempts: int = 20) -> tuple[in
     return status, body
 
 
+def docker_inspect(vault_cid: str, template: str) -> str:
+    result = subprocess.run(
+        ["docker", "inspect", "--format", template, vault_cid],
+        capture_output=True, text=True, check=False)
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def vault_probe_networks(vault_cid: str) -> list[tuple[str, str]]:
+    """返回 vault 所在的 Compose 网络及对应地址。"""
+    output = docker_inspect(
+        vault_cid,
+        "{{range $name, $network := .NetworkSettings.Networks}}{{println $name $network.IPAddress}}{{end}}")
+    networks: list[tuple[str, str]] = []
+    for line in output.splitlines():
+        pieces = line.split()
+        if len(pieces) == 2 and pieces[1]:
+            networks.append((pieces[0], pieces[1]))
+    return networks
+
+
+def probe_vault_without_credentials(vault_cid: str) -> tuple[int, str]:
+    """从同一 Compose 网络启动一次性容器，检查未授权访问是否返回 403。"""
+    image = docker_inspect(vault_cid, "{{.Config.Image}}")
+    if not image:
+        return 0, "无法获取 flag-vault 镜像"
+
+    probe = """import sys, urllib.error, urllib.request
+try:
+    urllib.request.urlopen(sys.argv[1], timeout=5)
+    print(200)
+except urllib.error.HTTPError as exc:
+    print(exc.code)
+except Exception as exc:
+    print(f\"probe error: {exc}\", file=sys.stderr)
+    print(0)
+"""
+    last_error = ""
+    for network, address in vault_probe_networks(vault_cid):
+        result = subprocess.run([
+            "docker", "run", "--rm",
+            "--network", network,
+            "--entrypoint", "python",
+            "--env", "HTTP_PROXY=", "--env", "HTTPS_PROXY=",
+            "--env", "http_proxy=", "--env", "https_proxy=",
+            "--env", "NO_PROXY=*", "--env", "no_proxy=*",
+            image, "-c", probe, f"http://{address}:5000/flag",
+        ], capture_output=True, text=True, check=False)
+        lines = result.stdout.strip().splitlines()
+        if result.returncode == 0 and lines:
+            try:
+                return int(lines[-1]), result.stderr.strip()
+            except ValueError:
+                pass
+        last_error = (result.stderr or result.stdout).strip()
+    return 0, last_error
+
+
 def main() -> int:
     if len(sys.argv) != 3:
         raise SystemExit("usage: validate-cloud-gate.py <scenario-id> <expected-flag>")
@@ -156,22 +213,14 @@ def main() -> int:
     else:
         ok("该场景无固定宿主入口端口")
 
-    # 4. 未校验时 vault 必须拒绝
-    # vault 可能同时接在多个网络上，逐个地址试到能应答为止
-    vault_ips = subprocess.run(
-        ["docker", "inspect", "--format", "{{range .NetworkSettings.Networks}}{{println .IPAddress}}{{end}}", vault_cid],
-        capture_output=True, text=True, check=False).stdout.split()
-    status, body = 0, ""
-    for vault_ip in vault_ips:
-        status, body = http_get_ready(f"http://{vault_ip}:5000/flag")
-        if status:
-            break
-    if not vault_ips:
-        fail("取不到 flag-vault 容器地址")
-    elif status == 403 and flag not in body:
+    # 4. 未校验时 vault 必须拒绝。检查必须从同一 Compose 网络发起，
+    # 宿主网络无法可靠访问场景自定义网段。
+    status, probe_error = probe_vault_without_credentials(vault_cid)
+    if status == 403:
         ok("未带凭据访问 flag-vault 被 403")
     else:
-        fail(f"未带凭据访问 flag-vault 返回 {status}（应 403）")
+        detail = f"：{probe_error}" if probe_error else ""
+        fail(f"同网络探测未带凭据访问 flag-vault 返回 {status}（应 403）{detail}")
 
     if failures:
         print(f"[gate] {scenario_id} FAIL（{len(failures)} 项）")
